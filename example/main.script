@@ -2,4 +2,5 @@ local monarch = require "monarch.monarch"
 
 function init(self)
 	monarch.show(hash("menu"))
+	msg.post("@render:/", "clear_color", { color = vmath.vector4(0.4, 0.6, 0.8,1.0) })
 end

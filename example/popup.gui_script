@@ -1,10 +1,17 @@
 local monarch = require "monarch.monarch"
+local transitions = require "monarch.transitions.gui"
 
 function init(self)
 	msg.post(".", "acquire_input_focus")
 	self.ok = gui.get_node("ok_button")
 	self.cancel = gui.get_node("cancel_button")
 	gui.set_render_order(16)
+
+	self.transition = transitions.create(gui.get_node("root"))
+		.show_in(transitions.slide_in_top, gui.EASING_OUTQUAD, 0.6, 0)
+		.show_out(transitions.slide_out_top, gui.EASING_INQUAD, 0.6, 0)
+		.back_in(transitions.slide_in_top, gui.EASING_OUTQUAD, 0.6, 0)
+		.back_out(transitions.slide_out_top, gui.EASING_INQUAD, 0.6, 0)
 end
 
 function on_input(self, action_id, action)
@@ -17,4 +24,8 @@ function on_input(self, action_id, action)
 			monarch.back()
 		end
 	end
+end
+
+function on_message(self, message_id, message, sender)
+	self.transition.handle(message_id, message, sender)
 end

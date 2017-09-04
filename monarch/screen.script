@@ -10,7 +10,6 @@ go.property("transition_back_out", msg.url())
 
 
 function init(self)
-	print("screen init", self.proxy)
 	monarch.register(self.screen_id, self.screen_proxy, self.popup, {
 		show_in = self.transition_show_in,
 		show_out = self.transition_show_out,
@@ -20,25 +19,20 @@ function init(self)
 end
 
 function final(self)
-	print("screen final", self.proxy)
 	monarch.unregister(self.screen_id)
 end
 
 function on_message(self, message_id, message, sender)
-	print("screen on_message", message_id, sender)
 	if message_id == hash("show") then
 		monarch.show(self.screen_id, message.clear)
 	elseif message_id == hash("hide") then
 		monarch.hide(self.screen_id)
 	elseif message_id == hash("back") then
 		monarch.hide(self.screen_id)
-	elseif message_id == hash("transition_show_in") then
-		msg.post(sender, "transition_done")
-	elseif message_id == hash("transition_show_out") then
-		msg.post(sender, "transition_done")
-	elseif message_id == hash("transition_back_in") then
-		msg.post(sender, "transition_done")
-	elseif message_id == hash("transition_back_out") then
+	elseif message_id == hash("transition_show_in")
+		or message_id == hash("transition_show_out")
+		or message_id == hash("transition_back_in")
+		or message_id == hash("transition_back_out") then
 		msg.post(sender, "transition_done")
 	else
 		monarch.on_message(message_id, message, sender)

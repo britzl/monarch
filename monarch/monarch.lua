@@ -100,6 +100,7 @@ local function back_out(screen)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
+		msg.post(screen.script, "release_input_focus")
 		msg.post(screen.script, "monarch_context")
 		coroutine.yield()
 		msg.post(screen.transitions.back_out, "transition_back_out")

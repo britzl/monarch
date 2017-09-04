@@ -73,32 +73,21 @@ You can add optional transitions when navigating between screens. The default be
 * ````transition_back_in````
 * ````transition_back_out````
 
-When a transition is completed it is up to the developer to send a ````transition_done```` message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Example:
+When a transition is completed it is up to the developer to send a ````transition_done```` message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Monarch comes with a system for setting up transitions easily in a gui.script. Example:
+
+	local transitions = require "monarch.transitions.gui"
+
+	function init(self)
+		-- create transitions for the node 'root'
+		-- the node will slide in/out from left and right with
+		-- a specific easing, duration and delay
+		self.transition = transitions.create(gui.get_node("root"))
+			.show_in(transitions.slide_in_right, gui.EASING_OUTQUAD, 0.6, 0)
+			.show_out(transitions.slide_out_left, gui.EASING_INQUAD, 0.6, 0)
+			.back_in(transitions.slide_in_left, gui.EASING_OUTQUAD, 0.6, 0)
+			.back_out(transitions.slide_out_right, gui.EASING_INQUAD, 0.6, 0)
+	end
 
 	function on_message(self, message_id, message, sender)
-		if message_id == hash("transition_show_in") then
-			-- slide in from the right
-			gui.set_position(self.root, self.initial_position + vmath.vector3(1000, 0, 0))
-			gui.animate(self.root, gui.PROP_POSITION, self.initial_position, go.EASING_INOUTQUAD, 0.6, 0, function()
-				msg.post(sender, "transition_done")
-			end)
-		elseif message_id == hash("transition_show_out") then
-			-- slide out to the left
-			gui.animate(self.root, gui.PROP_POSITION, self.initial_position - vmath.vector3(1000, 0, 0), go.EASING_INOUTQUAD, 0.6, 0, function()
-				msg.post(sender, "transition_done")
-			end)
-		end
-		elseif message_id == hash("transition_back_in") then
-			-- slide in from the left
-			gui.set_position(self.root, self.initial_position - vmath.vector3(1000, 0, 0))
-			gui.animate(self.root, gui.PROP_POSITION, self.initial_position, go.EASING_INOUTQUAD, 0.6, 0, function()
-				msg.post(sender, "transition_done")
-			end)
-		end
-		elseif message_id == hash("transition_back_out") then
-			-- slide out to the right
-			gui.animate(self.root, gui.PROP_POSITION, self.initial_position + vmath.vector3(1000, 0, 0), go.EASING_INOUTQUAD, 0.6, 0, function()
-				msg.post(sender, "transition_done")
-			end)
-		end
+		self.transition.handle(message_id, message, sender)
 	end
