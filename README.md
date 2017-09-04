@@ -7,18 +7,18 @@ You can use Monarch in your own project by adding this project as a [Defold libr
 https://github.com/britzl/monarch/archive/master.zip
 
 # Usage
-Using Monarch requires that screens are created in a certain way. Ones you have one or more screens created you can start navigating between the screens.
+Using Monarch requires that screens are created in a certain way. Once you have one or more screens created you can start navigating between the screens.
 
 ## Creating screens
-Monarch screens are created in individual collections and loaded through collection proxies. The recommended setup is to create one game objects per screen and per game object attach a collection proxy component and an instance of the ````screen.script```` provided by Monarch. The screen.script will take care of the setup of the screen. All you need to do is to make sure that the script properties on the screen.script are correct:
+Monarch screens are created in individual collections and loaded through collection proxies. The recommended setup is to create one game object per screen and per game object attach a collection proxy component and an instance of the ````screen.script```` provided by Monarch. The screen.script will take care of the setup of the screen. All you need to do is to make sure that the script properties on the ````screen.script```` are correct:
 
 * **Screen Proxy (url)** - The URL to the collection proxy component containing the actual screen. Defaults to ````#collectionproxy````
 * **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app
-* **Popup (boolean)** - Check this if the screen should be treated as a popup (see the section on popups below)
-* **Transition Show In (url)** - Optional URL to call when the screen is about to be shown. Use this to trigger a transition (see the section on transitions below)
-* **Transition Show Out (url)** - Optional URL to call when the screen is about to be hidden. Use this to trigger a transition (see the section on transitions below)
-* **Transition Back In (url)** - Optional URL to call when the screen is about to be shown when navigating back in the screen hierarchy. Use this to trigger a transition (see the section on transitions below)
-* **Transition Back Out (url)** - Optional URL to call when the screen is about to be hidden when navigating back in the screen hierarchy. Use this to trigger a transition (see the section on transitions below)
+* **Popup (boolean)** - Check this if the screen should be treated as a [popup](#popups)
+* **Transition Show In (url)** - Optional URL to call when the screen is about to be shown. Use this to trigger a transition (see the section on [transitions](#transitions))
+* **Transition Show Out (url)** - Optional URL to call when the screen is about to be hidden. Use this to trigger a transition (see the section on [transitions](#transitions))
+* **Transition Back In (url)** - Optional URL to call when the screen is about to be shown when navigating back in the screen hierarchy. Use this to trigger a transition (see the section on [transitions](#transitions))
+* **Transition Back Out (url)** - Optional URL to call when the screen is about to be hidden when navigating back in the screen hierarchy. Use this to trigger a transition (see the section on [transitions](#transitions))
 
 
 ## Navigating between screens
@@ -37,10 +37,10 @@ You show a screen in one of two ways:
 1. Post a ````show```` message to the ````screen.script````
 2. Call ````monarch.show(screen_id, [clear])````
 
-Showing a screen will push it to the top of the stack and trigger an optional transition. The previous screen will be hidden (with an optional transition) unless the screen to be shown is a popup (see below).
+Showing a screen will push it to the top of the stack and trigger an optional transition. The previous screen will be hidden (with an optional transition) unless the screen to be shown is a [popup](#popups).
 
 #### Preventing duplicates in the stack
-You can pass an optional ````clear```` flag when showing a screen (either as a second argument to ````monarch.show()```` or in the message). If the clear flag is set Monarch will look search the stack for the screen in question. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question. Example:
+You can pass an optional ````clear```` flag when showing a screen (either as a second argument to ````monarch.show()```` or in the message). If the clear flag is set Monarch will search the stack for the screen in question. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question. Example:
 
 * Stack is [A, B, C, D] - (D is on top)
 * A call to ````monarch.show(B, true)```` is made
@@ -57,7 +57,7 @@ You navigate back in the screen hierarchy in one of two ways:
 Monarch will acquire and release input focus on the screens and ensure that only the top-most screen will ever have input focus.
 
 ## Popups
-A screen that is flagged as a popup (see list of screen properties above) will be treated slightly differently when it comes to navigation. If a popup is at the top of the stack (ie currently shown) and another screen or popup is shown then the current popup will be removed from the stack. This means that it is not possible to have a popup anywhere in the stack but the top. This also means that you cannot navigate back to a popup since popups can only exist on the top of the stack. Another important difference between normal screens and popups is that when a popup is shown on top of a non-popup the current top screen will not be unloaded.
+A screen that is flagged as a popup (see list of screen properties above) will be treated slightly differently when it comes to navigation. If a popup is at the top of the stack (ie currently shown) and another screen or popup is shown then the current popup will be removed from the stack. This means that it is not possible to have a popup anywhere in the stack but the top. This also means that you cannot navigate back to a popup since popups can only exist on the top of the stack. Another important difference between normal screens and popups is that when a popup is shown on top of a non-popup the current top screen will not be unloaded and instead remain visible in the background.
 
 * Stack is [A, B]
 * A call to ````monarch.show(C)```` is made and C is a popup
@@ -73,7 +73,7 @@ You can add optional transitions when navigating between screens. The default be
 * ````transition_back_in````
 * ````transition_back_out````
 
-When a transition is completed it is up to the developer to send a ````transition_done```` message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Monarch comes with a system for setting up transitions easily in a gui.script. Example:
+When a transition is completed it is up to the developer to send a ````transition_done```` message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Monarch comes with a system for setting up transitions easily in a gui_script. Example:
 
 	local transitions = require "monarch.transitions.gui"
 
