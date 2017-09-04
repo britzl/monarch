@@ -1,0 +1,5 @@
+local monarch = require "monarch.monarch"
+
+function init(self)
+	monarch.show(hash("menu"))
+end

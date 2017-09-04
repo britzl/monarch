@@ -1,0 +1,5 @@
+local monarch = require "monarch.monarch"
+
+function update(self, dt)
+	gui.set_text(gui.get_node("stack"), monarch.dump_stack())
+end
