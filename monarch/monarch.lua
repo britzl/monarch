@@ -41,7 +41,7 @@ function M.unregister(id)
 	screens[id] = nil
 end
 
-local function show_out(screen, next_screen)
+local function show_out(screen, next_screen, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -55,11 +55,12 @@ local function show_out(screen, next_screen)
 			coroutine.yield()
 		end
 		screen.co = nil
+		if cb then cb() end
 	end)
 	coroutine.resume(co)
 end
 
-local function show_in(screen)
+local function show_in(screen, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -73,11 +74,12 @@ local function show_in(screen)
 		coroutine.yield()
 		msg.post(screen.script, "acquire_input_focus")
 		screen.co = nil
+		if cb then cb() end
 	end)
 	coroutine.resume(co)
 end
 
-local function back_in(screen, previous_screen)
+local function back_in(screen, previous_screen, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -92,11 +94,12 @@ local function back_in(screen, previous_screen)
 		end
 		msg.post(screen.script, "acquire_input_focus")
 		screen.co = nil
+		if cb then cb() end
 	end)
 	coroutine.resume(co)
 end
 
-local function back_out(screen)
+local function back_out(screen, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -107,6 +110,7 @@ local function back_out(screen)
 		coroutine.yield()
 		msg.post(screen.proxy, "unload")
 		screen.co = nil
+		if cb then cb() end
 	end)
 	coroutine.resume(co)
 end
@@ -114,8 +118,10 @@ end
 
 --- Show a new screen
 -- @param id Id of the screen to show
--- @param clear Set to true if the stack should be cleared down to an existing instance of the screen. Optional
-function M.show(id, clear)
+-- @param options Table with options when showing the screen (can be nil). Valid values:
+-- 		* clear - Set to true if the stack should be cleared down to an existing instance of the screen
+-- @ param cb Optional callback to invoke when screen is shown
+function M.show(id, options, cb)
 	assert(id, "You must provide a screen id")
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
@@ -142,7 +148,7 @@ function M.show(id, clear)
 	-- already and the clear flag is set then we need
 	-- to remove every screen on the stack up until and
 	-- including the screen itself
-	if clear and in_stack(id) then
+	if options and options.clear and in_stack(id) then
 		while true do
 			if table.remove(stack).id == id then
 				break
@@ -152,19 +158,22 @@ function M.show(id, clear)
 	end
 
 	-- show screen
-	show_in(screen)
+	show_in(screen, cb)
 end
 
 
 -- Go back to the previous screen in the stack
-function M.back()
+-- @param cb Optional callback to invoke when the previous screen is visible again
+function M.back(cb)
 	local screen = table.remove(stack)
 	if screen then
-		back_out(screen)
+		back_out(screen, cb)
 		local top = stack[#stack]
 		if top then
 			back_in(top, screen)
 		end
+	elseif cb then
+		cb()
 	end
 end
 

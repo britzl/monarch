@@ -24,11 +24,11 @@ end
 
 function on_message(self, message_id, message, sender)
 	if message_id == hash("show") then
-		monarch.show(self.screen_id, message.clear)
+		monarch.show(self.screen_id, { clear = message.clear })
 	elseif message_id == hash("hide") then
-		monarch.hide(self.screen_id)
+		monarch.back()
 	elseif message_id == hash("back") then
-		monarch.hide(self.screen_id)
+		monarch.back()
 	elseif message_id == hash("transition_show_in")
 		or message_id == hash("transition_show_out")
 		or message_id == hash("transition_back_in")

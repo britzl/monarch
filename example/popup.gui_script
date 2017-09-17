@@ -18,10 +18,14 @@ function on_input(self, action_id, action)
 	if action_id == hash("touch") and action.released then
 		if gui.pick_node(self.ok, action.x, action.y) then
 			print("ok")
-			monarch.show(hash("pregame"))
+			monarch.show(hash("pregame"), nil, function()
+				print("pregame show done")
+			end)
 		elseif gui.pick_node(self.cancel, action.x, action.y) then
 			print("cancel")
-			monarch.back()
+			monarch.back(function()
+				print("back from popup done")
+			end)
 		end
 	end
 end

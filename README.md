@@ -35,15 +35,15 @@ The navigation in Monarch is based around a stack of screens. When a screen is s
 You show a screen in one of two ways:
 
 1. Post a ````show```` message to the ````screen.script````
-2. Call ````monarch.show(screen_id, [clear])````
+2. Call ````monarch.show(screen_id, [options], [callback])````
 
 Showing a screen will push it to the top of the stack and trigger an optional transition. The previous screen will be hidden (with an optional transition) unless the screen to be shown is a [popup](#popups).
 
 #### Preventing duplicates in the stack
-You can pass an optional ````clear```` flag when showing a screen (either as a second argument to ````monarch.show()```` or in the message). If the clear flag is set Monarch will search the stack for the screen in question. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question. Example:
+You can pass an optional ````clear```` flag when showing a screen (either as a key value pair in the options table when calling ````monarch.show()```` or in the message). If the clear flag is set Monarch will search the stack for the screen in question. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question. Example:
 
 * Stack is [A, B, C, D] - (D is on top)
-* A call to ````monarch.show(B, true)```` is made
+* A call to ````monarch.show(B, { clear = true })```` is made
 * Stack is [A, B]
 
 ### Going back to a previous screen
@@ -91,3 +91,6 @@ When a transition is completed it is up to the developer to send a ````transitio
 	function on_message(self, message_id, message, sender)
 		self.transition.handle(message_id, message, sender)
 	end
+
+## Callbacks
+Both the ```monarch.show()``` and ```monarch.back()``` functions take an optional callback function that will be invoked when the transition is completed. Note that this will not take into account when custom transitions are completed. The callback will be invoked immediately when the loading and unloading of collections are done and when the internal state of Monarch has completed the navigation.
