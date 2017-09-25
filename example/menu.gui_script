@@ -14,7 +14,7 @@ end
 function on_input(self, action_id, action)
 	if action_id == hash("touch") and action.released then
 		if gui.pick_node(gui.get_node("startgame_button"), action.x, action.y) then
-			monarch.show(hash("popup"), nil, function()
+			monarch.show(hash("popup"), nil, nil, function()
 				print("showing popup done")
 			end)
 		end

@@ -116,16 +116,27 @@ local function back_out(screen, cb)
 end
 
 
+--- Get data associated with a screen
+-- @param id Id of the screen to get data for
+-- @return Data associated with the screen
+function M.data(id)
+	assert(id, "You must provide a screen id")
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	return screens[id].data
+end
+
 --- Show a new screen
 -- @param id Id of the screen to show
 -- @param options Table with options when showing the screen (can be nil). Valid values:
 -- 		* clear - Set to true if the stack should be cleared down to an existing instance of the screen
+-- @param data Optional data to set on the screen. Can be retrieved by the data() function
 -- @ param cb Optional callback to invoke when screen is shown
-function M.show(id, options, cb)
+function M.show(id, options, data, cb)
 	assert(id, "You must provide a screen id")
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
 	local screen = screens[id]
+	screen.data = data
 	
 	-- manipulate the current top
 	-- close popup if needed
@@ -163,13 +174,17 @@ end
 
 
 -- Go back to the previous screen in the stack
+-- @param data Optional data to set for the previous screen
 -- @param cb Optional callback to invoke when the previous screen is visible again
-function M.back(cb)
+function M.back(data, cb)
 	local screen = table.remove(stack)
 	if screen then
 		back_out(screen, cb)
 		local top = stack[#stack]
 		if top then
+			if data then
+				screen.data = data
+			end
 			back_in(top, screen)
 		end
 	elseif cb then
