@@ -6,8 +6,8 @@ local stack = {}
 
 
 M.TRANSITION_DONE = hash("transition_done")
-M.MONARCH_CONTEXT = hash("monarch_context")
-M.MONARCH_FOCUS_GAINED = hash("monarch_focus_gained")
+M.CONTEXT = hash("monarch_context")
+M.FOCUS_GAINED = hash("monarch_focus_gained")
 
 
 local function screen_from_proxy(proxy)
@@ -58,7 +58,7 @@ local function show_out(screen, next_screen, cb)
 	co = coroutine.create(function()
 		screen.co = co
 		msg.post(screen.script, "release_input_focus")
-		msg.post(screen.script, "monarch_context")
+		msg.post(screen.script, M.CONTEXT)
 		coroutine.yield()
 		if not next_screen.popup then
 			msg.post(screen.transition_url, "transition_show_out")
@@ -73,10 +73,12 @@ local function show_out(screen, next_screen, cb)
 end
 
 local function show_in(screen, cb)
+	print("hsow", screen)
+	pprint(screen)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		msg.post(screen.script, "monarch_context")
+		msg.post(screen.script, M.CONTEXT)
 		coroutine.yield()
 		msg.post(screen.proxy, "async_load")
 		coroutine.yield()
@@ -98,7 +100,7 @@ local function back_in(screen, previous_screen, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		msg.post(screen.script, "monarch_context")
+		msg.post(screen.script, M.CONTEXT)
 		coroutine.yield()
 		if not previous_screen.popup then
 			msg.post(screen.proxy, "async_load")
@@ -219,7 +221,7 @@ function M.on_message(message_id, message, sender)
 	elseif message_id == hash("proxy_unloaded") then
 		local screen = screen_from_proxy(sender)
 		assert(screen, "Unable to find screen for unloaded proxy")
-	elseif message_id == M.MONARCH_CONTEXT then
+	elseif message_id == M.CONTEXT then
 		local screen = screen_from_script()
 		assert(screen, "Unable to find screen for current script url")
 		coroutine.resume(screen.co)
