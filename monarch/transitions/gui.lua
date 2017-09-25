@@ -93,7 +93,7 @@ function M.create(node)
 	function instance.show_in(fn, easing, duration, delay)
 		transitions[hash("transition_show_in")] = function(url)
 			print("transition_show_in", url, fn)
-			fn(node, initial_position, easing, duration, delay, url)
+			fn(node, initial_position, easing, duration, delay or 0, url)
 		end
 		return instance
 	end
@@ -103,7 +103,7 @@ function M.create(node)
 	function instance.show_out(fn, easing, duration, delay)
 		transitions[hash("transition_show_out")] = function(url)
 			print("transition_show_out")
-			fn(node, initial_position, easing, duration, delay, url)
+			fn(node, initial_position, easing, duration, delay or 0, url)
 		end
 		return instance
 	end
@@ -113,7 +113,7 @@ function M.create(node)
 	function instance.back_in(fn, easing, duration, delay)
 		transitions[hash("transition_back_in")] = function(url)
 			print("transition_back_in")
-			fn(node, initial_position, easing, duration, delay, url)
+			fn(node, initial_position, easing, duration, delay or 0, url)
 		end
 		return instance
 	end
@@ -123,7 +123,7 @@ function M.create(node)
 	function instance.back_out(fn, easing, duration, delay)
 		transitions[hash("transition_back_out")] = function(url)
 			print("transition_back_out")
-			fn(node, initial_position, easing, duration, delay, url)
+			fn(node, initial_position, easing, duration, delay or 0, url)
 		end
 		return instance
 	end
