@@ -5,7 +5,7 @@ function init(self)
 	msg.post(".", "acquire_input_focus")
 	self.ok = gui.get_node("ok_button")
 	self.cancel = gui.get_node("cancel_button")
-	gui.set_render_order(16)
+	gui.set_render_order(15)
 
 	self.transition = transitions.create(gui.get_node("root"))
 		.show_in(transitions.slide_in_top, gui.EASING_OUTQUAD, 0.6, 0)
