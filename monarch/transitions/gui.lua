@@ -79,7 +79,9 @@ function M.create(node)
 	
 	-- Forward on_message calls here
 	function instance.handle(message_id, message, sender)
-		transitions[message_id](sender)
+		if transitions[message_id] then
+			transitions[message_id](sender)
+		end
 	end
 	
 	-- Specify the transition function when this node is transitioned
