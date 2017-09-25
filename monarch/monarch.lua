@@ -73,8 +73,6 @@ local function show_out(screen, next_screen, cb)
 end
 
 local function show_in(screen, cb)
-	print("hsow", screen)
-	pprint(screen)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -124,7 +122,7 @@ local function back_out(screen, cb)
 	co = coroutine.create(function()
 		screen.co = co
 		msg.post(screen.script, "release_input_focus")
-		msg.post(screen.script, "monarch_context")
+		msg.post(screen.script, M.CONTEXT)
 		coroutine.yield()
 		msg.post(screen.transition_url, "transition_back_out")
 		coroutine.yield()
