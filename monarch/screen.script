@@ -3,19 +3,12 @@ local monarch = require "monarch.monarch"
 go.property("screen_proxy", msg.url("#collectionproxy"))
 go.property("screen_id", hash(""))
 go.property("popup", false)
-go.property("transition_show_in", msg.url())
-go.property("transition_show_out", msg.url())
-go.property("transition_back_in", msg.url())
-go.property("transition_back_out", msg.url())
+go.property("transition_url", msg.url())
+go.property("controller_url", msg.url())
 
 
 function init(self)
-	monarch.register(self.screen_id, self.screen_proxy, self.popup, {
-		show_in = self.transition_show_in,
-		show_out = self.transition_show_out,
-		back_in = self.transition_back_in,
-		back_out = self.transition_back_out,
-	})
+	monarch.register(self.screen_id, self.screen_proxy, self.popup, self.transition_url, self.controller_url)
 end
 
 function final(self)

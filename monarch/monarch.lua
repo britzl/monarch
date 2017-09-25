@@ -5,6 +5,11 @@ local screens = {}
 local stack = {}
 
 
+M.TRANSITION_DONE = hash("transition_done")
+M.MONARCH_CONTEXT = hash("monarch_context")
+M.MONARCH_FOCUS_GAINED = hash("monarch_focus_gained")
+
+
 local function screen_from_proxy(proxy)
 	for id,screen in pairs(screens) do
 		if screen.proxy == proxy then
@@ -31,9 +36,16 @@ local function in_stack(id)
 	return false
 end
 
-function M.register(id, proxy, popup, transitions)
+function M.register(id, proxy, popup, transition_url, controller_url)
 	assert(not screens[id], ("There is already a screen registered with id %s"):format(tostring(id)))
-	screens[id] = { id = id, proxy = proxy, script = msg.url(), popup = popup, transitions = transitions }
+	screens[id] = {
+		id = id,
+		proxy = proxy,
+		script = msg.url(),
+		popup = popup,
+		transition_url = transition_url,
+		controller_url = controller_url,
+	}
 end
 
 function M.unregister(id)
@@ -49,7 +61,7 @@ local function show_out(screen, next_screen, cb)
 		msg.post(screen.script, "monarch_context")
 		coroutine.yield()
 		if not next_screen.popup then
-			msg.post(screen.transitions.show_out, "transition_show_out")
+			msg.post(screen.transition_url, "transition_show_out")
 			coroutine.yield()
 			msg.post(screen.proxy, "unload")
 			coroutine.yield()
@@ -70,9 +82,12 @@ local function show_in(screen, cb)
 		coroutine.yield()
 		msg.post(screen.proxy, "enable")
 		stack[#stack + 1] = screen
-		msg.post(screen.transitions.show_in, "transition_show_in")
+		msg.post(screen.transition_url, "transition_show_in")
 		coroutine.yield()
 		msg.post(screen.script, "acquire_input_focus")
+		if screen.controller_url then
+			msg.post(screen.controller_url, M.MONARCH_FOCUS_GAINED)
+		end
 		screen.co = nil
 		if cb then cb() end
 	end)
@@ -89,10 +104,13 @@ local function back_in(screen, previous_screen, cb)
 			msg.post(screen.proxy, "async_load")
 			coroutine.yield()
 			msg.post(screen.proxy, "enable")
-			msg.post(screen.transitions.back_in, "transition_back_in")
+			msg.post(screen.transition_url, "transition_back_in")
 			coroutine.yield()
 		end
 		msg.post(screen.script, "acquire_input_focus")
+		if screen.controller_url then
+			msg.post(screen.controller_url, M.MONARCH_FOCUS_GAINED)
+		end
 		screen.co = nil
 		if cb then cb() end
 	end)
@@ -106,7 +124,7 @@ local function back_out(screen, cb)
 		msg.post(screen.script, "release_input_focus")
 		msg.post(screen.script, "monarch_context")
 		coroutine.yield()
-		msg.post(screen.transitions.back_out, "transition_back_out")
+		msg.post(screen.transition_url, "transition_back_out")
 		coroutine.yield()
 		msg.post(screen.proxy, "unload")
 		screen.co = nil
@@ -201,11 +219,11 @@ function M.on_message(message_id, message, sender)
 	elseif message_id == hash("proxy_unloaded") then
 		local screen = screen_from_proxy(sender)
 		assert(screen, "Unable to find screen for unloaded proxy")
-	elseif message_id == hash("monarch_context") then
+	elseif message_id == M.MONARCH_CONTEXT then
 		local screen = screen_from_script()
 		assert(screen, "Unable to find screen for current script url")
 		coroutine.resume(screen.co)
-	elseif message_id == hash("transition_done") then
+	elseif message_id == M.TRANSITION_DONE then
 		local screen = screen_from_script()
 		assert(screen, "Unable to find screen for current script url")
 		coroutine.resume(screen.co)
