@@ -86,7 +86,7 @@ local function show_in(screen, cb)
 		coroutine.yield()
 		msg.post(screen.script, "acquire_input_focus")
 		if screen.controller_url then
-			msg.post(screen.controller_url, M.MONARCH_FOCUS_GAINED)
+			msg.post(screen.controller_url, M.FOCUS_GAINED)
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -109,7 +109,7 @@ local function back_in(screen, previous_screen, cb)
 		end
 		msg.post(screen.script, "acquire_input_focus")
 		if screen.controller_url then
-			msg.post(screen.controller_url, M.MONARCH_FOCUS_GAINED)
+			msg.post(screen.controller_url, M.FOCUS_GAINED)
 		end
 		screen.co = nil
 		if cb then cb() end
