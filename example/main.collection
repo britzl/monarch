@@ -81,7 +81,7 @@ embedded_instances {
   "  }\n"
   "}\n"
   "components {\n"
-  "  id: \"main1\"\n"
+  "  id: \"gui\"\n"
   "  component: \"/example/debug.gui\"\n"
   "  position {\n"
   "    x: 0.0\n"

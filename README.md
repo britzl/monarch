@@ -15,11 +15,8 @@ Monarch screens are created in individual collections and loaded through collect
 * **Screen Proxy (url)** - The URL to the collection proxy component containing the actual screen. Defaults to ````#collectionproxy````
 * **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app
 * **Popup (boolean)** - Check this if the screen should be treated as a [popup](#popups)
-* **Transition Show In (url)** - Optional URL to call when the screen is about to be shown. Use this to trigger a transition (see the section on [transitions](#transitions))
-* **Transition Show Out (url)** - Optional URL to call when the screen is about to be hidden. Use this to trigger a transition (see the section on [transitions](#transitions))
-* **Transition Back In (url)** - Optional URL to call when the screen is about to be shown when navigating back in the screen hierarchy. Use this to trigger a transition (see the section on [transitions](#transitions))
-* **Transition Back Out (url)** - Optional URL to call when the screen is about to be hidden when navigating back in the screen hierarchy. Use this to trigger a transition (see the section on [transitions](#transitions))
-
+* **Transition Url (url)** - Optional URL to call when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions))
+* **Controller Url (url)** - Optional URL to call when the screen gains or loses focus.
 
 ## Navigating between screens
 The navigation in Monarch is based around a stack of screens. When a screen is shown it is pushed to the top of the stack. When going back to a previous screen the topmost screen on the stack is removed. Example:
@@ -35,7 +32,7 @@ The navigation in Monarch is based around a stack of screens. When a screen is s
 You show a screen in one of two ways:
 
 1. Post a ````show```` message to the ````screen.script````
-2. Call ````monarch.show(screen_id, [options], [callback])````
+2. Call ````monarch.show(screen_id, [options], [data], [callback])````
 
 Showing a screen will push it to the top of the stack and trigger an optional transition. The previous screen will be hidden (with an optional transition) unless the screen to be shown is a [popup](#popups).
 
@@ -54,7 +51,7 @@ You navigate back in the screen hierarchy in one of two ways:
 
 
 ## Input focus
-Monarch will acquire and release input focus on the screens and ensure that only the top-most screen will ever have input focus.
+Monarch will acquire and release input focus on the game objects containing the proxies to the screens and ensure that only the top-most screen will ever have input focus.
 
 ## Popups
 A screen that is flagged as a popup (see list of screen properties above) will be treated slightly differently when it comes to navigation. If a popup is at the top of the stack (ie currently shown) and another screen or popup is shown then the current popup will be removed from the stack. This means that it is not possible to have a popup anywhere in the stack but the top. This also means that you cannot navigate back to a popup since popups can only exist on the top of the stack. Another important difference between normal screens and popups is that when a popup is shown on top of a non-popup the current top screen will not be unloaded and instead remain visible in the background.
@@ -92,5 +89,49 @@ When a transition is completed it is up to the developer to send a ````transitio
 		self.transition.handle(message_id, message, sender)
 	end
 
+## Screen focus gain/loss
+Monarch will send focus gain and focus loss messages if a controller url was provided when the screen was created. Example:
+
+	local monarch = require "monarch.monarch"
+
+	function on_message(self, message_id, message, sender)
+		if message_id == monarch.FOCUS_GAINED then
+			print("Focus gained")
+		elseif message_id == monarch.FOCUS_LOST then
+			print("Focus lost")
+		end
+	end
+
 ## Callbacks
 Both the ```monarch.show()``` and ```monarch.back()``` functions take an optional callback function that will be invoked when the transition is completed. Note that this will not take into account when custom transitions are completed. The callback will be invoked immediately when the loading and unloading of collections are done and when the internal state of Monarch has completed the navigation.
+
+## Monarch API
+
+### monarch.show(screen_id, [options], [data], [callback])
+Show a Monarch screen
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to show.
+* ```options``` (table) - Options when showing the new screen (see below).
+* ```data``` (table) - Optional data to associate with the screen.  Retrieve using ```monarch.data()```.
+* ```callback``` (function) - Function to call when the new screen is visible.
+
+The options table can contain the following fields:
+
+* ```clear``` (boolean) - If the clear flag is set Monarch will search the stack for the screen that is to be shown. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question.
+
+### monarch.back([data], [callback])
+Go back to a previous Monarch screen
+
+**PARAMETERS**
+* ```data``` (table) - Optional data to associate with the screen you are going back to.  Retrieve using ```monarch.data()```.
+* ```callback``` (function) - Function to call when the previous screen is visible.
+
+### monarch.data(screen_id)
+Get the data associated with a screen (from a call to ```monarch.show()``` or ```monarch.back()```).
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to get data for
+
+**RETURN**
+* ```data``` (table) - Data associated with the screen.

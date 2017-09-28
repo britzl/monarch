@@ -4,11 +4,11 @@ go.property("screen_proxy", msg.url("#collectionproxy"))
 go.property("screen_id", hash(""))
 go.property("popup", false)
 go.property("transition_url", msg.url())
-go.property("controller_url", msg.url())
+go.property("focus_url", msg.url())
 
 
 function init(self)
-	monarch.register(self.screen_id, self.screen_proxy, self.popup, self.transition_url, self.controller_url)
+	monarch.register(self.screen_id, self.screen_proxy, self.popup, self.transition_url, self.focus_url)
 end
 
 function final(self)
