@@ -90,7 +90,7 @@ When a transition is completed it is up to the developer to send a ````transitio
 	end
 
 ## Screen focus gain/loss
-Monarch will send focus gain and focus loss messages if a controller url was provided when the screen was created. Example:
+Monarch will send focus gain and focus loss messages if a focus url was provided when the screen was created. Example:
 
 	local monarch = require "monarch.monarch"
 
