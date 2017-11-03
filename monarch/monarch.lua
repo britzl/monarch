@@ -8,13 +8,24 @@ local CONTEXT = hash("monarch_context")
 local PROXY_LOADED = hash("proxy_loaded")
 local PROXY_UNLOADED = hash("proxy_unloaded")
 
-M.TRANSITION_DONE = hash("transition_done")
+local RELEASE_INPUT_FOCUS = hash("release_input_focus")
+local ACQUIRE_INPUT_FOCUS = hash("acquire_input_focus")
+local ASYNC_LOAD = hash("async_load")
+local ENABLE = hash("enable")
+
+M.TRANSITION = {}
+M.TRANSITION.DONE = hash("transition_done")
+M.TRANSITION.SHOW_IN = hash("transition_show_in")
+M.TRANSITION.SHOW_OUT = hash("transition_show_out")
+M.TRANSITION.BACK_IN = hash("transition_back_in")
+M.TRANSITION.BACK_OUT = hash("transition_back_out")
+
 M.FOCUS_GAINED = hash("monarch_focus_gained")
 M.FOCUS_LOST = hash("monarch_focus_lost")
 
 
 local function screen_from_proxy(proxy)
-	for _,screen in pairs(screens) do
+	for _, screen in pairs(screens) do
 		if screen.proxy == proxy then
 			return screen
 		end
@@ -23,7 +34,7 @@ end
 
 local function screen_from_script()
 	local url = msg.url()
-	for _,screen in pairs(screens) do
+	for _, screen in pairs(screens) do
 		if screen.script == url then
 			return screen
 		end
@@ -31,7 +42,7 @@ local function screen_from_script()
 end
 
 local function in_stack(id)
-	for i=1,#stack do
+	for i = 1, #stack do
 		if stack[i].id == id then
 			return true
 		end
@@ -60,11 +71,11 @@ local function show_out(screen, next_screen, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		msg.post(screen.script, "release_input_focus")
+		msg.post(screen.script, RELEASE_INPUT_FOCUS)
 		msg.post(screen.script, CONTEXT)
 		coroutine.yield()
 		if not next_screen.popup then
-			msg.post(screen.transition_url, "transition_show_out")
+			msg.post(screen.transition_url, M.TRANSITION.SHOW_OUT)
 			coroutine.yield()
 			msg.post(screen.proxy, "unload")
 			coroutine.yield()
@@ -84,13 +95,13 @@ local function show_in(screen, cb)
 		screen.co = co
 		msg.post(screen.script, CONTEXT)
 		coroutine.yield()
-		msg.post(screen.proxy, "async_load")
+		msg.post(screen.proxy, ASYNC_LOAD)
 		coroutine.yield()
-		msg.post(screen.proxy, "enable")
+		msg.post(screen.proxy, ENABLE)
 		stack[#stack + 1] = screen
-		msg.post(screen.transition_url, "transition_show_in")
+		msg.post(screen.transition_url, M.TRANSITION.SHOW_IN)
 		coroutine.yield()
-		msg.post(screen.script, "acquire_input_focus")
+		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
 		if screen.focus_url then
 			msg.post(screen.focus_url, M.FOCUS_GAINED)
 		end
@@ -107,13 +118,13 @@ local function back_in(screen, previous_screen, cb)
 		msg.post(screen.script, CONTEXT)
 		coroutine.yield()
 		if not previous_screen.popup then
-			msg.post(screen.proxy, "async_load")
+			msg.post(screen.proxy, ASYNC_LOAD)
 			coroutine.yield()
-			msg.post(screen.proxy, "enable")
-			msg.post(screen.transition_url, "transition_back_in")
+			msg.post(screen.proxy, ENABLE)
+			msg.post(screen.transition_url, M.TRANSITION.BACK_IN)
 			coroutine.yield()
 		end
-		msg.post(screen.script, "acquire_input_focus")
+		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
 		if screen.focus_url then
 			msg.post(screen.focus_url, M.FOCUS_GAINED)
 		end
@@ -127,10 +138,10 @@ local function back_out(screen, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		msg.post(screen.script, "release_input_focus")
+		msg.post(screen.script, RELEASE_INPUT_FOCUS)
 		msg.post(screen.script, CONTEXT)
 		coroutine.yield()
-		msg.post(screen.transition_url, "transition_back_out")
+		msg.post(screen.transition_url, M.TRANSITION.BACK_OUT)
 		coroutine.yield()
 		msg.post(screen.proxy, "unload")
 		if screen.focus_url then
@@ -232,7 +243,7 @@ function M.on_message(message_id, message, sender)
 		local screen = screen_from_script()
 		assert(screen, "Unable to find screen for current script url")
 		coroutine.resume(screen.co)
-	elseif message_id == M.TRANSITION_DONE then
+	elseif message_id == M.TRANSITION.DONE then
 		local screen = screen_from_script()
 		assert(screen, "Unable to find screen for current script url")
 		coroutine.resume(screen.co)
@@ -241,7 +252,7 @@ end
 
 function M.dump_stack()
 	local s = ""
-	for i,screen in ipairs(stack) do
+	for i, screen in ipairs(stack) do
 		s = s .. ("%d = %s\n"):format(i, tostring(screen.id))
 	end
 	return s
