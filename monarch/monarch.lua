@@ -152,6 +152,13 @@ function M.data(id)
 	return screens[id].data
 end
 
+--- Checks to see if a screen id is registered
+-- @param id Id of the screen to check if is registered
+-- @return True or False if the screen id is registered or not
+function M.screen_exists(id)
+	return screens[id] ~= nil
+end
+
 --- Show a new screen
 -- @param id Id of the screen to show
 -- @param options Table with options when showing the screen (can be nil). Valid values:
