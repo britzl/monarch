@@ -81,7 +81,7 @@ local function show_out(screen, next_screen, cb)
 			coroutine.yield()
 		end
 		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS_LOST)
+			msg.post(screen.focus_url, M.FOCUS_LOST, {id = next_screen.id})
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -103,7 +103,7 @@ local function show_in(screen, cb)
 		coroutine.yield()
 		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
 		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS_GAINED)
+			msg.post(screen.focus_url, M.FOCUS_GAINED, {id = screen.id})
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -126,7 +126,8 @@ local function back_in(screen, previous_screen, cb)
 		end
 		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
 		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS_GAINED)
+			pprint(previous_screen)
+			msg.post(screen.focus_url, M.FOCUS_GAINED, {id = previous_screen.id})
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -145,7 +146,7 @@ local function back_out(screen, cb)
 		coroutine.yield()
 		msg.post(screen.proxy, "unload")
 		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS_LOST)
+			msg.post(screen.focus_url, M.FOCUS_LOST, {id = screen.id})
 		end
 		screen.co = nil
 		if cb then cb() end
