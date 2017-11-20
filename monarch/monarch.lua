@@ -126,7 +126,6 @@ local function back_in(screen, previous_screen, cb)
 		end
 		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
 		if screen.focus_url then
-			pprint(previous_screen)
 			msg.post(screen.focus_url, M.FOCUS_GAINED, {id = previous_screen.id})
 		end
 		screen.co = nil
