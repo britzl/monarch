@@ -68,6 +68,7 @@ local function show_out(screen, next_screen, cb)
 			coroutine.yield()
 			msg.post(screen.proxy, "unload")
 			coroutine.yield()
+			screen.loaded = false
 		end
 		if screen.focus_url then
 			msg.post(screen.focus_url, M.FOCUS_LOST)
@@ -78,15 +79,26 @@ local function show_out(screen, next_screen, cb)
 	coroutine.resume(co)
 end
 
-local function show_in(screen, cb)
+local function show_in(screen, reload, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
 		msg.post(screen.script, CONTEXT)
 		coroutine.yield()
-		msg.post(screen.proxy, "async_load")
-		coroutine.yield()
-		msg.post(screen.proxy, "enable")
+		if reload and screen.loaded then
+			msg.post(screen.proxy, "unload")
+			coroutine.yield()
+			screen.loaded = false
+		end
+		-- the screen could be loaded if the previous screen was a popup
+		-- and the popup asked to show this screen again
+		-- in that case we shouldn't attempt to load it again
+		if not screen.loaded then
+			msg.post(screen.proxy, "async_load")
+			coroutine.yield()
+			msg.post(screen.proxy, "enable")
+			screen.loaded = true
+		end
 		stack[#stack + 1] = screen
 		msg.post(screen.transition_url, "transition_show_in")
 		coroutine.yield()
@@ -110,6 +122,7 @@ local function back_in(screen, previous_screen, cb)
 			msg.post(screen.proxy, "async_load")
 			coroutine.yield()
 			msg.post(screen.proxy, "enable")
+			screen.loaded = true
 			msg.post(screen.transition_url, "transition_back_in")
 			coroutine.yield()
 		end
@@ -133,6 +146,8 @@ local function back_out(screen, cb)
 		msg.post(screen.transition_url, "transition_back_out")
 		coroutine.yield()
 		msg.post(screen.proxy, "unload")
+		coroutine.yield()
+		screen.loaded = false
 		if screen.focus_url then
 			msg.post(screen.focus_url, M.FOCUS_LOST)
 		end
@@ -156,6 +171,8 @@ end
 -- @param id Id of the screen to show
 -- @param options Table with options when showing the screen (can be nil). Valid values:
 -- 		* clear - Set to true if the stack should be cleared down to an existing instance of the screen
+-- 		* reload - Set to true if screen should be reloaded if it already exists in the stack and is loaded
+--				  This would be the case if doing a show() from a popup on the screen just below the popup.
 -- @param data Optional data to set on the screen. Can be retrieved by the data() function
 -- @ param cb Optional callback to invoke when screen is shown
 function M.show(id, options, data, cb)
@@ -177,7 +194,7 @@ function M.show(id, options, data, cb)
 			top = stack[#stack]
 		end
 		-- unload and transition out from top
-		if top then
+		if top and top.id ~= screen.id then
 			show_out(top, screen)
 		end
 	end
@@ -186,17 +203,14 @@ function M.show(id, options, data, cb)
 	-- already and the clear flag is set then we need
 	-- to remove every screen on the stack up until and
 	-- including the screen itself
-	if options and options.clear and in_stack(id) then
-		while true do
-			if table.remove(stack).id == id then
-				break
-			end
-
+	if options and options.clear then
+		while in_stack(id) do
+			table.remove(stack)
 		end
 	end
 
 	-- show screen
-	show_in(screen, cb)
+	show_in(screen, options and options.reload, cb)
 end
 
 
@@ -228,6 +242,7 @@ function M.on_message(message_id, message, sender)
 	elseif message_id == PROXY_UNLOADED then
 		local screen = screen_from_proxy(sender)
 		assert(screen, "Unable to find screen for unloaded proxy")
+		coroutine.resume(screen.co)
 	elseif message_id == CONTEXT then
 		local screen = screen_from_script()
 		assert(screen, "Unable to find screen for current script url")
