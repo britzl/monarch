@@ -22,12 +22,12 @@ function on_message(self, message_id, message, sender)
 		monarch.back()
 	elseif message_id == hash("back") then
 		monarch.back()
-	elseif message_id == hash("transition_show_in")
-		or message_id == hash("transition_show_out")
-		or message_id == hash("transition_back_in")
-		or message_id == hash("transition_back_out") then
-		msg.post(sender, "transition_done")
-	else
-		monarch.on_message(message_id, message, sender)
+	elseif message_id == monarch.TRANSITION.SHOW_IN
+		or message_id == monarch.TRANSITION.SHOW_OUT
+		or message_id == monarch.TRANSITION.BACK_IN
+		or message_id == monarch.TRANSITION.BACK_OUT then
+			msg.post(sender, monarch.TRANSITION.DONE)
+		else
+			monarch.on_message(message_id, message, sender)
+		end
 	end
-end

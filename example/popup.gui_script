@@ -8,10 +8,10 @@ function init(self)
 	gui.set_render_order(15)
 
 	self.transition = transitions.create(gui.get_node("root"))
-		.show_in(transitions.slide_in_top, gui.EASING_OUTQUAD, 0.6, 0)
-		.show_out(transitions.slide_out_top, gui.EASING_INQUAD, 0.6, 0)
-		.back_in(transitions.slide_in_top, gui.EASING_OUTQUAD, 0.6, 0)
-		.back_out(transitions.slide_out_top, gui.EASING_INQUAD, 0.6, 0)
+		.show_in(transitions.scale_in, gui.EASING_OUTBACK, 0.3, 0)
+		.show_out(transitions.scale_out, gui.EASING_INBACK, 0.3, 0)
+		.back_in(transitions.scale_in, gui.EASING_OUTBACK, 0.3, 0)
+		.back_out(transitions.scale_out, gui.EASING_INBACK, 0.3, 0)
 end
 
 function on_input(self, action_id, action)
