@@ -21,8 +21,9 @@ M.TRANSITION.SHOW_OUT = hash("transition_show_out")
 M.TRANSITION.BACK_IN = hash("transition_back_in")
 M.TRANSITION.BACK_OUT = hash("transition_back_out")
 
-M.FOCUS_GAINED = hash("monarch_focus_gained")
-M.FOCUS_LOST = hash("monarch_focus_lost")
+M.FOCUS = {}
+M.FOCUS.GAINED = hash("monarch_focus_gained")
+M.FOCUS.LOST = hash("monarch_focus_lost")
 
 
 local function screen_from_proxy(proxy)
@@ -83,7 +84,7 @@ local function show_out(screen, next_screen, cb)
 			screen.loaded = false
 		end
 		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS_LOST, {id = next_screen.id})
+			msg.post(screen.focus_url, M.FOCUS.LOST, {id = next_screen.id})
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -91,7 +92,7 @@ local function show_out(screen, next_screen, cb)
 	coroutine.resume(co)
 end
 
-local function show_in(screen, reload, cb)
+local function show_in(screen, previous_screen, reload, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -116,7 +117,7 @@ local function show_in(screen, reload, cb)
 		coroutine.yield()
 		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
 		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS_GAINED, {id = screen.id})
+			msg.post(screen.focus_url, M.FOCUS.GAINED, {id = previous_screen and previous_screen.id})
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -140,7 +141,7 @@ local function back_in(screen, previous_screen, cb)
 		end
 		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
 		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS_GAINED, {id = previous_screen.id})
+			msg.post(screen.focus_url, M.FOCUS.GAINED, {id = previous_screen.id})
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -148,7 +149,7 @@ local function back_in(screen, previous_screen, cb)
 	coroutine.resume(co)
 end
 
-local function back_out(screen, cb)
+local function back_out(screen, next_screen, cb)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -161,7 +162,7 @@ local function back_out(screen, cb)
 		coroutine.yield()
 		screen.loaded = false
 		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS_LOST, {id = screen.id})
+			msg.post(screen.focus_url, M.FOCUS.LOST, {id = next_screen and next_screen.id})
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -229,7 +230,7 @@ function M.show(id, options, data, cb)
 	end
 
 	-- show screen
-	show_in(screen, options and options.reload, cb)
+	show_in(screen, top, options and options.reload, cb)
 end
 
 
@@ -239,8 +240,8 @@ end
 function M.back(data, cb)
 	local screen = table.remove(stack)
 	if screen then
-		back_out(screen, cb)
 		local top = stack[#stack]
+		back_out(screen, top, cb)
 		if top then
 			if data then
 				screen.data = data

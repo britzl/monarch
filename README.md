@@ -98,15 +98,15 @@ When a transition is completed it is up to the developer to send a ```transition
 	end
 
 ## Screen focus gain/loss
-Monarch will send focus gain and focus loss messages if a Focus Url was provided when the screen was created. Example:
+Monarch will send focus gain and focus loss messages if a Focus Url was provided when the screen was created. The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
 
 	local monarch = require "monarch.monarch"
 
 	function on_message(self, message_id, message, sender)
 		if message_id == monarch.FOCUS_GAINED then
-			print("Focus gained")
+			print("Focus gained, previous screen: ", message.id)
 		elseif message_id == monarch.FOCUS_LOST then
-			print("Focus lost")
+			print("Focus lost, next screen: ", message.id)
 		end
 	end
 
@@ -127,7 +127,7 @@ Show a Monarch screen
 The options table can contain the following fields:
 
 * ```clear``` (boolean) - If the clear flag is set Monarch will search the stack for the screen that is to be shown. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question.
-
+* ```reload``` (boolean) - If the reload flag is set Monarch will reload the collection proxy if it's already loaded (this can happen if the previous screen was a popup).
 
 ### monarch.back([data], [callback])
 Go back to a previous Monarch screen
