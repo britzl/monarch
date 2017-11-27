@@ -128,12 +128,14 @@ The options table can contain the following fields:
 
 * ```clear``` (boolean) - If the clear flag is set Monarch will search the stack for the screen that is to be shown. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question.
 
+
 ### monarch.back([data], [callback])
 Go back to a previous Monarch screen
 
 **PARAMETERS**
 * ```data``` (table) - Optional data to associate with the screen you are going back to.  Retrieve using ```monarch.data()```.
 * ```callback``` (function) - Function to call when the previous screen is visible.
+
 
 ### monarch.data(screen_id)
 Get the data associated with a screen (from a call to ```monarch.show()``` or ```monarch.back()```).
@@ -143,3 +145,13 @@ Get the data associated with a screen (from a call to ```monarch.show()``` or ``
 
 **RETURN**
 * ```data``` (table) - Data associated with the screen.
+
+
+### monarch.screen_exists(screen_id)
+Check if a Monarch screen exists.
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to get data for
+
+**RETURN**
+* ```exists``` (boolean) - True if the screen exists.
