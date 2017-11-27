@@ -1,6 +1,14 @@
 local monarch = require "monarch.monarch"
 
 function init(self)
-	monarch.show(hash("menu"))
+	self.wait = true
 	msg.post("@render:/", "clear_color", { color = vmath.vector4(0.4, 0.6, 0.8,1.0) })
+end
+
+function update(self)
+	-- Ensure that the initial screen has had enough time to register
+	if self.wait == true and monarch.screen_exists(hash("menu")) then
+		self.wait = false
+		monarch.show(hash("menu"))
+	end	
 end
