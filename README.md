@@ -6,6 +6,8 @@ You can use Monarch in your own project by adding this project as a [Defold libr
 
 https://github.com/britzl/monarch/archive/master.zip
 
+Or point to the ZIP file of a [specific release](https://github.com/britzl/monarch/releases).
+
 # Usage
 Using Monarch requires that screens are created in a certain way. Once you have one or more screens created you can start navigating between the screens.
 
