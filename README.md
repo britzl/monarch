@@ -76,7 +76,7 @@ You can add optional transitions when navigating between screens. The default be
 * ```transition_show_in```
 * ```transition_show_out```
 * ```transition_back_in```
-* ``transition_back_out```
+* ```transition_back_out```
 
 When a transition is completed it is up to the developer to send a ```transition_done``` message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Monarch comes with a system for setting up transitions easily in a gui_script. Example:
 
@@ -111,7 +111,7 @@ Monarch will send focus gain and focus loss messages if a Focus Url was provided
 	end
 
 ## Callbacks
-Both the ```monarch.show()``` and ```monarch.back()``` functions take an optional callback function that will be invoked when the ```transition_show_in``` (or the ```transition_back_in``` in the case of a ```monarch.back()``` call) transition is completed. Tthe transition is considered completed when a ```transition_done``` message has been received (see section on [transitions](#transitions) above).
+Both the ```monarch.show()``` and ```monarch.back()``` functions take an optional callback function that will be invoked when the ```transition_show_in``` (or the ```transition_back_in``` in the case of a ```monarch.back()``` call) transition is completed. The transition is considered completed when a ```transition_done``` message has been received (see section on [transitions](#transitions) above).
 
 ## Monarch API
 
