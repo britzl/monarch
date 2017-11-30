@@ -43,13 +43,18 @@ local function screen_from_script()
 	end
 end
 
-local function in_stack(id)
+function M.in_stack(id)
 	for i = 1, #stack do
 		if stack[i].id == id then
 			return true
 		end
 	end
 	return false
+end
+
+function M.is_top(id)
+	local top = stack[#stack]
+	return top and top.id == id or false
 end
 
 function M.register(id, proxy, popup, transition_url, focus_url)
@@ -191,10 +196,10 @@ end
 -- @param id Id of the screen to show
 -- @param options Table with options when showing the screen (can be nil). Valid values:
 -- 		* clear - Set to true if the stack should be cleared down to an existing instance of the screen
--- 		* reload - Set to true if screen should be reloaded if it already exists in the stack and is loaded
+-- 		* reload - Set to true if screen should be reloaded if it already exists in the stack and is loaded.
 --				  This would be the case if doing a show() from a popup on the screen just below the popup.
 -- @param data Optional data to set on the screen. Can be retrieved by the data() function
--- @ param cb Optional callback to invoke when screen is shown
+-- @param cb Optional callback to invoke when screen is shown
 function M.show(id, options, data, cb)
 	assert(id, "You must provide a screen id")
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
@@ -224,7 +229,7 @@ function M.show(id, options, data, cb)
 	-- to remove every screen on the stack up until and
 	-- including the screen itself
 	if options and options.clear then
-		while in_stack(id) do
+		while M.in_stack(id) do
 			table.remove(stack)
 		end
 	end
@@ -244,7 +249,7 @@ function M.back(data, cb)
 		back_out(screen, top, cb)
 		if top then
 			if data then
-				screen.data = data
+				top.data = data
 			end
 			back_in(top, screen)
 		end
@@ -272,6 +277,15 @@ function M.on_message(message_id, message, sender)
 		assert(screen, "Unable to find screen for current script url")
 		coroutine.resume(screen.co)
 	end
+end
+
+
+function M.get_stack()
+	local s = {}
+	for k,v in pairs(stack) do
+		s[k] = v
+	end
+	return s
 end
 
 function M.dump_stack()

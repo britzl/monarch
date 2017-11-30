@@ -1,4 +1,4 @@
-local monarch = require "monarch.monarch"
+local monarch
 
 go.property("screen_proxy", msg.url("#collectionproxy"))
 go.property("screen_id", hash(""))
@@ -8,6 +8,7 @@ go.property("focus_url", msg.url())
 
 
 function init(self)
+	monarch = require "monarch.monarch"
 	monarch.register(self.screen_id, self.screen_proxy, self.popup, self.transition_url, self.focus_url)
 end
 
@@ -27,7 +28,7 @@ function on_message(self, message_id, message, sender)
 		or message_id == monarch.TRANSITION.BACK_IN
 		or message_id == monarch.TRANSITION.BACK_OUT then
 			msg.post(sender, monarch.TRANSITION.DONE)
-		else
-			monarch.on_message(message_id, message, sender)
-		end
+	else
+		monarch.on_message(message_id, message, sender)
 	end
+end

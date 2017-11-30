@@ -1,0 +1,5 @@
+local cowait = require "test.cowait"
+
+function update(self, dt)
+	cowait.update()
+end

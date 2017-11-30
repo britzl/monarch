@@ -1,0 +1,9 @@
+local deftest = require "deftest.deftest"
+
+local test_monarch = require "test.test_monarch"
+
+
+function init(self)
+	deftest.add(test_monarch)
+	deftest.run()
+end

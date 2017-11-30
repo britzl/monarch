@@ -1,0 +1,12 @@
+function init(self)
+	print("init - screen1")
+end
+
+function final(self)
+	print("final - screen1")
+end
+
+function on_message(self, message_id, message, sender)
+	-- Add message-handling code here
+	-- Remove this function if not needed
+end
