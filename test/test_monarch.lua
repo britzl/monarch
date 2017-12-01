@@ -39,7 +39,7 @@ return function()
 			error("Stack length mismatch", 2)
 		end
 		for i=1,#actual_screens do
-			if actual_screens[i].id ~= expected_screens[i] then
+			if actual_screens[i] ~= expected_screens[i] then
 				error("Stack content not matching", 2)
 			end
 		end

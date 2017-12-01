@@ -43,6 +43,10 @@ local function screen_from_script()
 	end
 end
 
+
+--- Check if a screen exists in the current screen stack
+-- @param id
+-- @return true of the screen is in the stack
 function M.in_stack(id)
 	for i = 1, #stack do
 		if stack[i].id == id then
@@ -52,13 +56,33 @@ function M.in_stack(id)
 	return false
 end
 
+
+--- Check if a screen is at the top of the stack
+-- (primarily used for unit tests, but could have a usecase outside tests)
+-- @param id
+-- @return true if the screen is at the top of the stack
 function M.is_top(id)
 	local top = stack[#stack]
 	return top and top.id == id or false
 end
 
+
+--- Register a new screen
+-- This is done automatically by the screen.script. It is expected that the
+-- caller of this function is a script component attached to the same game
+-- object as the proxy. This is required since monarch will acquire and
+-- release input focus of the game object where the proxy is attached.
+-- @param id Unique id of the screen
+-- @param proxy URL to the collection proxy containing the screen
+-- @param popup true the screen is a popup
+-- @param transition_url Optional URL to a script that is
+-- responsible for the screen transitions
+-- @param focus_url Optional URL to a script that is to be notified of
+-- focus lost/gained events
 function M.register(id, proxy, popup, transition_url, focus_url)
 	assert(not screens[id], ("There is already a screen registered with id %s"):format(tostring(id)))
+	assert(proxy, "You must provide a collection proxy URL")
+	local url = msg.url(proxy)
 	screens[id] = {
 		id = id,
 		proxy = proxy,
@@ -69,6 +93,9 @@ function M.register(id, proxy, popup, transition_url, focus_url)
 	}
 end
 
+--- Unregister a screen
+-- This is done automatically by the screen.script
+-- @param id Id of the screen to unregister
 function M.unregister(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	screens[id] = nil
@@ -279,11 +306,14 @@ function M.on_message(message_id, message, sender)
 	end
 end
 
-
+--- Get a list of ids for the current screen stack
+-- (primarily used for unit testing, but could have uses outside testing)
+-- @return Table with screen ids. First entry is at the bottom of the
+-- stack and the last value is at the top (and currently visible)
 function M.get_stack()
 	local s = {}
 	for k,v in pairs(stack) do
-		s[k] = v
+		s[k] = v.id
 	end
 	return s
 end
