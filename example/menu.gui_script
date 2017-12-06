@@ -31,4 +31,7 @@ end
 
 function on_message(self, message_id, message, sender)
 	self.transition.handle(message_id, message, sender)
+	if message_id == monarch.FOCUS.GAINED then
+		gui.set_text(gui.get_node("timestamp"), os.date())
+	end
 end

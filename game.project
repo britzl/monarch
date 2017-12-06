@@ -4,7 +4,7 @@ version = 0.9
 dependencies = https://github.com/britzl/deftest/archive/1.2.1.zip
 
 [bootstrap]
-main_collection = /test/test.collectionc
+main_collection = /example/example.collectionc
 
 [input]
 game_binding = /input/game.input_bindingc

@@ -26,6 +26,11 @@ function on_input(self, action_id, action)
 			monarch.back(function()
 				print("back from popup done")
 			end)
+		elseif gui.pick_node(gui.get_node("about_button"), action.x, action.y) then
+			print("about")
+			monarch.show(hash("about"), {clear=true, reload=true}, nil, function()
+				print("about show done")
+			end)
 		end
 	end
 end
