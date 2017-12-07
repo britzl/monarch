@@ -173,6 +173,7 @@ local function focus_lost(screen, next_screen)
 end
 
 local function show_out(screen, next_screen, cb)
+	log("show_out()", screen.id)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -220,6 +221,7 @@ local function show_in(screen, previous_screen, reload, cb)
 end
 
 local function back_in(screen, previous_screen, cb)
+	log("back_in()", screen.id)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
@@ -239,6 +241,7 @@ local function back_in(screen, previous_screen, cb)
 end
 
 local function back_out(screen, next_screen, cb)
+	log("back_out()", screen.id)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
