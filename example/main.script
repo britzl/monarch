@@ -1,14 +1,12 @@
 local monarch = require "monarch.monarch"
 
 function init(self)
-	self.wait = true
 	msg.post("@render:/", "clear_color", { color = vmath.vector4(0.4, 0.6, 0.8,1.0) })
+	msg.post("#", "init_monarch") -- wait until init() has been called for all screen.script instances
 end
 
-function update(self)
-	-- Ensure that the initial screen has had enough time to register
-	if self.wait == true and monarch.screen_exists(hash("menu")) then
-		self.wait = false
+function on_message(self, message_id, message, sender)
+	if message_id == hash("init_monarch") then
 		monarch.show(hash("menu"))
-	end	
+	end
 end
