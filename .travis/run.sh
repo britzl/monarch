@@ -36,7 +36,7 @@ echo "Running bob.jar - building"
 java -jar bob.jar --debug build --keep-unused
 
 echo "Starting dmengine_headless"
-if [ - "${DEFOLD_BOOSTRAP_COLLECTION}" ]; then
+if [ -n "${DEFOLD_BOOSTRAP_COLLECTION}" ]; then
 	./dmengine_headless --config=bootstrap.main_collection=${DEFOLD_BOOSTRAP_COLLECTION}
 else
 	./dmengine_headless
