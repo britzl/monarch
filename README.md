@@ -66,7 +66,7 @@ You navigate back in the screen hierarchy in one of two ways:
 Monarch will acquire and release input focus on the game objects containing the proxies to the screens and ensure that only the top-most screen will ever have input focus.
 
 ## Popups
-A screen that is flagged as a popup (see list of screen properties above) will be treated slightly differently when it comes to navigation. If a popup is at the top of the stack (ie currently shown) and another screen or popup is shown then the current popup will be removed from the stack. This means that it is not possible to have a popup anywhere in the stack but the top. This also means that you cannot navigate back to a popup since popups can only exist on the top of the stack. Another important difference between normal screens and popups is that when a popup is shown on top of a non-popup the current top screen will not be unloaded and instead remain visible in the background.
+A screen that is flagged as a popup (see [list of screen properties](#creating-screens) above) will be treated slightly differently when it comes to navigation. If a popup is at the top of the stack (ie currently shown) and another screen or popup is shown then the current popup will be removed from the stack. This means that it is not possible to have a popup anywhere in the stack but the top. This also means that you cannot navigate back to a popup since popups can only exist on the top of the stack. Another important difference between normal screens and popups is that when a popup is shown on top of a non-popup the current top screen will not be unloaded and instead remain visible in the background.
 
 * Stack is ```[A, B]```
 * A call to ```monarch.show(C)``` is made and C is a popup
