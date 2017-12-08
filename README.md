@@ -77,12 +77,12 @@ A screen that is flagged as a popup (see [list of screen properties](#creating-s
 ## Transitions
 You can add optional transitions when navigating between screens. The default behavior is that screen navigation is instant but if you have defined a transition for a screen Monarch will wait until the transition is completed before proceeding. The Transition Url property described above should be the URL to a script with an ```on_message``` handlers for the following messages:
 
-* ```transition_show_in```
-* ```transition_show_out```
-* ```transition_back_in```
-* ```transition_back_out```
+* ```transition_show_in``` (constant defined as ```monarch.TRANSITION.SHOW_IN```)
+* ```transition_show_out``` (constant defined as ```monarch.TRANSITION.SHOW_OUT```)
+* ```transition_back_in``` (constant defined as ```monarch.TRANSITION.BACK_IN```)
+* ```transition_back_out``` (constant defined as ```monarch.TRANSITION.BACK_OUT```)
 
-When a transition is completed it is up to the developer to send a ```transition_done``` message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Monarch comes with a system for setting up transitions easily in a gui_script. Example:
+When a transition is completed it is up to the developer to send a ```transition_done``` (constant ```monarch.TRANSITION.DONE```) message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Monarch comes with a system for setting up transitions easily in a gui_script. Example:
 
 	local transitions = require "monarch.transitions.gui"
 
