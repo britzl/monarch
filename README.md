@@ -107,9 +107,9 @@ Monarch will send focus gain and focus loss messages if a Focus Url was provided
 	local monarch = require "monarch.monarch"
 
 	function on_message(self, message_id, message, sender)
-		if message_id == monarch.FOCUS_GAINED then
+		if message_id == monarch.FOCUS.GAINED then
 			print("Focus gained, previous screen: ", message.id)
-		elseif message_id == monarch.FOCUS_LOST then
+		elseif message_id == monarch.FOCUS.LOST then
 			print("Focus lost, next screen: ", message.id)
 		end
 	end
