@@ -26,6 +26,12 @@ M.FOCUS.GAINED = hash("monarch_focus_gained")
 M.FOCUS.LOST = hash("monarch_focus_lost")
 
 
+local function log(...) end
+
+function M.debug()
+	log = print
+end
+
 local function screen_from_proxy(proxy)
 	for _, screen in pairs(screens) do
 		if screen.proxy == proxy then
@@ -101,29 +107,86 @@ function M.unregister(id)
 	screens[id] = nil
 end
 
+local function acquire_input(screen)
+	log("change_context()", screen.id)
+	if not screen.input then
+		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
+		screen.input = true
+	end
+end
+
+local function release_input(screen)
+	log("change_context()", screen.id)
+	if screen.input then
+		msg.post(screen.script, RELEASE_INPUT_FOCUS)
+		screen.input = false
+	end
+end
+
+local function change_context(screen)
+	log("change_context()", screen.id)
+	screen.wait_for = CONTEXT
+	msg.post(screen.script, CONTEXT)
+	coroutine.yield()
+	screen.wait_for = nil
+end
+
+local function unload(screen)
+	log("unload()", screen.id)
+	screen.wait_for = PROXY_UNLOADED
+	msg.post(screen.proxy, UNLOAD)
+	coroutine.yield()
+	screen.loaded = false
+	screen.wait_for = nil
+end
+
+local function async_load(screen)
+	log("async_load()", screen.id)
+	screen.wait_for = PROXY_LOADED
+	msg.post(screen.proxy, ASYNC_LOAD)
+	coroutine.yield()
+	msg.post(screen.proxy, ENABLE)
+	screen.loaded = true
+	screen.wait_for = nil
+end
+
+local function transition(screen, message_id)
+	log("transition()", screen.id)
+	screen.wait_for = M.TRANSITION.DONE
+	msg.post(screen.transition_url, message_id)
+	coroutine.yield()
+	screen.wait_for = nil
+end
+
+local function focus_gained(screen, previous_screen)
+	log("focus_gained()", screen.id)
+	if screen.focus_url then
+		msg.post(screen.focus_url, M.FOCUS.GAINED, {id = previous_screen and previous_screen.id})
+	end
+end
+
+local function focus_lost(screen, next_screen)
+	log("focus_lost()", screen.id)
+	if screen.focus_url then
+		msg.post(screen.focus_url, M.FOCUS.LOST, {id = next_screen and next_screen.id})
+	end
+end
+
 local function show_out(screen, next_screen, cb)
+	log("show_out()", screen.id)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		msg.post(screen.script, RELEASE_INPUT_FOCUS)
-		screen.input = false
-
-		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS.LOST, {id = next_screen.id})
-		end
-				
-		msg.post(screen.script, CONTEXT)
-		coroutine.yield()
+		change_context(screen)
+		release_input(screen)
+		focus_lost(screen, next_screen)
 		-- if the next screen is a popup we want the current screen to stay visible below the popup
 		-- if the next screen isn't a popup the current one should be unloaded and transitioned out
 		local next_is_popup = next_screen and not next_screen.popup
 		local current_is_popup = screen.popup
 		if (next_is_popup and not current_is_popup) or (current_is_popup) then
-			msg.post(screen.transition_url, M.TRANSITION.SHOW_OUT)
-			coroutine.yield()
-			msg.post(screen.proxy, UNLOAD)
-			coroutine.yield()
-			screen.loaded = false
+			transition(screen, M.TRANSITION.SHOW_OUT)
+			unload(screen)
 		end
 		screen.co = nil
 		if cb then cb() end
@@ -132,39 +195,25 @@ local function show_out(screen, next_screen, cb)
 end
 
 local function show_in(screen, previous_screen, reload, cb)
+	log("show_in()", screen.id)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		msg.post(screen.script, CONTEXT)
-		coroutine.yield()
-
+		change_context(screen)
 		if reload and screen.loaded then
-			msg.post(screen.proxy, UNLOAD)
-			coroutine.yield()
-			screen.loaded = false
+			log("show_in() reloading", screen.id)
+			unload(screen)
 		end
-	
 		-- the screen could be loaded if the previous screen was a popup
 		-- and the popup asked to show this screen again
 		-- in that case we shouldn't attempt to load it again
 		if not screen.loaded then
-			msg.post(screen.proxy, ASYNC_LOAD)
-			coroutine.yield()
-			msg.post(screen.proxy, ENABLE)
-			screen.loaded = true
+			async_load(screen)
 		end
 		stack[#stack + 1] = screen
-		msg.post(screen.transition_url, M.TRANSITION.SHOW_IN)
-		coroutine.yield()
-
-		if not screen.input then
-			msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
-			screen.input = true
-		end
-		
-		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS.GAINED, {id = previous_screen and previous_screen.id})
-		end
+		transition(screen, M.TRANSITION.SHOW_IN)
+		acquire_input(screen)
+		focus_gained(screen, previous_screen)
 		screen.co = nil
 		if cb then cb() end
 	end)
@@ -172,30 +221,19 @@ local function show_in(screen, previous_screen, reload, cb)
 end
 
 local function back_in(screen, previous_screen, cb)
+	log("back_in()", screen.id)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		msg.post(screen.script, CONTEXT)
-		coroutine.yield()
+		change_context(screen)
 		if not screen.loaded then
-			msg.post(screen.proxy, ASYNC_LOAD)
-			coroutine.yield()
-			msg.post(screen.proxy, ENABLE)
-			screen.loaded = true
+			async_load(screen)
 		end
 		if previous_screen and not previous_screen.popup then
-			msg.post(screen.transition_url, M.TRANSITION.BACK_IN)
-			coroutine.yield()
+			transition(screen, M.TRANSITION.BACK_IN)
 		end
-
-		if not screen.input then
-			msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
-			screen.input = true
-		end
-
-		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS.GAINED, {id = previous_screen.id})
-		end
+		acquire_input(screen)
+		focus_gained(screen, previous_screen)
 		screen.co = nil
 		if cb then cb() end
 	end)
@@ -203,21 +241,15 @@ local function back_in(screen, previous_screen, cb)
 end
 
 local function back_out(screen, next_screen, cb)
+	log("back_out()", screen.id)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		msg.post(screen.script, RELEASE_INPUT_FOCUS)
-		screen.input = false
-		if screen.focus_url then
-			msg.post(screen.focus_url, M.FOCUS.LOST, {id = next_screen and next_screen.id})
-		end
-		msg.post(screen.script, CONTEXT)
-		coroutine.yield()
-		msg.post(screen.transition_url, M.TRANSITION.BACK_OUT)
-		coroutine.yield()
-		msg.post(screen.proxy, UNLOAD)
-		coroutine.yield()
-		screen.loaded = false
+		change_context(screen)
+		release_input(screen)
+		focus_lost(screen, next_screen)
+		transition(screen, M.TRANSITION.BACK_OUT)
+		unload(screen)
 		screen.co = nil
 		if cb then cb() end
 	end)
@@ -256,6 +288,8 @@ function M.show(id, options, data, cb)
 	local screen = screens[id]
 	screen.data = data
 
+	log("show()", screen.id)
+
 	-- manipulate the current top
 	-- close popup if needed
 	-- transition out
@@ -279,6 +313,7 @@ function M.show(id, options, data, cb)
 	-- to remove every screen on the stack up until and
 	-- including the screen itself
 	if options and options.clear then
+		log("show() clearing")
 		while M.in_stack(id) do
 			table.remove(stack)
 		end
@@ -295,6 +330,7 @@ end
 function M.back(data, cb)
 	local screen = table.remove(stack)
 	if screen then
+		log("back()", screen.id)
 		local top = stack[#stack]
 		-- if we go back to the same screen we need to first hide it
 		-- and wait until it is hidden before we show it again
@@ -324,19 +360,27 @@ function M.on_message(message_id, message, sender)
 	if message_id == PROXY_LOADED then
 		local screen = screen_from_proxy(sender)
 		assert(screen, "Unable to find screen for loaded proxy")
-		assert(coroutine.resume(screen.co))
+		if screen.wait_for == PROXY_LOADED then
+			assert(coroutine.resume(screen.co))
+		end
 	elseif message_id == PROXY_UNLOADED then
 		local screen = screen_from_proxy(sender)
 		assert(screen, "Unable to find screen for unloaded proxy")
-		assert(coroutine.resume(screen.co))
+		if screen.wait_for == PROXY_UNLOADED then
+			assert(coroutine.resume(screen.co))
+		end
 	elseif message_id == CONTEXT then
 		local screen = screen_from_script()
 		assert(screen, "Unable to find screen for current script url")
-		assert(coroutine.resume(screen.co))
+		if screen.wait_for == CONTEXT then
+			assert(coroutine.resume(screen.co))
+		end
 	elseif message_id == M.TRANSITION.DONE then
 		local screen = screen_from_script()
 		assert(screen, "Unable to find screen for current script url")
-		assert(coroutine.resume(screen.co))
+		if screen.wait_for == M.TRANSITION.DONE then
+			assert(coroutine.resume(screen.co))
+		end
 	end
 end
 

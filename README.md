@@ -84,6 +84,8 @@ You can add optional transitions when navigating between screens. The default be
 
 When a transition is completed it is up to the developer to send a ```transition_done``` (constant ```monarch.TRANSITION.DONE```) message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Monarch comes with a system for setting up transitions easily in a gui_script. Example:
 
+Monarch comes with a system for setting up transitions easily in a gui_script using the ```monarch.transitions.gui``` module. Example:
+
 	local transitions = require "monarch.transitions.gui"
 
 	function init(self)
@@ -100,6 +102,34 @@ When a transition is completed it is up to the developer to send a ```transition
 	function on_message(self, message_id, message, sender)
 		self.transition.handle(message_id, message, sender)
 	end
+
+### Predefined transitions
+The predefined transitions provided by ```monarch.transitions.gui``` are:
+
+* ```slide_in_right```
+* ```slide_in_left```
+* ```slide_in_top```
+* ```slide_in_bottom```
+* ```slide_out_right```
+* ```slide_out_left```
+* ```slide_out_top```
+* ```slide_out_bottom```
+* ```scale_in```
+* ```scale_out```
+
+### Custom transitions
+You can create and use your own transition as long as the provided transition function has the following function signature:
+
+	custom_transition(node, to, easing, duration, delay, cb)
+
+**PARAMETERS**
+* ```node``` (node) - Gui node to animate.
+* ```to``` (vector3) - Target position.
+* ```easing``` (number) - One of gui.EASING_* constants.
+* ```duration``` (number) - Transition duration in seconds.
+* ```delay``` (number) - Transition delay in seconds.
+* ```cb``` (function) - This function must be called when the transition is completed.
+
 
 ## Screen focus gain/loss
 Monarch will send focus gain and focus loss messages if a Focus Url was provided when the screen was created. The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
