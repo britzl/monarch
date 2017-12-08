@@ -126,7 +126,7 @@ Show a Monarch screen
 * ```screen_id``` (hash) - Id of the screen to show.
 * ```options``` (table) - Options when showing the new screen (see below).
 * ```data``` (table) - Optional data to associate with the screen.  Retrieve using ```monarch.data()```.
-* ```callback``` (function) - Function to call when the new screen is visible.
+* ```callback``` (function) - Optional function to call when the new screen is visible.
 
 The options table can contain the following fields:
 
