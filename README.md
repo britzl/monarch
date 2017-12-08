@@ -138,7 +138,7 @@ Go back to a previous Monarch screen
 
 **PARAMETERS**
 * ```data``` (table) - Optional data to associate with the screen you are going back to.  Retrieve using ```monarch.data()```.
-* ```callback``` (function) - Function to call when the previous screen is visible.
+* ```callback``` (function) - Optional function to call when the previous screen is visible.
 
 
 ### monarch.data(screen_id)
