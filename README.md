@@ -42,6 +42,16 @@ You show a screen in one of two ways:
 
 Showing a screen will push it to the top of the stack and trigger an optional transition. The previous screen will be hidden (with an optional transition) unless the screen to be shown is a [popup](#popups).
 
+NOTE: You must ensure that the ```init()``` function of the ```screen.script``` has run. The ```init()``` function is responsible for registering the screen and it's not possible to show it until this has happened. A good practice is to delay the first call by posting a message to a controller script or similar before calling ```monarch.show()``` the first time:
+
+	function init(self)
+		msg.post("#", "show_first_screen")
+	end
+
+	function on_message(self, message_id, message, sender)
+		monarch.show("first_screen")
+	end
+
 #### Preventing duplicates in the stack
 You can pass an optional ```clear``` flag when showing a screen (either as a key value pair in the options table when calling ```monarch.show()``` or in the message). If the clear flag is set Monarch will search the stack for the screen in question. If the screen already exists in the stack and the ```clear``` flag is set Monarch will remove all screens between the current top and the screen in question. Example:
 
@@ -150,7 +160,7 @@ Both the ```monarch.show()``` and ```monarch.back()``` functions take an optiona
 ## Monarch API
 
 ### monarch.show(screen_id, [options], [data], [callback])
-Show a Monarch screen
+Show a Monarch screen. Note that the screen must be registered before it can be shown. The ```init()``` function of the ```screen.script``` takes care of registration.
 
 **PARAMETERS**
 * ```screen_id``` (hash) - Id of the screen to show.
