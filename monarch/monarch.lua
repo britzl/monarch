@@ -80,12 +80,15 @@ end
 -- release input focus of the game object where the proxy is attached.
 -- @param id Unique id of the screen
 -- @param proxy URL to the collection proxy containing the screen
--- @param popup true the screen is a popup
--- @param transition_url Optional URL to a script that is
--- responsible for the screen transitions
--- @param focus_url Optional URL to a script that is to be notified of
--- focus lost/gained events
-function M.register(id, proxy, popup, transition_url, focus_url)
+-- @param settings Settings table for screen. Accepted values:
+-- 		* popup - true the screen is a popup
+--		* popup_on_popup - true if this popup can be shown on top of
+--		  another popup or false if an underlying popup should be closed
+-- 		* transition_url - URL to a script that is responsible for the
+--		  screen transitions
+-- 		* focus_url - URL to a script that is to be notified of focus
+--		  lost/gained events
+function M.register(id, proxy, settings)
 	assert(not screens[id], ("There is already a screen registered with id %s"):format(tostring(id)))
 	assert(proxy, "You must provide a collection proxy URL")
 	local url = msg.url(proxy)
@@ -93,9 +96,10 @@ function M.register(id, proxy, popup, transition_url, focus_url)
 		id = id,
 		proxy = proxy,
 		script = msg.url(),
-		popup = popup,
-		transition_url = transition_url,
-		focus_url = focus_url,
+		popup = settings and settings.popup,
+		popup_on_popup = settings and settings.popup_on_popup,
+		transition_url = settings and settings.transition_url,
+		focus_url = settings and settings.focus_url,
 	}
 end
 
@@ -170,6 +174,34 @@ local function focus_lost(screen, next_screen)
 	if screen.focus_url then
 		msg.post(screen.focus_url, M.FOCUS.LOST, {id = next_screen and next_screen.id})
 	end
+end
+
+local function disable(screen, next_screen)
+	log("disable()", screen.id)
+	local co
+	co = coroutine.create(function()
+		screen.co = co
+		change_context(screen)
+		release_input(screen)
+		focus_lost(screen, next_screen)
+		screen.co = nil
+		if cb then cb() end
+	end)
+	coroutine.resume(co)
+end
+
+local function enable(screen, previous_screen)
+	log("enable()", screen.id)
+	local co
+	co = coroutine.create(function()
+		screen.co = co
+		change_context(screen)
+		acquire_input(screen)
+		focus_gained(screen, previous_screen)
+		screen.co = nil
+		if cb then cb() end
+	end)
+	coroutine.resume(co)
 end
 
 local function show_out(screen, next_screen, cb)
@@ -295,16 +327,21 @@ function M.show(id, options, data, cb)
 	-- transition out
 	local top = stack[#stack]
 	if top then
-		-- if top is popup then close it
-		if top.popup then
-			stack[#stack] = nil
-			show_out(top, screen)
-			top = stack[#stack]
-		end
-		-- unload and transition out from top
-		-- unless we're showing the same screen as is already visible
-		if top and top.id ~= screen.id then
-			show_out(top, screen)
+		-- keep top popup visible if new screen can be shown on top of a popup
+		if top.popup and screen.popup_on_popup then
+			disable(top, screen)
+		else
+			-- close all popups
+			while top.popup do
+				stack[#stack] = nil
+				show_out(top, screen)
+				top = stack[#stack]
+			end
+			-- unload and transition out from top
+			-- unless we're showing the same screen as is already visible
+			if top and top.id ~= screen.id then
+				show_out(top, screen)
+			end
 		end
 	end
 

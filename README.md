@@ -19,6 +19,7 @@ Monarch screens are created in individual collections and loaded through collect
 * **Screen Proxy (url)** - The URL to the collection proxy component containing the actual screen. Defaults to ```#collectionproxy```.
 * **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app.
 * **Popup (boolean)** - Check this if the screen should be treated as a [popup](#popups).
+* **Popup on Popup (boolean)** - Check this if the screen is a [popup](#popups) and it can be shown on top of other popups.
 * **Transition Url (url)** - Optional URL to call when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Url (url)** - Optional URL to call when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 
@@ -76,13 +77,35 @@ You navigate back in the screen hierarchy in one of two ways:
 Monarch will acquire and release input focus on the game objects containing the proxies to the screens and ensure that only the top-most screen will ever have input focus.
 
 ## Popups
-A screen that is flagged as a popup (see [list of screen properties](#creating-screens) above) will be treated slightly differently when it comes to navigation. If a popup is at the top of the stack (ie currently shown) and another screen or popup is shown then the current popup will be removed from the stack. This means that it is not possible to have a popup anywhere in the stack but the top. This also means that you cannot navigate back to a popup since popups can only exist on the top of the stack. Another important difference between normal screens and popups is that when a popup is shown on top of a non-popup the current top screen will not be unloaded and instead remain visible in the background.
+A screen that is flagged as a popup (see [list of screen properties](#creating-screens) above) will be treated slightly differently when it comes to navigation.
+
+### Popup on normal screen
+If a popup is shown on top of a non-popup the current top screen will not be unloaded and instead remain visible in the background:
 
 * Stack is ```[A, B]```
 * A call to ```monarch.show(C)``` is made and C is a popup
-* Stack is ```[A, B, C]```
-* A call to ```monarch.show(D)```
+* Stack is ```[A, B, C]``` and B will still be visible
+
+### Popup on popup
+If a popup is at the top of the stack and another popup is show the behavior will depend on if the new popup has the Popup on Popup flag set or not. If the Popup on Popup flag is set the underlying popup will remain visible.
+
+* Stack is ```[A, B, C]``` and C is a popup
+* A call to ```monarch.show(D)``` is made and D is a popup with the popup on popup flag set
+* Stack is ```[A, B, C, D]```
+
+If the Popup on Popup flag is not set then the underlying popup will be closed, just as when showing a normal screen on top of a popup (see above).
+
+* Stack is ```[A, B, C]``` and C is a popup
+* A call to ```monarch.show(D)``` is made and D is a popup without the popup on popup flag set
 * Stack is ```[A, B, D]```
+
+### Screen on popup
+If a screen is shown on top of one or more popups they will all be removed from the stack:
+
+* Stack is ```[A, B, C, D]``` and C and D are popups
+* A call to ```monarch.show(E)``` is made and E is not a popup
+* Stack is ```[A, B, E]```
+
 
 ## Transitions
 You can add optional transitions when navigating between screens. The default behavior is that screen navigation is instant but if you have defined a transition for a screen Monarch will wait until the transition is completed before proceeding. The Transition Url property described above should be the URL to a script with an ```on_message``` handlers for the following messages:

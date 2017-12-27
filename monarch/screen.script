@@ -3,13 +3,24 @@ local monarch
 go.property("screen_proxy", msg.url("#collectionproxy"))
 go.property("screen_id", hash(""))
 go.property("popup", false)
+go.property("popup_on_popup", false)
 go.property("transition_url", msg.url())
 go.property("focus_url", msg.url())
 
 
 function init(self)
 	monarch = require "monarch.monarch"
-	monarch.register(self.screen_id, self.screen_proxy, self.popup, self.transition_url, self.focus_url)
+	assert(not self.popup_on_popup or (self.popup_on_popup and self.popup), "Popup on Popups can only be set if the Popup flag is set")
+	monarch.register(
+		self.screen_id,
+		self.screen_proxy,
+		{
+			popup = self.popup,
+			popup_on_popup = self.popup_on_popup,
+			transition_url = self.transition_url,
+			focus_url = self.focus_url
+		}
+	)
 end
 
 function final(self)

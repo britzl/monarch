@@ -3,10 +3,9 @@ local transitions = require "monarch.transitions.gui"
 
 function init(self)
 	msg.post(".", "acquire_input_focus")
-	self.ok = gui.get_node("ok_button")
-	self.cancel = gui.get_node("cancel_button")
-	self.about = gui.get_node("about_button")
-	gui.set_render_order(14)
+	self.yes = gui.get_node("yes_button")
+	self.no = gui.get_node("no_button")
+	gui.set_render_order(15)
 
 	self.transition = transitions.create(gui.get_node("root"))
 		.show_in(transitions.scale_in, gui.EASING_OUTBACK, 0.3, 0)
@@ -17,20 +16,15 @@ end
 
 function on_input(self, action_id, action)
 	if action_id == hash("touch") and action.released then
-		if gui.pick_node(self.ok, action.x, action.y) then
-			print("ok")
-			monarch.show(hash("confirm"), nil, { next = hash("pregame") }, function()
-				print("confirm show done")
+		if gui.pick_node(self.yes, action.x, action.y) then
+			print("yes")
+			monarch.show(monarch.data(hash("confirm")).next, nil, nil, function()
+				print("next screen show done")
 			end)
-		elseif gui.pick_node(self.cancel, action.x, action.y) then
-			print("cancel")
+		elseif gui.pick_node(self.no, action.x, action.y) then
+			print("no")
 			monarch.back(function()
 				print("back from popup done")
-			end)
-		elseif gui.pick_node(self.about, action.x, action.y) then
-			print("about")
-			monarch.show(hash("about"), { clear = true, reload = true }, nil, function()
-				print("about show done")
 			end)
 		end
 	end
