@@ -14,7 +14,7 @@ Or point to the ZIP file of a [specific release](https://github.com/britzl/monar
 Using Monarch requires that screens are created in a certain way. Once you have one or more screens created you can start navigating between the screens.
 
 ## Creating screens
-Monarch screens are created in individual collections and loaded through collection proxies. The recommended setup is to create one game object per screen and per game object attach a collection proxy component and an instance of the ```screen.script``` provided by Monarch. The screen.script will take care of the setup of the screen. All you need to do is to make sure that the script properties on the ```screen.script``` are correct:
+Monarch screens are created in individual collections and loaded through collection proxies. The recommended setup is to create one game object per screen and per game object attach a collection proxy component and an instance of the ```screen.script``` provided by Monarch. The ```screen.script``` will take care of the setup of the screen. All you need to do is to make sure that the script properties on the ```screen.script``` are correct:
 
 * **Screen Proxy (url)** - The URL to the collection proxy component containing the actual screen. Defaults to ```#collectionproxy```.
 * **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app.
