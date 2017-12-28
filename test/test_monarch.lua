@@ -3,6 +3,8 @@ local monarch = require "monarch.monarch"
 
 local SCREEN1 = hash("screen1")
 local SCREEN2 = hash("screen2")
+local POPUP1 = hash("popup1")
+local POPUP2 = hash("popup2")
 local FOOBAR = hash("foobar")
 
 return function()
@@ -130,6 +132,47 @@ return function()
 			assert_stack({ SCREEN1 })
 		end)
 		
-						
+
+		it("should be able to show one popup on top of another the Popup On Popup flag is set", function()
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+			monarch.show(POPUP1)
+			assert(wait_until_shown(POPUP1), "Popup1 was never shown")
+			assert_stack({ SCREEN1, POPUP1 })
+			monarch.show(POPUP2)
+			assert(wait_until_shown(POPUP2), "Popup2 was never shown")
+			assert_stack({ SCREEN1, POPUP1, POPUP2 })
+		end)
+
+		
+		it("should close any open popups when showing a popup without the Popup On Popup flag", function()
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+			monarch.show(POPUP2)
+			assert(wait_until_shown(POPUP2), "Popup2 was never shown")
+			assert_stack({ SCREEN1, POPUP2 })
+			monarch.show(POPUP1)
+			assert(wait_until_shown(POPUP1), "Popup1 was never shown")
+			assert_stack({ SCREEN1, POPUP1 })
+		end)
+
+		
+		it("should close any open popups when showing a non-popup", function()
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+			monarch.show(POPUP1)
+			assert(wait_until_shown(POPUP1), "Popup1 was never shown")
+			assert_stack({ SCREEN1, POPUP1 })
+			monarch.show(POPUP2)
+			assert(wait_until_shown(POPUP2), "Popup2 was never shown")
+			assert_stack({ SCREEN1, POPUP1, POPUP2 })
+			monarch.show(SCREEN2)
+			assert(wait_until_shown(SCREEN2), "Popup2 was never shown")
+			assert_stack({ SCREEN1, SCREEN2 })
+		end)
+										
 	end)
 end
