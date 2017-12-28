@@ -87,7 +87,7 @@ If a popup is shown on top of a non-popup the current top screen will not be unl
 * Stack is ```[A, B, C]``` and B will still be visible
 
 ### Popup on popup
-If a popup is at the top of the stack and another popup is show the behavior will depend on if the new popup has the Popup on Popup flag set or not. If the Popup on Popup flag is set the underlying popup will remain visible.
+If a popup is at the top of the stack and another popup is shown the behavior will depend on if the new popup has the Popup on Popup flag set or not. If the Popup on Popup flag is set the underlying popup will remain visible.
 
 * Stack is ```[A, B, C]``` and C is a popup
 * A call to ```monarch.show(D)``` is made and D is a popup with the popup on popup flag set
