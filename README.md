@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/britzl/monarch.svg?branch=master)](https://travis-ci.org/britzl/monarch)
+[![Latest Release](https://img.shields.io/github/release/britzl/monarch.svg)](https://github.com/britzl/monarch/releases)
 [![Github All Releases](https://img.shields.io/github/downloads/britzl/monarch/total.svg)](https://github.com/britzl/monarch)
 
 # Monarch
