@@ -51,7 +51,7 @@ NOTE: You must ensure that the ```init()``` function of the ```screen.script``` 
 	end
 
 	function on_message(self, message_id, message, sender)
-		monarch.show("first_screen")
+		monarch.show(hash("first_screen"))
 	end
 
 #### Preventing duplicates in the stack
