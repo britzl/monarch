@@ -1,6 +1,8 @@
 ![](docs/logo.jpg)
 
 [![Build Status](https://travis-ci.org/britzl/monarch.svg?branch=master)](https://travis-ci.org/britzl/monarch)
+[![Latest Release](https://img.shields.io/github/release/britzl/monarch.svg)](https://github.com/britzl/monarch/releases)
+
 # Monarch
 Monarch is a screen manager for the [Defold](https://www.defold.com) game engine.
 
@@ -15,7 +17,7 @@ Or point to the ZIP file of a [specific release](https://github.com/britzl/monar
 Using Monarch requires that screens are created in a certain way. Once you have one or more screens created you can start navigating between the screens.
 
 ## Creating screens
-Monarch screens are created in individual collections and loaded through collection proxies. The recommended setup is to create one game object per screen and per game object attach a collection proxy component and an instance of the ```screen.script``` provided by Monarch. The screen.script will take care of the setup of the screen. All you need to do is to make sure that the script properties on the ```screen.script``` are correct:
+Monarch screens are created in individual collections and loaded through collection proxies. The recommended setup is to create one game object per screen and per game object attach a collection proxy component and an instance of the ```screen.script``` provided by Monarch. The ```screen.script``` will take care of the setup of the screen. All you need to do is to make sure that the script properties on the ```screen.script``` are correct:
 
 * **Screen Proxy (url)** - The URL to the collection proxy component containing the actual screen. Defaults to ```#collectionproxy```.
 * **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app.
@@ -51,7 +53,7 @@ NOTE: You must ensure that the ```init()``` function of the ```screen.script``` 
 	end
 
 	function on_message(self, message_id, message, sender)
-		monarch.show("first_screen")
+		monarch.show(hash("first_screen"))
 	end
 
 #### Preventing duplicates in the stack
@@ -88,7 +90,7 @@ If a popup is shown on top of a non-popup the current top screen will not be unl
 * Stack is ```[A, B, C]``` and B will still be visible
 
 ### Popup on popup
-If a popup is at the top of the stack and another popup is show the behavior will depend on if the new popup has the Popup on Popup flag set or not. If the Popup on Popup flag is set the underlying popup will remain visible.
+If a popup is at the top of the stack and another popup is shown the behavior will depend on if the new popup has the Popup on Popup flag set or not. If the Popup on Popup flag is set the underlying popup will remain visible.
 
 * Stack is ```[A, B, C]``` and C is a popup
 * A call to ```monarch.show(D)``` is made and D is a popup with the popup on popup flag set
