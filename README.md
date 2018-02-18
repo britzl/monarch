@@ -1,5 +1,6 @@
-[![Build Status](https://travis-ci.org/britzl/monarch.svg?branch=master)](https://travis-ci.org/britzl/monarch)
+![](docs/logo.jpg)
 
+[![Build Status](https://travis-ci.org/britzl/monarch.svg?branch=master)](https://travis-ci.org/britzl/monarch)
 # Monarch
 Monarch is a screen manager for the [Defold](https://www.defold.com) game engine.
 
