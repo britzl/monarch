@@ -166,6 +166,21 @@ You can create and use your own transition as long as the provided transition fu
 * ```delay``` (number) - Transition delay in seconds.
 * ```cb``` (function) - This function must be called when the transition is completed.
 
+### Dynamic orientation and resized windows
+When using dynamic screen orientation together with gui layouts or using transitions on a platform where the window can be resized it's important to make sure that the created transitions adapt to the change in orientation or window size. The transition system takes care of layout changes automatically, but when it comes to changes in window size you need to notify the transition manually:
+
+	local transitions = require "monarch.transitions.gui"
+
+	function init(self)
+		self.transition = transitions.create(gui.get_node("root"))
+	end
+
+	function on_message(self, message_id, message, sender)
+		if message_id == hash("my_resize_message") then
+			self.transition.window_resized(message.width, message.height)
+		end
+	end
+
 
 ## Screen focus gain/loss
 Monarch will send focus gain and focus loss messages if a Focus Url was provided when the screen was created. The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:

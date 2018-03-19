@@ -2,15 +2,31 @@ local monarch = require "monarch.monarch"
 
 local M = {}
 
-local WIDTH = tonumber(sys.get_config("display.width"))
-local HEIGHT = tonumber(sys.get_config("display.height"))
-
-local LEFT = vmath.vector3(-WIDTH * 2, 0, 0)
-local RIGHT = vmath.vector3(WIDTH * 2, 0, 0)
-local TOP = vmath.vector3(0, HEIGHT * 2, 0)
-local BOTTOM = vmath.vector3(0, - HEIGHT * 2, 0)
+local WIDTH = nil
+local HEIGHT = nil
+local LEFT = nil
+local RIGHT = nil
+local TOP = nil
+local BOTTOM = nil
 
 local ZERO_SCALE = vmath.vector3(0, 0, 1)
+
+local LAYOUT_CHANGED = hash("layout_changed")
+
+-- Notify the transition system that the window size has changed
+-- @param width
+-- @param height
+function M.window_resized(width, height)
+	WIDTH = width
+	HEIGHT = height
+	LEFT = vmath.vector3(-WIDTH * 2, 0, 0)
+	RIGHT = vmath.vector3(WIDTH * 2, 0, 0)
+	TOP = vmath.vector3(0, HEIGHT * 2, 0)
+	BOTTOM = vmath.vector3(0, - HEIGHT * 2, 0)
+end
+
+M.window_resized(tonumber(sys.get_config("display.width")), tonumber(sys.get_config("display.height")))
+
 
 function M.instant(node, to, easing, duration, delay, cb)
 	cb()
@@ -111,9 +127,13 @@ function M.create(node)
 
 	-- Forward on_message calls here
 	function instance.handle(message_id, message, sender)
-		local transition = transitions[message_id]
-		if transition then
-			start_transition(transition, sender)
+		if message_id == LAYOUT_CHANGED then
+			initial_data.pos = gui.get_position(node)
+		else
+			local transition = transitions[message_id]
+			if transition then
+				start_transition(transition, sender)
+			end
 		end
 	end
 	

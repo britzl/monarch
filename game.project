@@ -4,7 +4,7 @@ version = 0.9
 dependencies = https://github.com/britzl/deftest/archive/1.2.1.zip
 
 [bootstrap]
-main_collection = /test/test.collectionc
+main_collection = /example/example.collectionc
 
 [input]
 game_binding = /input/game.input_bindingc
@@ -12,6 +12,8 @@ game_binding = /input/game.input_bindingc
 [display]
 width = 640
 height = 1136
+dynamic_orientation = 1
+display_profiles = /example/example.display_profilesc
 
 [script]
 shared_state = 1
