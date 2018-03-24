@@ -1,7 +1,7 @@
 local cowait = require "test.cowait"
 local monarch = require "monarch.monarch"
 
-local SCREEN1 = hash("screen1")
+local SCREEN1 = hash(SCREEN1_STR)
 local SCREEN2 = hash("screen2")
 local POPUP1 = hash("popup1")
 local POPUP2 = hash("popup2")
@@ -65,12 +65,13 @@ return function()
 
 		it("should be able to tell if a screen exists", function()
 			assert(monarch.screen_exists(SCREEN1))
+			assert(monarch.screen_exists(SCREEN1_STR))
 			assert(not monarch.screen_exists(hash("foobar")))
 		end)
 
 
 		it("should be able to show screens and go back to previous screens", function()
-			monarch.show(SCREEN1)
+			monarch.show(SCREEN1_STR)
 			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
 			assert_stack({ SCREEN1 })
 

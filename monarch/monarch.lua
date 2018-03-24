@@ -32,6 +32,15 @@ function M.debug()
 	log = print
 end
 
+-- use a lookup table for so we don't have to do "return (type(s) == "string" and hash(s) or s)"
+-- every time
+local hash_lookup = {}
+local function tohash(s)
+	hash_lookup[s] = hash_lookup[s] or (type(s) == "string" and hash(s) or s)
+	return hash_lookup[s]
+end
+
+
 local function screen_from_proxy(proxy)
 	for _, screen in pairs(screens) do
 		if screen.proxy == proxy then
@@ -51,9 +60,11 @@ end
 
 
 --- Check if a screen exists in the current screen stack
--- @param id
+-- @param id (string|hash)
 -- @return true of the screen is in the stack
 function M.in_stack(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
 	for i = 1, #stack do
 		if stack[i].id == id then
 			return true
@@ -65,9 +76,11 @@ end
 
 --- Check if a screen is at the top of the stack
 -- (primarily used for unit tests, but could have a usecase outside tests)
--- @param id
+-- @param id (string|hash)
 -- @return true if the screen is at the top of the stack
 function M.is_top(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
 	local top = stack[#stack]
 	return top and top.id == id or false
 end
@@ -89,6 +102,8 @@ end
 -- 		* focus_url - URL to a script that is to be notified of focus
 --		  lost/gained events
 function M.register(id, proxy, settings)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
 	assert(not screens[id], ("There is already a screen registered with id %s"):format(tostring(id)))
 	assert(proxy, "You must provide a collection proxy URL")
 	local url = msg.url(proxy)
@@ -107,6 +122,8 @@ end
 -- This is done automatically by the screen.script
 -- @param id Id of the screen to unregister
 function M.unregister(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	screens[id] = nil
 end
@@ -290,31 +307,35 @@ end
 
 
 --- Get data associated with a screen
--- @param id Id of the screen to get data for
+-- @param id (string|hash) Id of the screen to get data for
 -- @return Data associated with the screen
 function M.data(id)
 	assert(id, "You must provide a screen id")
+	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	return screens[id].data
 end
 
 --- Checks to see if a screen id is registered
--- @param id Id of the screen to check if is registered
+-- @param id (string|hash) Id of the screen to check if is registered
 -- @return True or False if the screen id is registered or not
 function M.screen_exists(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
 	return screens[id] ~= nil
 end
 
 --- Show a new screen
--- @param id Id of the screen to show
--- @param options Table with options when showing the screen (can be nil). Valid values:
+-- @param id (string|hash) - Id of the screen to show
+-- @param options (table) - Table with options when showing the screen (can be nil). Valid values:
 -- 		* clear - Set to true if the stack should be cleared down to an existing instance of the screen
 -- 		* reload - Set to true if screen should be reloaded if it already exists in the stack and is loaded.
 --				  This would be the case if doing a show() from a popup on the screen just below the popup.
--- @param data Optional data to set on the screen. Can be retrieved by the data() function
--- @param cb Optional callback to invoke when screen is shown
+-- @param data (*) - Optional data to set on the screen. Can be retrieved by the data() function
+-- @param cb (function) - Optional callback to invoke when screen is shown
 function M.show(id, options, data, cb)
 	assert(id, "You must provide a screen id")
+	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
 	local screen = screens[id]
@@ -362,8 +383,8 @@ end
 
 
 -- Go back to the previous screen in the stack
--- @param data Optional data to set for the previous screen
--- @param cb Optional callback to invoke when the previous screen is visible again
+-- @param data (*) - Optional data to set for the previous screen
+-- @param cb (function) - Optional callback to invoke when the previous screen is visible again
 function M.back(data, cb)
 	local screen = table.remove(stack)
 	if screen then
