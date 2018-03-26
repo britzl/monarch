@@ -1,6 +1,7 @@
 local cowait = require "test.cowait"
 local monarch = require "monarch.monarch"
 
+local SCREEN1_STR = hash("screen1")
 local SCREEN1 = hash(SCREEN1_STR)
 local SCREEN2 = hash("screen2")
 local POPUP1 = hash("popup1")
