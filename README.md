@@ -240,3 +240,7 @@ Check if a Monarch screen exists.
 
 **RETURN**
 * ```exists``` (boolean) - True if the screen exists.
+
+
+### monarch.debug()
+Enable verbose logging of the internals of Monarch.
