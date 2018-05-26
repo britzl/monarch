@@ -96,6 +96,8 @@ function M.create(node)
 
 	local transitions = {}
 
+	local current_transition = nil
+	
 	local initial_data = {}
 	initial_data.pos = gui.get_position(node)
 	initial_data.scale = gui.get_scale(node)
@@ -114,6 +116,7 @@ function M.create(node)
 	local function start_transition(transition, url)
 		table.insert(transition.urls, url)
 		if not transition.in_progress then
+			current_transition = transition
 			transition.in_progress = true
 			transition.fn(node, initial_data, transition.easing, transition.duration, transition.delay or 0, function()
 				transition.in_progress = false
@@ -129,6 +132,12 @@ function M.create(node)
 	function instance.handle(message_id, message, sender)
 		if message_id == LAYOUT_CHANGED then
 			initial_data.pos = gui.get_position(node)
+			-- replay the current transition if the layout changes
+			-- this will ensure that things are still hidden if they
+			-- were transitioned out
+			if current_transition then
+				current_transition.fn(node, initial_data, current_transition.easing, 0, 0)
+			end
 		else
 			local transition = transitions[message_id]
 			if transition then
