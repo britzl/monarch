@@ -113,16 +113,18 @@ function M.create(node)
 		}
 	end
 
-	local function start_transition(transition, url)
+	local function start_transition(transition, transition_id, url)
 		table.insert(transition.urls, url)
 		if not transition.in_progress then
+			table.insert(transition.urls, msg.url())
 			current_transition = transition
 			transition.in_progress = true
 			transition.fn(node, initial_data, transition.easing, transition.duration, transition.delay or 0, function()
 				transition.in_progress = false
+				local message = { transition = transition_id }
 				while #transition.urls > 0 do
 					local url = table.remove(transition.urls)
-					msg.post(url, monarch.TRANSITION.DONE)
+					msg.post(url, monarch.TRANSITION.DONE, message)
 				end
 			end)
 		end
@@ -141,7 +143,7 @@ function M.create(node)
 		else
 			local transition = transitions[message_id]
 			if transition then
-				start_transition(transition, sender)
+				start_transition(transition, message_id, sender)
 			end
 		end
 	end

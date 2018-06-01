@@ -123,6 +123,7 @@ When a transition is completed it is up to the developer to send a ```transition
 Monarch comes with a system for setting up transitions easily in a gui_script using the ```monarch.transitions.gui``` module. Example:
 
 	local transitions = require "monarch.transitions.gui"
+	local monarch = require "monarch.monarch"
 
 	function init(self)
 		-- create transitions for the node 'root'
@@ -137,6 +138,10 @@ Monarch comes with a system for setting up transitions easily in a gui_script us
 
 	function on_message(self, message_id, message, sender)
 		self.transition.handle(message_id, message, sender)
+		-- you can also check when a transition has completed:
+		if message_id == monarch.TRANSITION.DONE and message.transition == monarch.TRANSITION.SHOW_IN then
+			print("Show in done!")
+		end
 	end
 
 ### Predefined transitions
