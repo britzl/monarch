@@ -253,10 +253,17 @@ local function show_in(screen, previous_screen, reload, cb)
 			log("show_in() reloading", screen.id)
 			unload(screen)
 		end
+		-- if the screen has been preloaded we need to enable it
+		if screen.preloaded then
+			log("show_in() screen was preloaded", screen.id)
+			msg.post(screen.proxy, ENABLE)
+			screen.loaded = true
+			screen.preloaded = false
 		-- the screen could be loaded if the previous screen was a popup
 		-- and the popup asked to show this screen again
 		-- in that case we shouldn't attempt to load it again
-		if not screen.loaded then
+		elseif not screen.loaded then
+			log("show_in() loading screen", screen.id)
 			async_load(screen)
 		end
 		stack[#stack + 1] = screen
@@ -275,7 +282,13 @@ local function back_in(screen, previous_screen, cb)
 	co = coroutine.create(function()
 		screen.co = co
 		change_context(screen)
-		if not screen.loaded then
+		if screen.preloaded then
+			log("back_in() screen was preloaded", screen.id)
+			msg.post(screen.proxy, ENABLE)
+			screen.preloaded = false
+			screen.loaded = true
+		elseif not screen.loaded then
+			log("back_in() loading screen", screen.id)
 			async_load(screen)
 		end
 		if previous_screen and not previous_screen.popup then
@@ -411,6 +424,30 @@ function M.back(data, cb)
 	elseif cb then
 		cb()
 	end
+end
+
+--- Preload a screen. This will load but not enable and show a screen. Useful for "heavier" screens
+-- that you wish to show without any delay.
+-- @param id (string|hash) - Id of the screen to preload
+-- @param cb (function) - Optional callback to invoke when screen is loaded
+function M.preload(id, cb)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+
+	local screen = screens[id]
+	local co
+	co = coroutine.create(function()
+		screen.co = co
+		change_context(screen)
+		screen.wait_for = PROXY_LOADED
+		msg.post(screen.proxy, ASYNC_LOAD)
+		coroutine.yield()
+		screen.preloaded = true
+		screen.wait_for = nil
+		if cb then cb() end
+	end)
+	coroutine.resume(co)
 end
 
 

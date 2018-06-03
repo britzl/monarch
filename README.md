@@ -227,6 +227,14 @@ Go back to a previous Monarch screen
 * ```callback``` (function) - Optional function to call when the previous screen is visible.
 
 
+### monarch.preload(screen_id, [callback])
+Preload a Monarch screen. This will load but not enable the screen. This is useful for content heavy screens that you wish to be able to show without having to wait for it load.
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to preload.
+* ```callback``` (function) - Optional function to call when the new screen is preloaded.
+
+
 ### monarch.data(screen_id)
 Get the data associated with a screen (from a call to ```monarch.show()``` or ```monarch.back()```).
 
