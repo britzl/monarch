@@ -171,10 +171,10 @@ local function async_load(screen)
 	screen.wait_for = nil
 end
 
-local function transition(screen, message_id)
+local function transition(screen, message_id, message)
 	log("transition()", screen.id)
 	screen.wait_for = M.TRANSITION.DONE
-	msg.post(screen.transition_url, message_id)
+	msg.post(screen.transition_url, message_id, message)
 	coroutine.yield()
 	screen.wait_for = nil
 end
@@ -234,7 +234,7 @@ local function show_out(screen, next_screen, cb)
 		local next_is_popup = next_screen and not next_screen.popup
 		local current_is_popup = screen.popup
 		if (next_is_popup and not current_is_popup) or (current_is_popup) then
-			transition(screen, M.TRANSITION.SHOW_OUT)
+			transition(screen, M.TRANSITION.SHOW_OUT, { next_screen = next_screen.id })
 			unload(screen)
 		end
 		screen.co = nil
@@ -267,7 +267,7 @@ local function show_in(screen, previous_screen, reload, cb)
 			async_load(screen)
 		end
 		stack[#stack + 1] = screen
-		transition(screen, M.TRANSITION.SHOW_IN)
+		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id })
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		screen.co = nil
@@ -292,7 +292,7 @@ local function back_in(screen, previous_screen, cb)
 			async_load(screen)
 		end
 		if previous_screen and not previous_screen.popup then
-			transition(screen, M.TRANSITION.BACK_IN)
+			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id })
 		end
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
@@ -310,7 +310,7 @@ local function back_out(screen, next_screen, cb)
 		change_context(screen)
 		release_input(screen)
 		focus_lost(screen, next_screen)
-		transition(screen, M.TRANSITION.BACK_OUT)
+		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id })
 		unload(screen)
 		screen.co = nil
 		if cb then cb() end
@@ -343,7 +343,7 @@ end
 -- @param options (table) - Table with options when showing the screen (can be nil). Valid values:
 -- 		* clear - Set to true if the stack should be cleared down to an existing instance of the screen
 -- 		* reload - Set to true if screen should be reloaded if it already exists in the stack and is loaded.
---				  This would be the case if doing a show() from a popup on the screen just below the popup.
+--				   This would be the case if doing a show() from a popup on the screen just below the popup.
 -- @param data (*) - Optional data to set on the screen. Can be retrieved by the data() function
 -- @param cb (function) - Optional callback to invoke when screen is shown
 function M.show(id, options, data, cb)

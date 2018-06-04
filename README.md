@@ -6,6 +6,7 @@
 # Monarch
 Monarch is a screen manager for the [Defold](https://www.defold.com) game engine.
 
+
 # Installation
 You can use Monarch in your own project by adding this project as a [Defold library dependency](http://www.defold.com/manuals/libraries/). Open your game.project file and in the dependencies field under project add:
 
@@ -13,8 +14,10 @@ https://github.com/britzl/monarch/archive/master.zip
 
 Or point to the ZIP file of a [specific release](https://github.com/britzl/monarch/releases).
 
+
 # Usage
 Using Monarch requires that screens are created in a certain way. Once you have one or more screens created you can start navigating between the screens.
+
 
 ## Creating screens
 Monarch screens are created in individual collections and loaded through collection proxies. The recommended setup is to create one game object per screen and per game object attach a collection proxy component and an instance of the ```screen.script``` provided by Monarch. The ```screen.script``` will take care of the setup of the screen. All you need to do is to make sure that the script properties on the ```screen.script``` are correct:
@@ -27,6 +30,7 @@ Monarch screens are created in individual collections and loaded through collect
 * **Focus Url (url)** - Optional URL to call when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 
 ![](docs/setup.png)
+
 
 ## Navigating between screens
 The navigation in Monarch is based around a stack of screens. When a screen is shown it is pushed to the top of the stack. When going back to a previous screen the topmost screen on the stack is removed. Example:
@@ -187,6 +191,26 @@ When using dynamic screen orientation together with gui layouts or using transit
 	end
 
 
+### Screen stack info and transitions
+The transition message sent to the Transition Url specified in the screen configuration contains additional information about the transition. For the ```transition_show_in``` and ```transition_back_out``` messages the message contains the previous screen id:
+
+	function on_message(self, message_id, message, sender)
+		if message_id == hash("transition_show_in") or message_id == hash("transition_back_out") then
+			print(message.previous_screen)
+		end
+	end
+
+For the ```transition_show_out``` and ```transition_back_in``` messages the message contains the next screen id:
+
+	function on_message(self, message_id, message, sender)
+		if message_id == hash("transition_show_out") or message_id == hash("transition_back_in") then
+			print(message.next_screen)
+		end
+	end
+
+This information can be used to create dynamic transitions where the direction of the transition depends on the previous/next screen
+
+
 ## Screen focus gain/loss
 Monarch will send focus gain and focus loss messages if a Focus Url was provided when the screen was created. The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
 
@@ -200,8 +224,10 @@ Monarch will send focus gain and focus loss messages if a Focus Url was provided
 		end
 	end
 
+
 ## Callbacks
 Both the ```monarch.show()``` and ```monarch.back()``` functions take an optional callback function that will be invoked when the ```transition_show_in``` (or the ```transition_back_in``` in the case of a ```monarch.back()``` call) transition is completed. The transition is considered completed when a ```transition_done``` message has been received (see section on [transitions](#transitions) above).
+
 
 ## Monarch API
 
