@@ -436,10 +436,10 @@ function M.preload(id, cb)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
 	local screen = screens[id]
-   if screen.preloaded then
-     if cb then cb() end
-     return
-  end
+	if screen.preloaded then
+		if cb then cb() end
+		return
+	end
 	local co
 	co = coroutine.create(function()
 		screen.co = co
