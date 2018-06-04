@@ -491,6 +491,25 @@ function M.get_stack()
 	return s
 end
 
+
+--- Get the screen on top of the stack
+-- @param offset Optional offset from the top of the stack, (eg -1 for the previous screen)
+-- @return Id of the requested screen
+function M.top(offset)
+	local screen = stack[#stack + (offset or 0)]
+	return screen and screen.id
+end
+
+
+--- Get the screen at the bottom of the stack
+-- @param offset Optional offset from the bottom of the stack
+-- @return Id of the requested screen
+function M.bottom(offset)
+	local screen = stack[1 + (offset or 0)]
+	return screen and screen.id
+end
+
+
 function M.dump_stack()
 	local s = ""
 	for i, screen in ipairs(stack) do

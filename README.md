@@ -261,6 +261,26 @@ Preload a Monarch screen. This will load but not enable the screen. This is usef
 * ```callback``` (function) - Optional function to call when the new screen is preloaded.
 
 
+### monarch.top([offset])
+Get the id of the screen at the top of the stack.
+
+**PARAMETERS**
+* ```offset``` (number) - Optional offset from the top of the stack, ie -1 to get the previous screen
+
+**RETURN**
+* ```screen_id``` (hash) - Id of the requested screen
+
+
+### monarch.bottom([offset])
+Get the id of the screen at the bottom of the stack.
+
+**PARAMETERS**
+* ```offset``` (number) - Optional offset from the bottom of the stack
+
+**RETURN**
+* ```screen_id``` (hash) - Id of the requested screen
+
+
 ### monarch.data(screen_id)
 Get the data associated with a screen (from a call to ```monarch.show()``` or ```monarch.back()```).
 

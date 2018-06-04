@@ -175,6 +175,31 @@ return function()
 			assert(wait_until_shown(SCREEN2), "Popup2 was never shown")
 			assert_stack({ SCREEN1, SCREEN2 })
 		end)
-										
+
+
+		it("should be able to get the id of the screen at the top and bottom of the stack", function()
+			assert(monarch.top() == nil)
+			assert(monarch.bottom() == nil)
+			assert(monarch.top(1) == nil)
+			assert(monarch.bottom(-1) == nil)
+						
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert(monarch.top() == SCREEN1)
+			assert(monarch.top(0) == SCREEN1)
+			assert(monarch.top(1) == nil)
+			assert(monarch.bottom() == SCREEN1)
+			assert(monarch.bottom(0) == SCREEN1)
+			assert(monarch.bottom(-1) == nil)
+									
+			monarch.show(SCREEN2)
+			assert(wait_until_hidden(SCREEN1), "Screen1 was never hidden")
+			assert(wait_until_shown(SCREEN2), "Screen2 was never shown")
+			assert_stack({ SCREEN1, SCREEN2 })
+			assert(monarch.top(0) == SCREEN2)
+			assert(monarch.top(-1) == SCREEN1)
+			assert(monarch.bottom(0) == SCREEN1)
+			assert(monarch.bottom(1) == SCREEN2)
+		end)
 	end)
 end
