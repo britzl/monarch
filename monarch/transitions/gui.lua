@@ -110,13 +110,13 @@ function M.create(node)
 			delay = delay,
 			in_progress = false,
 			urls = {},
-			transaction_id = nil
+			id = nil
 		}
 	end
 
 	local function finish_transaction(transition)
 		transition.in_progress = false
-		local message = { transition = transition.transition_id }
+		local message = { transition = transition.id }
 		while #transition.urls > 0 do
 			local url = table.remove(transition.urls)
 			msg.post(url, monarch.TRANSITION.DONE, message)
@@ -128,7 +128,7 @@ function M.create(node)
 		if not transition.in_progress then
 			table.insert(transition.urls, msg.url())
 			transition.in_progress = true
-			transition.transaction_id = transition_id
+			transition.id = transition_id
 			current_transition = transition
 			transition.fn(node, initial_data, transition.easing, transition.duration, transition.delay or 0, function()
 				finish_transaction(transition)
