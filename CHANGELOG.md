@@ -1,3 +1,7 @@
+## Monarch 2.8.0 [britzl released 2018-06-10]
+NEW: Prevent show/hide operations while busy showing/hiding another screen  
+FIX: Make sure to properly finish active transitions when layout changes
+
 ## Monarch 2.7.0 [britzl released 2018-06-04]
 NEW: Added monarch.top([offset]) and monarch.bottom([offset]) to get screen id of top and bottom screens (w. optional offset)  
 NEW: Transition messages now contain `next_screen` or `previous_screen`
