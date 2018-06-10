@@ -148,6 +148,23 @@ return function()
 		end)
 
 		
+		it("should prevent further operations while hiding/showing a screen", function()
+			assert(monarch.show(SCREEN1) == true)
+			assert(monarch.show(SCREEN2) == false)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+
+			assert(monarch.show(SCREEN2) == true)
+			assert(wait_until_shown(SCREEN2), "Screen1 was never shown")
+			assert_stack({ SCREEN1, SCREEN2 })
+
+			assert(monarch.back() == true)
+			assert(monarch.back() == false)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+		end)
+		
+		
 		it("should close any open popups when showing a popup without the Popup On Popup flag", function()
 			monarch.show(SCREEN1)
 			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")

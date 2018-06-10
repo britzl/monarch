@@ -245,12 +245,19 @@ The options table can contain the following fields:
 * ```clear``` (boolean) - If the clear flag is set Monarch will search the stack for the screen that is to be shown. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question.
 * ```reload``` (boolean) - If the reload flag is set Monarch will reload the collection proxy if it's already loaded (this can happen if the previous screen was a popup).
 
+**RETURN**
+* ```success``` (boolean) - True if the process of showing the screen was started successfully. False if already busy showing/hiding a screen.
+
+
 ### monarch.back([data], [callback])
 Go back to a previous Monarch screen
 
 **PARAMETERS**
 * ```data``` (table) - Optional data to associate with the screen you are going back to.  Retrieve using ```monarch.data()```.
 * ```callback``` (function) - Optional function to call when the previous screen is visible.
+
+**RETURN**
+* ```success``` (boolean) - True if the process of going back to a previous screen was started successfully. False if already busy showing/hiding a screen.
 
 
 ### monarch.preload(screen_id, [callback])

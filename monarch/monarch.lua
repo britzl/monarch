@@ -1,9 +1,5 @@
 local M = {}
 
-local screens = {}
-
-local stack = {}
-
 local CONTEXT = hash("monarch_context")
 local PROXY_LOADED = hash("proxy_loaded")
 local PROXY_UNLOADED = hash("proxy_unloaded")
@@ -24,6 +20,15 @@ M.TRANSITION.BACK_OUT = hash("transition_back_out")
 M.FOCUS = {}
 M.FOCUS.GAINED = hash("monarch_focus_gained")
 M.FOCUS.LOST = hash("monarch_focus_lost")
+
+-- all registered screens
+local screens = {}
+
+-- the current stack of screens
+local stack = {}
+
+-- true while busy showing/hiding something
+local busy = false
 
 
 local function log(...) end
@@ -225,6 +230,7 @@ local function show_out(screen, next_screen, cb)
 	log("show_out()", screen.id)
 	local co
 	co = coroutine.create(function()
+		busy = true
 		screen.co = co
 		change_context(screen)
 		release_input(screen)
@@ -238,6 +244,7 @@ local function show_out(screen, next_screen, cb)
 			unload(screen)
 		end
 		screen.co = nil
+		busy = false
 		if cb then cb() end
 	end)
 	coroutine.resume(co)
@@ -247,6 +254,7 @@ local function show_in(screen, previous_screen, reload, cb)
 	log("show_in()", screen.id)
 	local co
 	co = coroutine.create(function()
+		busy = true
 		screen.co = co
 		change_context(screen)
 		if reload and screen.loaded then
@@ -271,6 +279,7 @@ local function show_in(screen, previous_screen, reload, cb)
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		screen.co = nil
+		busy = false
 		if cb then cb() end
 	end)
 	coroutine.resume(co)
@@ -280,6 +289,7 @@ local function back_in(screen, previous_screen, cb)
 	log("back_in()", screen.id)
 	local co
 	co = coroutine.create(function()
+		busy = true
 		screen.co = co
 		change_context(screen)
 		if screen.preloaded then
@@ -297,6 +307,7 @@ local function back_in(screen, previous_screen, cb)
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		screen.co = nil
+		busy = false
 		if cb then cb() end
 	end)
 	coroutine.resume(co)
@@ -306,6 +317,7 @@ local function back_out(screen, next_screen, cb)
 	log("back_out()", screen.id)
 	local co
 	co = coroutine.create(function()
+		busy = true
 		screen.co = co
 		change_context(screen)
 		release_input(screen)
@@ -313,6 +325,7 @@ local function back_out(screen, next_screen, cb)
 		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id })
 		unload(screen)
 		screen.co = nil
+		busy = false
 		if cb then cb() end
 	end)
 	coroutine.resume(co)
@@ -346,8 +359,13 @@ end
 --				   This would be the case if doing a show() from a popup on the screen just below the popup.
 -- @param data (*) - Optional data to set on the screen. Can be retrieved by the data() function
 -- @param cb (function) - Optional callback to invoke when screen is shown
+-- @return success True if screen is successfully shown, false if busy performing another operation
 function M.show(id, options, data, cb)
 	assert(id, "You must provide a screen id")
+	if busy then
+		return false
+	end
+	
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
@@ -392,13 +410,20 @@ function M.show(id, options, data, cb)
 
 	-- show screen
 	show_in(screen, top, options and options.reload, cb)
+
+	return true
 end
 
 
 -- Go back to the previous screen in the stack
 -- @param data (*) - Optional data to set for the previous screen
 -- @param cb (function) - Optional callback to invoke when the previous screen is visible again
+-- @return true if successfully going back, false if busy performing another operation
 function M.back(data, cb)
+	if busy then
+		return false
+	end
+
 	local screen = table.remove(stack)
 	if screen then
 		log("back()", screen.id)
@@ -424,6 +449,7 @@ function M.back(data, cb)
 	elseif cb then
 		cb()
 	end
+	return true
 end
 
 --- Preload a screen. This will load but not enable and show a screen. Useful for "heavier" screens
