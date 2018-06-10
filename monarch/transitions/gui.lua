@@ -114,7 +114,7 @@ function M.create(node)
 		}
 	end
 
-	local function finish_transaction(transition)
+	local function finish_transition(transition)
 		transition.in_progress = false
 		local message = { transition = transition.id }
 		while #transition.urls > 0 do
@@ -131,7 +131,7 @@ function M.create(node)
 			transition.id = transition_id
 			current_transition = transition
 			transition.fn(node, initial_data, transition.easing, transition.duration, transition.delay or 0, function()
-				finish_transaction(transition)
+				finish_transition(transition)
 			end)
 		end
 	end
@@ -146,7 +146,7 @@ function M.create(node)
 			if current_transition then
 				current_transition.fn(node, initial_data, current_transition.easing, 0, 0)
 				if current_transition.in_progress then
-					finish_transaction(current_transition)
+					finish_transition(current_transition)
 				end
 			end
 		else
