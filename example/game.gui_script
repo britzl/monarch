@@ -7,11 +7,7 @@ function init(self)
 	local data = monarch.data(hash("game"))
 	gui.set_text(gui.get_node("level"), tostring(data.level))
 
-	self.transition = transitions.create(gui.get_node("root"))
-		.show_in(transitions.slide_in_right, gui.EASING_OUTQUAD, 0.6, 0)
-		.show_out(transitions.slide_out_left, gui.EASING_INQUAD, 0.6, 0)
-		.back_in(transitions.slide_in_left, gui.EASING_OUTQUAD, 0.6, 0)
-		.back_out(transitions.slide_out_right, gui.EASING_INQUAD, 0.6, 0)
+	self.transition = transitions.in_right_out_left(gui.get_node("root"), 0.6, 0)
 end
 
 function on_input(self, action_id, action)

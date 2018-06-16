@@ -7,6 +7,7 @@ local SCREEN2 = hash("screen2")
 local POPUP1 = hash("popup1")
 local POPUP2 = hash("popup2")
 local FOOBAR = hash("foobar")
+local TRANSITION1 = hash("transition1")
 
 return function()
 
@@ -34,6 +35,9 @@ return function()
 	end
 	local function wait_until_hidden(screen_id)
 		return wait_timeout(is_hidden, screen_id)
+	end
+	local function wait_until_not_busy()
+		return wait_timeout(function() return not monarch.is_busy() end)
 	end
 
 	local function assert_stack(expected_screens)
@@ -155,7 +159,7 @@ return function()
 			assert_stack({ SCREEN1 })
 
 			assert(monarch.show(SCREEN2) == true)
-			assert(wait_until_shown(SCREEN2), "Screen1 was never shown")
+			assert(wait_until_shown(SCREEN2), "Screen2 was never shown")
 			assert_stack({ SCREEN1, SCREEN2 })
 
 			assert(monarch.back() == true)
@@ -217,6 +221,13 @@ return function()
 			assert(monarch.top(-1) == SCREEN1)
 			assert(monarch.bottom(0) == SCREEN1)
 			assert(monarch.bottom(1) == SCREEN2)
+		end)
+
+		it("should be busy while transition is running", function()
+			monarch.show(TRANSITION1)
+			assert(wait_until_shown(TRANSITION1), "Transition1 was never shown")
+			assert(monarch.is_busy())
+			assert(wait_until_not_busy())
 		end)
 	end)
 end

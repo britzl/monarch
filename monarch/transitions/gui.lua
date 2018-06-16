@@ -1,4 +1,5 @@
 local monarch = require "monarch.monarch"
+local easings = require "monarch.transitions.easings"
 
 local M = {}
 
@@ -197,5 +198,61 @@ function M.create(node)
 	
 	return instance
 end
+
+
+--- Create transition where the screen slides in from the right when shown and out
+-- to the left when hidden (and the reverse when going back)
+-- @param node
+-- @param duration
+-- @param delay Optional. Defaults to 0
+-- @param easing Optional. A constant from monarch.transitions.easing
+-- @return Transition instance
+function M.in_right_out_left(node, duration, delay, easing)
+	assert(node, "You must provide a node")
+	assert(duration, "You must provide a duration")
+	easing = easing or easings.QUAD()
+	return M.create(node)
+	.show_in(M.slide_in_right, easing.OUT, duration, delay or 0)
+	.show_out(M.slide_out_left, easing.IN, duration, delay or 0)
+	.back_in(M.slide_in_left, easing.OUT, duration, delay or 0)
+	.back_out(M.slide_out_right, easing.IN, duration, delay or 0)
+end
+
+
+function M.in_left_out_right(node, duration, delay, easing)
+	assert(node, "You must provide a node")
+	assert(duration, "You must provide a duration")
+	easing = easing or easings.QUAD()
+	return M.create(node)
+	.show_in(M.slide_in_left, easing.OUT, duration, delay or 0)
+	.show_out(M.slide_out_right, easing.IN, duration, delay or 0)
+	.back_in(M.slide_in_right, easing.OUT, duration, delay or 0)
+	.back_out(M.slide_out_left, easing.IN, duration, delay or 0)
+end
+
+
+function M.in_right_out_right(node, duration, delay, easing)
+	assert(node, "You must provide a node")
+	assert(duration, "You must provide a duration")
+	easing = easing or easings.QUAD()
+	return M.create(node)
+	.show_in(M.slide_in_right, easing.OUT, duration, delay or 0)
+	.show_out(M.slide_out_right, easing.IN, duration, delay or 0)
+	.back_in(M.slide_in_right, easing.OUT, duration, delay or 0)
+	.back_out(M.slide_out_right, easing.IN, duration, delay or 0)
+end
+
+
+function M.in_left_out_left(node, duration, delay, easing)
+	assert(node, "You must provide a node")
+	assert(duration, "You must provide a duration")
+	easing = easing or easings.QUAD()
+	return M.create(node)
+	.show_in(M.slide_in_left, easing.OUT, duration, delay or 0)
+	.show_out(M.slide_out_left, easing.IN, duration, delay or 0)
+	.back_in(M.slide_in_left, easing.OUT, duration, delay or 0)
+	.back_out(M.slide_out_left, easing.IN, duration, delay or 0)
+end
+
 
 return M

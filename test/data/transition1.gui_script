@@ -1,0 +1,10 @@
+local transitions = require "monarch.transitions.gui"
+
+function init(self)
+	self.transition = transitions.in_right_out_left(gui.get_node("root"), 1)
+end
+
+function on_message(self, message_id, message, sender)
+	print(message_id)
+	self.transition.handle(message_id, message, sender)
+end

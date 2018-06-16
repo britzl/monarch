@@ -122,8 +122,10 @@ You can add optional transitions when navigating between screens. The default be
 * ```transition_back_in``` (constant defined as ```monarch.TRANSITION.BACK_IN```)
 * ```transition_back_out``` (constant defined as ```monarch.TRANSITION.BACK_OUT```)
 
-When a transition is completed it is up to the developer to send a ```transition_done``` (constant ```monarch.TRANSITION.DONE```) message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence. Monarch comes with a system for setting up transitions easily in a gui_script. Example:
+When a transition is completed it is up to the developer to send a ```transition_done``` (constant ```monarch.TRANSITION.DONE```) message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence.
 
+
+### Predefined transitions
 Monarch comes with a system for setting up transitions easily in a gui_script using the ```monarch.transitions.gui``` module. Example:
 
 	local transitions = require "monarch.transitions.gui"
@@ -148,7 +150,6 @@ Monarch comes with a system for setting up transitions easily in a gui_script us
 		end
 	end
 
-### Predefined transitions
 The predefined transitions provided by ```monarch.transitions.gui``` are:
 
 * ```slide_in_right```
@@ -162,6 +163,23 @@ The predefined transitions provided by ```monarch.transitions.gui``` are:
 * ```scale_in```
 * ```scale_out```
 
+Additionally there's functionality to create a full set of transitions for common transition styles:
+
+* ```transitions.in_right_out_left(node, duration, [delay], [easing])```
+* ```transitions.in_left_out_right(node, duration, [delay], [easing])```
+* ```transitions.in_left_out_left(node, duration, [delay], [easing])```
+* ```transitions.in_right_out_right(node, duration, [delay], [easing])```
+
+**PARAMETERS**
+* ```node``` (node) - Gui node to animate.
+* ```duration``` (number) - Transition duration in seconds.
+* ```delay``` (number) - Transition delay in seconds.
+* ```easing``` (table) - Easing table, created from a function provided by ```monarch.transitions.easings```
+
+**RETURN**
+* ```instance``` - The created transition instance
+
+
 ### Custom transitions
 You can create and use your own transition as long as the provided transition function has the following function signature:
 
@@ -174,6 +192,7 @@ You can create and use your own transition as long as the provided transition fu
 * ```duration``` (number) - Transition duration in seconds.
 * ```delay``` (number) - Transition delay in seconds.
 * ```cb``` (function) - This function must be called when the transition is completed.
+
 
 ### Dynamic orientation and resized windows
 When using dynamic screen orientation together with gui layouts or using transitions on a platform where the window can be resized it's important to make sure that the created transitions adapt to the change in orientation or window size. The transition system takes care of layout changes automatically, but when it comes to changes in window size you need to notify the transition manually:
@@ -306,6 +325,13 @@ Check if a Monarch screen exists.
 
 **RETURN**
 * ```exists``` (boolean) - True if the screen exists.
+
+
+### monarch.is_busy()
+Check if Monarch is busy showing and/or hiding a screen.
+
+**RETURN**
+* ```busy``` (boolean) - True if busy hiding and/or showing a screen.
 
 
 ### monarch.debug()
