@@ -27,8 +27,9 @@ local screens = {}
 -- the current stack of screens
 local stack = {}
 
--- true while busy showing/hiding something
-local busy = false
+-- the number of active transitions
+-- monarch is considered busy while there are active transitions
+local active_transition_count = 0
 
 
 local function log(...) end
@@ -230,7 +231,7 @@ local function show_out(screen, next_screen, cb)
 	log("show_out()", screen.id)
 	local co
 	co = coroutine.create(function()
-		busy = true
+		active_transition_count = active_transition_count + 1
 		screen.co = co
 		change_context(screen)
 		release_input(screen)
@@ -244,7 +245,7 @@ local function show_out(screen, next_screen, cb)
 			unload(screen)
 		end
 		screen.co = nil
-		busy = false
+		active_transition_count = active_transition_count - 1
 		if cb then cb() end
 	end)
 	coroutine.resume(co)
@@ -254,7 +255,7 @@ local function show_in(screen, previous_screen, reload, cb)
 	log("show_in()", screen.id)
 	local co
 	co = coroutine.create(function()
-		busy = true
+		active_transition_count = active_transition_count + 1
 		screen.co = co
 		change_context(screen)
 		if reload and screen.loaded then
@@ -279,7 +280,7 @@ local function show_in(screen, previous_screen, reload, cb)
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		screen.co = nil
-		busy = false
+		active_transition_count = active_transition_count - 1
 		if cb then cb() end
 	end)
 	coroutine.resume(co)
@@ -289,7 +290,7 @@ local function back_in(screen, previous_screen, cb)
 	log("back_in()", screen.id)
 	local co
 	co = coroutine.create(function()
-		busy = true
+		active_transition_count = active_transition_count + 1
 		screen.co = co
 		change_context(screen)
 		if screen.preloaded then
@@ -307,7 +308,7 @@ local function back_in(screen, previous_screen, cb)
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		screen.co = nil
-		busy = false
+		active_transition_count = active_transition_count - 1
 		if cb then cb() end
 	end)
 	coroutine.resume(co)
@@ -317,7 +318,7 @@ local function back_out(screen, next_screen, cb)
 	log("back_out()", screen.id)
 	local co
 	co = coroutine.create(function()
-		busy = true
+		active_transition_count = active_transition_count + 1
 		screen.co = co
 		change_context(screen)
 		release_input(screen)
@@ -325,7 +326,7 @@ local function back_out(screen, next_screen, cb)
 		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id })
 		unload(screen)
 		screen.co = nil
-		busy = false
+		active_transition_count = active_transition_count - 1
 		if cb then cb() end
 	end)
 	coroutine.resume(co)
@@ -342,6 +343,7 @@ function M.data(id)
 	return screens[id].data
 end
 
+
 --- Checks to see if a screen id is registered
 -- @param id (string|hash) Id of the screen to check if is registered
 -- @return True or False if the screen id is registered or not
@@ -350,6 +352,14 @@ function M.screen_exists(id)
 	id = tohash(id)
 	return screens[id] ~= nil
 end
+
+
+--- Check if Monarch is busy hiding and or showing a screen
+-- @return true if busy
+function M.is_busy()
+	return active_transition_count > 0
+end
+
 
 --- Show a new screen
 -- @param id (string|hash) - Id of the screen to show
@@ -362,7 +372,7 @@ end
 -- @return success True if screen is successfully shown, false if busy performing another operation
 function M.show(id, options, data, cb)
 	assert(id, "You must provide a screen id")
-	if busy then
+	if M.is_busy() then
 		return false
 	end
 	
@@ -420,7 +430,7 @@ end
 -- @param cb (function) - Optional callback to invoke when the previous screen is visible again
 -- @return true if successfully going back, false if busy performing another operation
 function M.back(data, cb)
-	if busy then
+	if M.is_busy() then
 		return false
 	end
 
