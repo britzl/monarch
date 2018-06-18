@@ -472,7 +472,7 @@ function M.preload(id, cb)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
 	local screen = screens[id]
-	if screen.preloaded then
+	if screen.preloaded or screen.loaded then
 		if cb then cb() end
 		return
 	end
