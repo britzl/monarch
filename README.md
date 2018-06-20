@@ -334,5 +334,35 @@ Check if Monarch is busy showing and/or hiding a screen.
 * ```busy``` (boolean) - True if busy hiding and/or showing a screen.
 
 
+### monarch.add_listener([url])
+Add a URL that will be notified of navigation events.
+
+**PARAMETERS**
+* ```url``` (url) - URL to send navigation events to. Will use current URL if omitted.
+
+
+### monarch.remove_listener([url])
+Remove a previously added listener.
+
+**PARAMETERS**
+* ```url``` (url) - URL to remove. Will use current URL if omitted.
+
+
 ### monarch.debug()
 Enable verbose logging of the internals of Monarch.
+
+
+### monarch.SCREEN_VISIBLE
+Message sent to listeners when a screen becomes visible.
+
+**PARAMETERS**
+* ```screen``` (hash) - Id of the screen
+* ```previous_screen``` (hash) - Id of theprevious screen (if any)
+
+
+### monarch.SCREEN_HIDDEN
+Message sent to listeners when a screen is hidden.
+
+**PARAMETERS**
+* ```screen``` (hash) - Id of the screen
+* ```next_screen``` (hash) - Id of the next screen (if any)
