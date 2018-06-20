@@ -352,16 +352,32 @@ Remove a previously added listener.
 Enable verbose logging of the internals of Monarch.
 
 
-### monarch.SCREEN_VISIBLE
-Message sent to listeners when a screen becomes visible.
+### monarch.SCREEN_TRANSITION_IN_STARTED
+Message sent to listeners when a screen has started to transition in.
 
 **PARAMETERS**
 * ```screen``` (hash) - Id of the screen
-* ```previous_screen``` (hash) - Id of theprevious screen (if any)
+* ```previous_screen``` (hash) - Id of the previous screen (if any)
 
 
-### monarch.SCREEN_HIDDEN
-Message sent to listeners when a screen is hidden.
+### monarch.SCREEN_TRANSITION_IN_FINISHED
+Message sent to listeners when a screen has finished to transition in.
+
+**PARAMETERS**
+* ```screen``` (hash) - Id of the screen
+* ```previous_screen``` (hash) - Id of the previous screen (if any)
+
+
+### monarch.SCREEN_TRANSITION_OUT_STARTED
+Message sent to listeners when a screen has started to transition out.
+
+**PARAMETERS**
+* ```screen``` (hash) - Id of the screen
+* ```next_screen``` (hash) - Id of the next screen (if any)
+
+
+### monarch.SCREEN_TRANSITION_OUT_FINISHED
+Message sent to listeners when a screen has finished to transition out.
 
 **PARAMETERS**
 * ```screen``` (hash) - Id of the screen
