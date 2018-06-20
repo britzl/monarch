@@ -10,6 +10,7 @@ local ASYNC_LOAD = hash("async_load")
 local UNLOAD = hash("unload")
 local ENABLE = hash("enable")
 
+-- transition messages
 M.TRANSITION = {}
 M.TRANSITION.DONE = hash("transition_done")
 M.TRANSITION.SHOW_IN = hash("transition_show_in")
@@ -17,15 +18,24 @@ M.TRANSITION.SHOW_OUT = hash("transition_show_out")
 M.TRANSITION.BACK_IN = hash("transition_back_in")
 M.TRANSITION.BACK_OUT = hash("transition_back_out")
 
+-- focus messages
 M.FOCUS = {}
 M.FOCUS.GAINED = hash("monarch_focus_gained")
 M.FOCUS.LOST = hash("monarch_focus_lost")
+
+-- listener messages
+M.SCREEN_VISIBLE = hash("monarch_screen_visible")
+M.SCREEN_HIDDEN = hash("monarch_screen_hidden")
+
 
 -- all registered screens
 local screens = {}
 
 -- the current stack of screens
 local stack = {}
+
+-- navigation listeners
+local listeners = {}
 
 -- the number of active transitions
 -- monarch is considered busy while there are active transitions
@@ -46,9 +56,15 @@ local function tohash(s)
 	return hash_lookup[s]
 end
 
+local function notify_listeners(message_id, message)
+	log("notify_listeners()", message_id)
+	for _,url in pairs(listeners) do
+		msg.post(url, message_id, message or {})
+	end
+end
 
 local function screen_from_proxy(proxy)
-	for _, screen in pairs(screens) do
+	for _,screen in pairs(screens) do
 		if screen.proxy == proxy then
 			return screen
 		end
@@ -57,7 +73,7 @@ end
 
 local function screen_from_script()
 	local url = msg.url()
-	for _, screen in pairs(screens) do
+	for _,screen in pairs(screens) do
 		if screen.script == url then
 			return screen
 		end
@@ -188,14 +204,14 @@ end
 local function focus_gained(screen, previous_screen)
 	log("focus_gained()", screen.id)
 	if screen.focus_url then
-		msg.post(screen.focus_url, M.FOCUS.GAINED, {id = previous_screen and previous_screen.id})
+		msg.post(screen.focus_url, M.FOCUS.GAINED, { id = previous_screen and previous_screen.id })
 	end
 end
 
 local function focus_lost(screen, next_screen)
 	log("focus_lost()", screen.id)
 	if screen.focus_url then
-		msg.post(screen.focus_url, M.FOCUS.LOST, {id = next_screen and next_screen.id})
+		msg.post(screen.focus_url, M.FOCUS.LOST, { id = next_screen and next_screen.id })
 	end
 end
 
@@ -247,6 +263,7 @@ local function show_out(screen, next_screen, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
+		notify_listeners(M.SCREEN_HIDDEN, { screen = screen.id, next_screen = next_screen.id })
 	end)
 	coroutine.resume(co)
 end
@@ -282,12 +299,14 @@ local function show_in(screen, previous_screen, reload, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
+		notify_listeners(M.SCREEN_VISIBLE, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 	end)
 	coroutine.resume(co)
 end
 
 local function back_in(screen, previous_screen, cb)
 	log("back_in()", screen.id)
+	print("back_in()", screen.id)
 	local co
 	co = coroutine.create(function()
 		active_transition_count = active_transition_count + 1
@@ -310,12 +329,14 @@ local function back_in(screen, previous_screen, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
+		notify_listeners(M.SCREEN_VISIBLE, { screen = screen.id, previous_screen = previous_screen.id })
 	end)
 	coroutine.resume(co)
 end
 
 local function back_out(screen, next_screen, cb)
 	log("back_out()", screen.id)
+	print("back_out()", screen.id)
 	local co
 	co = coroutine.create(function()
 		active_transition_count = active_transition_count + 1
@@ -328,6 +349,7 @@ local function back_out(screen, next_screen, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
+		notify_listeners(M.SCREEN_HIDDEN, { screen = screen.id, next_screen = next_screen and next_screen.id })
 	end)
 	coroutine.resume(co)
 end
@@ -547,6 +569,26 @@ end
 function M.bottom(offset)
 	local screen = stack[1 + (offset or 0)]
 	return screen and screen.id
+end
+
+local function url_to_key(url)
+	return (url.socket or hash("")) .. (url.path or hash("")) .. (url.fragment or hash(""))
+end
+
+
+--- Add a listener to be notified of when screens are shown or hidden
+-- @param url The url to notify, nil for current url
+function M.add_listener(url)
+	url = url or msg.url()
+	listeners[url_to_key(url)] = url
+end
+
+
+--- Remove a previously added listener
+-- @param url The url to remove, nil for current url
+function M.remove_listener(url)
+	url = url or msg.url()
+	listeners[url_to_key(url)] = nil
 end
 
 

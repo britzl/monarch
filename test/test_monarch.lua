@@ -1,4 +1,6 @@
 local cowait = require "test.cowait"
+local mock_msg = require "test.msg"
+local unload = require "deftest.util.unload"
 local monarch = require "monarch.monarch"
 
 local SCREEN1_STR = hash("screen1")
@@ -55,12 +57,14 @@ return function()
 	
 	describe("monarch", function()
 		before(function()
+			mock_msg.mock()
 			monarch = require "monarch.monarch"
 			screens_instances = collectionfactory.create("#screensfactory")
 		end)
 
 		after(function()
-			package.loaded["monarch.monarch"] = nil
+			mock_msg.unmock()
+			unload.unload("monarch%..*")
 			for id,instance_id in pairs(screens_instances) do
 				go.delete(instance_id)
 			end
@@ -228,6 +232,35 @@ return function()
 			assert(wait_until_shown(TRANSITION1), "Transition1 was never shown")
 			assert(monarch.is_busy())
 			assert(wait_until_not_busy())
+		end)
+
+		it("should be able to notify listeners of navigation events", function()
+			local URL1 = msg.url(screens_instances[hash("/listener1")])
+			local URL2 = msg.url(screens_instances[hash("/listener2")])
+			monarch.add_listener(URL1)
+			monarch.add_listener(URL2)
+
+			monarch.show(SCREEN1)
+			assert(wait_until_not_busy())
+			
+			monarch.remove_listener(URL2)
+			monarch.show(SCREEN2)
+			assert(wait_until_not_busy())
+			
+			monarch.back()
+			assert(wait_until_not_busy())
+						
+			local messages_1 = mock_msg.messages(URL1)
+			local messages_2 = mock_msg.messages(URL2)
+			assert(#messages_1 == 5)
+			assert(#messages_2 == 1)
+			assert(messages_2[1].message_id == monarch.SCREEN_VISIBLE and messages_1[1].message.screen == SCREEN1)
+			
+			assert(messages_1[1].message_id == monarch.SCREEN_VISIBLE and messages_1[1].message.screen == SCREEN1)
+			assert(messages_1[2].message_id == monarch.SCREEN_HIDDEN and messages_1[2].message.screen == SCREEN1)
+			assert(messages_1[3].message_id == monarch.SCREEN_VISIBLE and messages_1[3].message.screen == SCREEN2)
+			assert(messages_1[4].message_id == monarch.SCREEN_HIDDEN and messages_1[4].message.screen == SCREEN2)
+			assert(messages_1[5].message_id == monarch.SCREEN_VISIBLE and messages_1[5].message.screen == SCREEN1)
 		end)
 	end)
 end
