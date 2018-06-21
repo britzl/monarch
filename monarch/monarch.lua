@@ -1,3 +1,5 @@
+local callback_tracker = require "monarch.utils.callback_tracker"
+
 local M = {}
 
 local CONTEXT = hash("monarch_context")
@@ -402,6 +404,8 @@ function M.show(id, options, data, cb)
 		log("show() monarch is busy, ignoring request")
 		return false
 	end
+
+	local callbacks = callback_tracker()
 	
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
@@ -423,13 +427,13 @@ function M.show(id, options, data, cb)
 			-- close all popups
 			while top.popup do
 				stack[#stack] = nil
-				show_out(top, screen)
+				show_out(top, screen, callbacks.track())
 				top = stack[#stack]
 			end
 			-- unload and transition out from top
 			-- unless we're showing the same screen as is already visible
 			if top and top.id ~= screen.id then
-				show_out(top, screen)
+				show_out(top, screen, callbacks.track())
 			end
 		end
 	end
@@ -446,7 +450,9 @@ function M.show(id, options, data, cb)
 	end
 
 	-- show screen
-	show_in(screen, top, options and options.reload, cb)
+	show_in(screen, top, options and options.reload, callbacks.track())
+
+	if cb then callbacks.when_done(cb) end
 
 	return true
 end
@@ -462,6 +468,8 @@ function M.back(data, cb)
 		return false
 	end
 
+	local callbacks = callback_tracker()
+	
 	local screen = table.remove(stack)
 	if screen then
 		log("back()", screen.id)
@@ -473,7 +481,7 @@ function M.back(data, cb)
 				if data then
 					top.data = data
 				end
-				back_in(top, screen, cb)
+				back_in(top, screen, callbacks.track())
 			end)
 		else
 			back_out(screen, top)
@@ -481,12 +489,13 @@ function M.back(data, cb)
 				if data then
 					top.data = data
 				end
-				back_in(top, screen, cb)
+				back_in(top, screen, callbacks.track())
 			end
 		end
-	elseif cb then
-		cb()
 	end
+
+	if cb then callbacks.when_done(cb) end
+	
 	return true
 end
 
