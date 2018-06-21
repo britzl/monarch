@@ -399,6 +399,7 @@ end
 function M.show(id, options, data, cb)
 	assert(id, "You must provide a screen id")
 	if M.is_busy() then
+		log("show() monarch is busy, ignoring request")
 		return false
 	end
 	
@@ -457,6 +458,7 @@ end
 -- @return true if successfully going back, false if busy performing another operation
 function M.back(data, cb)
 	if M.is_busy() then
+		log("back() monarch is busy, ignoring request")
 		return false
 	end
 
