@@ -310,7 +310,6 @@ end
 
 local function back_in(screen, previous_screen, cb)
 	log("back_in()", screen.id)
-	print("back_in()", screen.id)
 	local co
 	co = coroutine.create(function()
 		active_transition_count = active_transition_count + 1
@@ -341,7 +340,6 @@ end
 
 local function back_out(screen, next_screen, cb)
 	log("back_out()", screen.id)
-	print("back_out()", screen.id)
 	local co
 	co = coroutine.create(function()
 		notify_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
