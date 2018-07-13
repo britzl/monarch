@@ -6,7 +6,7 @@ function init(self)
 
 	gui.set_text(gui.get_node("timestamp"), os.date())
 
-	self.transition = transitions.in_right_out_left(gui.get_node("root"), 0.6, 0)
+	self.transition = transitions.fade_in_out(gui.get_node("root"), 0.6, 0)
 end
 
 function on_input(self, action_id, action)

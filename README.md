@@ -162,6 +162,8 @@ The predefined transitions provided by ```monarch.transitions.gui``` are:
 * ```slide_out_bottom```
 * ```scale_in```
 * ```scale_out```
+* ```fade_in``` - Set node alpha to fully transparent (i.e. 0.0) and fade to fully opaque (i.e. 1.0)
+* ```fade_out``` - Set node alpha to fully opaque (i.e. 1.0) and fade to fully transparent (i.e. 0.0)
 
 Additionally there's functionality to create a full set of transitions for common transition styles:
 
@@ -169,6 +171,7 @@ Additionally there's functionality to create a full set of transitions for commo
 * ```transitions.in_left_out_right(node, duration, [delay], [easing])```
 * ```transitions.in_left_out_left(node, duration, [delay], [easing])```
 * ```transitions.in_right_out_right(node, duration, [delay], [easing])```
+* ```transitions.fade_in_out(node, duration, [delay], [easing])```
 
 **PARAMETERS**
 * ```node``` (node) - Gui node to animate.

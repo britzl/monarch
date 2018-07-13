@@ -88,6 +88,22 @@ function M.scale_out(node, from, easing, duration, delay, cb)
 	gui.animate(node, gui.PROP_SCALE, ZERO_SCALE, easing, duration, delay, cb)
 end
 
+function M.fade_out(node, from, easing, duration, delay, cb)
+	local to = gui.get_color(node)
+	to.w = 1
+	gui.set_color(node, to)
+	to.w = 0
+	gui.animate(node, gui.PROP_COLOR, to, easing, duration, delay, cb)
+end
+
+function M.fade_in(node, from, easing, duration, delay, cb)
+	local to = gui.get_color(node)
+	to.w = 0
+	gui.set_color(node, to)
+	to.w = 1
+	gui.animate(node, gui.PROP_COLOR, to, easing, duration, delay, cb)
+end
+
 --- Create a transition for a node
 -- @return Transition instance
 function M.create(node)
@@ -252,6 +268,18 @@ function M.in_left_out_left(node, duration, delay, easing)
 	.show_out(M.slide_out_left, easing.IN, duration, delay or 0)
 	.back_in(M.slide_in_left, easing.OUT, duration, delay or 0)
 	.back_out(M.slide_out_left, easing.IN, duration, delay or 0)
+end
+
+
+function M.fade_in_out(node, duration, delay, easing)
+	assert(node, "You must provide a node")
+	assert(duration, "You must provide a duration")
+	easing = easing or easings.QUAD()
+	return M.create(node)
+	.show_in(M.fade_in, easing.OUT, duration, delay or 0)
+	.show_out(M.fade_out, easing.IN, duration, delay or 0)
+	.back_in(M.fade_in, easing.OUT, duration, delay or 0)
+	.back_out(M.fade_out, easing.IN, duration, delay or 0)
 end
 
 
