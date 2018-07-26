@@ -127,6 +127,7 @@ end
 --		  screen transitions
 -- 		* focus_url - URL to a script that is to be notified of focus
 --		  lost/gained events
+--		* timestep_below_popup - Timestep to set on proxy when below a popup
 function M.register(id, proxy, settings)
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
@@ -141,6 +142,7 @@ function M.register(id, proxy, settings)
 		popup_on_popup = settings and settings.popup_on_popup,
 		transition_url = settings and settings.transition_url,
 		focus_url = settings and settings.focus_url,
+		timestep_below_popup = settings and settings.timestep_below_popup or 1,
 	}
 end
 
@@ -219,6 +221,18 @@ local function focus_lost(screen, next_screen)
 	end
 end
 
+local function change_timestep(screen)
+	screen.changed_timestep = true
+	msg.post(screen.proxy, "set_time_step", { mode = 0, factor = screen.timestep_below_popup })
+end
+
+local function reset_timestep(screen)
+	if screen.changed_timestep then
+		msg.post(screen.proxy, "set_time_step", { mode = 0, factor = 1 })
+		screen.changed_timestep = false
+	end
+end
+
 local function disable(screen, next_screen)
 	log("disable()", screen.id)
 	local co
@@ -227,6 +241,11 @@ local function disable(screen, next_screen)
 		change_context(screen)
 		release_input(screen)
 		focus_lost(screen, next_screen)
+		if next_screen and next_screen.popup then
+			change_timestep(screen)
+		else
+			reset_timestep(screen)
+		end
 		screen.co = nil
 		if cb then cb() end
 	end)
@@ -241,6 +260,7 @@ local function enable(screen, previous_screen)
 		change_context(screen)
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
+		reset_timestep(screen)
 		screen.co = nil
 		if cb then cb() end
 	end)
@@ -257,13 +277,16 @@ local function show_out(screen, next_screen, cb)
 		change_context(screen)
 		release_input(screen)
 		focus_lost(screen, next_screen)
+		reset_timestep(screen)
 		-- if the next screen is a popup we want the current screen to stay visible below the popup
 		-- if the next screen isn't a popup the current one should be unloaded and transitioned out
-		local next_is_popup = next_screen and not next_screen.popup
+		local next_is_popup = next_screen and next_screen.popup
 		local current_is_popup = screen.popup
-		if (next_is_popup and not current_is_popup) or (current_is_popup) then
+		if (not next_is_popup and not current_is_popup) or (current_is_popup) then
 			transition(screen, M.TRANSITION.SHOW_OUT, { next_screen = next_screen.id })
 			unload(screen)
+		elseif next_is_popup then
+			change_timestep(screen)
 		end
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
@@ -299,6 +322,7 @@ local function show_in(screen, previous_screen, reload, cb)
 			async_load(screen)
 		end
 		stack[#stack + 1] = screen
+		reset_timestep(screen)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id })
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
@@ -327,6 +351,7 @@ local function back_in(screen, previous_screen, cb)
 			log("back_in() loading screen", screen.id)
 			async_load(screen)
 		end
+		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id })
 		end
@@ -350,6 +375,9 @@ local function back_out(screen, next_screen, cb)
 		change_context(screen)
 		release_input(screen)
 		focus_lost(screen, next_screen)
+		if next_screen and screen.popup then
+			reset_timestep(next_screen)
+		end
 		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id })
 		unload(screen)
 		screen.co = nil

@@ -26,6 +26,7 @@ Monarch screens are created in individual collections and loaded through collect
 * **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app.
 * **Popup (boolean)** - Check this if the screen should be treated as a [popup](#popups).
 * **Popup on Popup (boolean)** - Check this if the screen is a [popup](#popups) and it can be shown on top of other popups.
+* **Timestep below Popup (number)** - Timestep to set on screen proxy when it is below a popup. This is useful when pausing animations and gameplay while a popup is open.
 * **Transition Url (url)** - Optional URL to call when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Url (url)** - Optional URL to call when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 

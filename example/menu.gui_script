@@ -6,6 +6,8 @@ function init(self)
 
 	gui.set_text(gui.get_node("timestamp"), os.date())
 
+	gui.animate(gui.get_node("spinner"), gui.PROP_ROTATION, vmath.vector3(0, 0, -360), gui.EASING_INOUTQUAD, 2, 0, nil, gui.PLAYBACK_LOOP_FORWARD)
+
 	self.transition = transitions.fade_in_out(gui.get_node("root"), 0.6, 0)
 end
 

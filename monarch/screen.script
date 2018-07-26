@@ -4,6 +4,7 @@ go.property("screen_proxy", msg.url("#collectionproxy"))
 go.property("screen_id", hash(""))
 go.property("popup", false)
 go.property("popup_on_popup", false)
+go.property("timestep_below_popup", 1)
 go.property("transition_url", msg.url())
 go.property("focus_url", msg.url())
 
@@ -18,7 +19,8 @@ function init(self)
 			popup = self.popup,
 			popup_on_popup = self.popup_on_popup,
 			transition_url = self.transition_url,
-			focus_url = self.focus_url
+			focus_url = self.focus_url,
+			timestep_below_popup = self.timestep_below_popup,
 		}
 	)
 end

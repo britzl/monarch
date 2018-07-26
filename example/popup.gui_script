@@ -8,6 +8,8 @@ function init(self)
 	self.about = gui.get_node("about_button")
 	gui.set_render_order(14)
 
+	gui.animate(gui.get_node("spinner"), gui.PROP_ROTATION, vmath.vector3(0, 0, -360), gui.EASING_INOUTQUAD, 2, 0, nil, gui.PLAYBACK_LOOP_FORWARD)
+	
 	self.transition = transitions.create(gui.get_node("root"))
 		.show_in(transitions.scale_in, gui.EASING_OUTBACK, 0.3, 0)
 		.show_out(transitions.scale_out, gui.EASING_INBACK, 0.3, 0)
