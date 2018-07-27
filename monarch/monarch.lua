@@ -191,12 +191,27 @@ end
 
 local function async_load(screen)
 	log("async_load()", screen.id)
-	screen.wait_for = PROXY_LOADED
-	msg.post(screen.proxy, ASYNC_LOAD)
-	coroutine.yield()
-	msg.post(screen.proxy, ENABLE)
-	screen.loaded = true
-	screen.wait_for = nil
+
+	-- if the screen has been preloaded we need to enable it
+	if screen.preloaded then
+		log("show_in() screen was preloaded", screen.id)
+		msg.post(screen.proxy, ENABLE)
+		screen.loaded = true
+		screen.preloaded = false
+		-- the screen could be loaded if the previous screen was a popup
+		-- and the popup asked to show this screen again
+		-- in that case we shouldn't attempt to load it again
+	elseif not screen.loaded then
+		log("show_in() loading screen", screen.id)
+		screen.wait_for = PROXY_LOADED
+		msg.post(screen.proxy, ASYNC_LOAD)
+		coroutine.yield()
+		msg.post(screen.proxy, ENABLE)
+		screen.loaded = true
+		screen.wait_for = nil
+	else
+		log("show_in() screen already loaded", screen.id)
+	end
 end
 
 local function transition(screen, message_id, message)
@@ -308,19 +323,7 @@ local function show_in(screen, previous_screen, reload, cb)
 			log("show_in() reloading", screen.id)
 			unload(screen)
 		end
-		-- if the screen has been preloaded we need to enable it
-		if screen.preloaded then
-			log("show_in() screen was preloaded", screen.id)
-			msg.post(screen.proxy, ENABLE)
-			screen.loaded = true
-			screen.preloaded = false
-		-- the screen could be loaded if the previous screen was a popup
-		-- and the popup asked to show this screen again
-		-- in that case we shouldn't attempt to load it again
-		elseif not screen.loaded then
-			log("show_in() loading screen", screen.id)
-			async_load(screen)
-		end
+		async_load(screen)
 		stack[#stack + 1] = screen
 		reset_timestep(screen)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id })
@@ -342,15 +345,7 @@ local function back_in(screen, previous_screen, cb)
 		notify_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		screen.co = co
 		change_context(screen)
-		if screen.preloaded then
-			log("back_in() screen was preloaded", screen.id)
-			msg.post(screen.proxy, ENABLE)
-			screen.preloaded = false
-			screen.loaded = true
-		elseif not screen.loaded then
-			log("back_in() loading screen", screen.id)
-			async_load(screen)
-		end
+		async_load(screen)
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id })
