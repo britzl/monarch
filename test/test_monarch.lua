@@ -63,6 +63,10 @@ return function()
 		end)
 
 		after(function()
+			while #monarch.get_stack() > 0 do
+				monarch.back()
+				wait_until_not_busy()
+			end
 			mock_msg.unmock()
 			unload.unload("monarch%..*")
 			for id,instance_id in pairs(screens_instances) do
@@ -254,22 +258,31 @@ return function()
 			monarch.remove_listener(URL2)
 			monarch.show(SCREEN2)
 			assert(wait_until_not_busy())
-			
-			monarch.back()
-			assert(wait_until_not_busy())
-						
-			local messages_1 = mock_msg.messages(URL1)
-			local messages_2 = mock_msg.messages(URL2)
-			assert(#mock_msg.messages(URL1) == 10)
+
+			assert(#mock_msg.messages(URL1) == 6)
 			assert(#mock_msg.messages(URL2) == 2)
 			assert(mock_msg.messages(URL1)[3].message_id == monarch.SCREEN_TRANSITION_OUT_STARTED)
 			assert(mock_msg.messages(URL1)[3].message.screen == SCREEN1)
 			assert(mock_msg.messages(URL1)[4].message_id == monarch.SCREEN_TRANSITION_IN_STARTED)
 			assert(mock_msg.messages(URL1)[4].message.screen == SCREEN2)
-			assert(mock_msg.messages(URL1)[5].message_id == monarch.SCREEN_TRANSITION_OUT_FINISHED)
-			assert(mock_msg.messages(URL1)[5].message.screen == SCREEN1)
-			assert(mock_msg.messages(URL1)[6].message_id == monarch.SCREEN_TRANSITION_IN_FINISHED)
+			assert(mock_msg.messages(URL1)[5].message_id == monarch.SCREEN_TRANSITION_IN_FINISHED)
+			assert(mock_msg.messages(URL1)[5].message.screen == SCREEN2)
+			assert(mock_msg.messages(URL1)[6].message_id == monarch.SCREEN_TRANSITION_OUT_FINISHED)
+			assert(mock_msg.messages(URL1)[6].message.screen == SCREEN1)
+						
+			monarch.back()
+			assert(wait_until_not_busy())
+						
+			assert(#mock_msg.messages(URL1) == 10)
+			assert(#mock_msg.messages(URL2) == 2)
+			assert(mock_msg.messages(URL1)[7].message_id == monarch.SCREEN_TRANSITION_OUT_STARTED)
 			assert(mock_msg.messages(URL1)[7].message.screen == SCREEN2)
+			assert(mock_msg.messages(URL1)[8].message_id == monarch.SCREEN_TRANSITION_IN_STARTED)
+			assert(mock_msg.messages(URL1)[8].message.screen == SCREEN1)
+			assert(mock_msg.messages(URL1)[9].message_id == monarch.SCREEN_TRANSITION_OUT_FINISHED)
+			assert(mock_msg.messages(URL1)[9].message.screen == SCREEN2)
+			assert(mock_msg.messages(URL1)[10].message_id == monarch.SCREEN_TRANSITION_IN_FINISHED)
+			assert(mock_msg.messages(URL1)[10].message.screen == SCREEN1)
 		end)
 	end)
 end

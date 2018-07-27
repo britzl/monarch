@@ -20,7 +20,10 @@ Using Monarch requires that screens are created in a certain way. Once you have 
 
 
 ## Creating screens
-Monarch screens are created in individual collections and loaded through collection proxies. The recommended setup is to create one game object per screen and per game object attach a collection proxy component and an instance of the ```screen.script``` provided by Monarch. The ```screen.script``` will take care of the setup of the screen. All you need to do is to make sure that the script properties on the ```screen.script``` are correct:
+Monarch screens are created in individual collections and either loaded through collection proxies or created through collection factories.
+
+### Collection proxies
+For proxies the recommended setup is to create one game object per screen and per game object attach a collection proxy component and an instance of the ```screen_proxy.script``` provided by Monarch. The ```screen_proxy.script``` will take care of the setup of the screen. All you need to do is to make sure that the script properties on the script are correct:
 
 * **Screen Proxy (url)** - The URL to the collection proxy component containing the actual screen. Defaults to ```#collectionproxy```.
 * **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app.
@@ -31,6 +34,16 @@ Monarch screens are created in individual collections and loaded through collect
 * **Focus Url (url)** - Optional URL to call when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 
 ![](docs/setup.png)
+
+### Collection factories
+For factories the recommended setup is to create one game object per screen and per game object attach a collection factory component and an instance of the ```screen_factory.script``` provided by Monarch. The ```screen_factory.script``` will take care of the setup of the screen. All you need to do is to make sure that the script properties on the script are correct:
+
+* **Screen Factory (url)** - The URL to the collection factory component containing the actual screen. Defaults to ```#collectionfactory```.
+* **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app.
+* **Popup (boolean)** - Check this if the screen should be treated as a [popup](#popups).
+* **Popup on Popup (boolean)** - Check this if the screen is a [popup](#popups) and it can be shown on top of other popups.
+* **Transition Id (url)** - Optional id of the game object to send a message to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
+* **Focus Id (url)** - Optional id of the game object to send a message to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 
 
 ## Navigating between screens

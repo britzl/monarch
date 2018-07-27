@@ -1,31 +1,25 @@
 local monarch
 
-go.property("screen_proxy", msg.url("#collectionproxy"))
+go.property("screen_factory", msg.url("#collectionfactory"))
 go.property("screen_id", hash("UNIQUE ID HERE"))
 go.property("popup", false)
 go.property("popup_on_popup", false)
-go.property("timestep_below_popup", 1)
-go.property("transition_url", msg.url())
-go.property("focus_url", msg.url())
+go.property("transition_id", hash(""))
+go.property("focus_id", hash(""))
 
 
 function init(self)
-	print("WARNING - screen.script is deprecated. Please use screen_proxy.script")
 	monarch = require "monarch.monarch"
-	local url = msg.url()
 	assert(not self.popup_on_popup or (self.popup_on_popup and self.popup), "Popup on Popups can only be set if the Popup flag is set")
-	assert(self.screen_proxy ~= url, "You must specify either a proxy URL")
-	assert(self.timestep_below_popup >= 0, "Timestep must be positive")
-
+	assert(self.screen_factory ~= msg.url(), "You must specify either a factory URL")
+	
 	local settings = {
 		popup = self.popup,
 		popup_on_popup = self.popup_on_popup,
-		transition_url = self.transition_url ~= url and self.transition_url or nil,
-		focus_url = self.focus_url ~= url and self.focus_url or nil,
-		timestep_below_popup = self.timestep_below_popup,
+		transition_id = self.transition_id,
+		focus_id = self.focus_id,
 	}
-
-	monarch.register_proxy(self.screen_id, self.screen_proxy, settings)
+	monarch.register_factory(self.screen_id, self.screen_factory, settings)
 end
 
 function final(self)

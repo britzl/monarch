@@ -112,9 +112,23 @@ function M.is_top(id)
 end
 
 
---- Register a new screen
--- This is done automatically by the screen.script. It is expected that the
--- caller of this function is a script component attached to the same game
+local function register(id, settings)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(not screens[id], ("There is already a screen registered with id %s"):format(tostring(id)))
+	screens[id] = {
+		id = id,
+		script = msg.url(),
+		popup = settings and settings.popup,
+		popup_on_popup = settings and settings.popup_on_popup,
+		timestep_below_popup = settings and settings.timestep_below_popup or 1,
+	}
+	return screens[id]
+end
+
+--- Register a new screen contained in a collection proxy
+-- This is done automatically by the screen_proxy.script. It is expected that
+-- the caller of this function is a script component attached to the same game
 -- object as the proxy. This is required since monarch will acquire and
 -- release input focus of the game object where the proxy is attached.
 -- @param id Unique id of the screen
@@ -128,22 +142,37 @@ end
 -- 		* focus_url - URL to a script that is to be notified of focus
 --		  lost/gained events
 --		* timestep_below_popup - Timestep to set on proxy when below a popup
-function M.register(id, proxy, settings)
-	assert(id, "You must provide a screen id")
-	id = tohash(id)
-	assert(not screens[id], ("There is already a screen registered with id %s"):format(tostring(id)))
+function M.register_proxy(id, proxy, settings)
 	assert(proxy, "You must provide a collection proxy URL")
-	local url = msg.url(proxy)
-	screens[id] = {
-		id = id,
-		proxy = proxy,
-		script = msg.url(),
-		popup = settings and settings.popup,
-		popup_on_popup = settings and settings.popup_on_popup,
-		transition_url = settings and settings.transition_url,
-		focus_url = settings and settings.focus_url,
-		timestep_below_popup = settings and settings.timestep_below_popup or 1,
-	}
+	local screen = register(id, settings)
+	screen.proxy = proxy
+	screen.transition_url = settings and settings.transition_url
+	screen.focus_url = settings and settings.focus_url
+end
+M.register = M.register_proxy
+
+
+--- Register a new screen contained in a collection factory
+-- This is done automatically by the screen_factory.script. It is expected that
+-- the caller of this function is a script component attached to the same game
+-- object as the factory. This is required since monarch will acquire and
+-- release input focus of the game object where the factory is attached.
+-- @param id Unique id of the screen
+-- @param factory URL to the collection factory containing the screen
+-- @param settings Settings table for screen. Accepted values:
+-- 		* popup - true the screen is a popup
+--		* popup_on_popup - true if this popup can be shown on top of
+--		  another popup or false if an underlying popup should be closed
+-- 		* transition_id - Id of the game object in the collection that is responsible
+--		  for the screen transitions
+-- 		* focus_id - Id of the game object in the collection that is to be notified
+--		  of focus lost/gained events
+function M.register_factory(id, factory, settings)
+	assert(factory, "You must provide a collection factory URL")
+	local screen = register(id, settings)
+	screen.factory = factory
+	screen.transition_id = settings and settings.transition_id
+	screen.focus_id = settings and settings.focus_id
 end
 
 --- Unregister a screen
@@ -159,7 +188,13 @@ end
 local function acquire_input(screen)
 	log("change_context()", screen.id)
 	if not screen.input then
-		msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
+		if screen.proxy then
+			msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
+		elseif screen.factory then
+			for id,instance in pairs(screen.factory_ids) do
+				msg.post(instance, ACQUIRE_INPUT_FOCUS)
+			end
+		end
 		screen.input = true
 	end
 end
@@ -167,7 +202,13 @@ end
 local function release_input(screen)
 	log("change_context()", screen.id)
 	if screen.input then
-		msg.post(screen.script, RELEASE_INPUT_FOCUS)
+		if screen.proxy then
+			msg.post(screen.script, RELEASE_INPUT_FOCUS)
+		elseif screen.factory then
+			for id,instance in pairs(screen.factory_ids) do
+				msg.post(instance, RELEASE_INPUT_FOCUS)
+			end
+		end
 		screen.input = false
 	end
 end
@@ -182,50 +223,98 @@ end
 
 local function unload(screen)
 	log("unload()", screen.id)
-	screen.wait_for = PROXY_UNLOADED
-	msg.post(screen.proxy, UNLOAD)
-	coroutine.yield()
-	screen.loaded = false
-	screen.wait_for = nil
+
+	if screen.proxy then
+		screen.wait_for = PROXY_UNLOADED
+		msg.post(screen.proxy, UNLOAD)
+		coroutine.yield()
+		screen.loaded = false
+		screen.wait_for = nil
+	elseif screen.factory then
+		for id, instance in pairs(screen.factory_ids) do
+			go.delete(instance)
+		end
+		screen.factory_ids = nil
+		collectionfactory.unload(screen.factory)
+		screen.loaded = false
+	end
 end
 
-local function async_load(screen)
-	log("async_load()", screen.id)
 
-	-- if the screen has been preloaded we need to enable it
+local function preload(screen)
+	log("preload() preloading screen", screen.id)
+	assert(screen.co, "You must assign a coroutine to the screen")
+
 	if screen.preloaded then
-		log("show_in() screen was preloaded", screen.id)
-		msg.post(screen.proxy, ENABLE)
-		screen.loaded = true
-		screen.preloaded = false
-		-- the screen could be loaded if the previous screen was a popup
-		-- and the popup asked to show this screen again
-		-- in that case we shouldn't attempt to load it again
-	elseif not screen.loaded then
-		log("show_in() loading screen", screen.id)
+		log("preload() screen already preloaded", screen.id)
+		return
+	end
+
+	if screen.proxy then
 		screen.wait_for = PROXY_LOADED
 		msg.post(screen.proxy, ASYNC_LOAD)
 		coroutine.yield()
-		msg.post(screen.proxy, ENABLE)
-		screen.loaded = true
-		screen.wait_for = nil
-	else
-		log("show_in() screen already loaded", screen.id)
+	elseif screen.factory then
+		if collectionfactory.get_status(screen.factory) == collectionfactory.STATUS_UNLOADED then
+			collectionfactory.load(screen.factory, function(self, url, result)
+				assert(coroutine.resume(screen.co))
+			end)
+			coroutine.yield()
+		end
+
+		if collectionfactory.get_status(screen.factory) ~= collectionfactory.STATUS_LOADED then
+			log("preload() error loading factory resources")
+			return
+		end
 	end
+	screen.preloaded = true
+end
+
+local function load(screen)
+	log("load()", screen.id)
+	assert(screen.co, "You must assign a coroutine to the screen")
+	
+	if screen.loaded then
+		log("load() screen already loaded", screen.id)
+		return
+	end
+
+	preload(screen)
+
+	if not screen.preloaded then
+		log("load() screen wasn't preloaded", screen.id)
+		return
+	end
+	
+	if screen.proxy then
+		msg.post(screen.proxy, ENABLE)
+	elseif screen.factory then
+		screen.factory_ids = collectionfactory.create(screen.factory)
+		screen.transition_url = screen.factory_ids[screen.transition_id]
+		screen.focus_url = screen.factory_ids[screen.focus_id]
+	end
+	screen.loaded = true
+	screen.preloaded = false
 end
 
 local function transition(screen, message_id, message)
 	log("transition()", screen.id)
-	screen.wait_for = M.TRANSITION.DONE
-	msg.post(screen.transition_url, message_id, message)
-	coroutine.yield()
-	screen.wait_for = nil
+	if screen.transition_url then
+		screen.wait_for = M.TRANSITION.DONE
+		msg.post(screen.transition_url, message_id, message)
+		coroutine.yield()
+		screen.wait_for = nil
+	else
+		log("transition() no transition url - ignoring")
+	end
 end
 
 local function focus_gained(screen, previous_screen)
 	log("focus_gained()", screen.id)
 	if screen.focus_url then
 		msg.post(screen.focus_url, M.FOCUS.GAINED, { id = previous_screen and previous_screen.id })
+	else
+		log("focus_gained() no focus url - ignoring")
 	end
 end
 
@@ -233,16 +322,20 @@ local function focus_lost(screen, next_screen)
 	log("focus_lost()", screen.id)
 	if screen.focus_url then
 		msg.post(screen.focus_url, M.FOCUS.LOST, { id = next_screen and next_screen.id })
+	else
+		log("focus_lost() no focus url - ignoring")
 	end
 end
 
 local function change_timestep(screen)
-	screen.changed_timestep = true
-	msg.post(screen.proxy, "set_time_step", { mode = 0, factor = screen.timestep_below_popup })
+	if screen.proxy then
+		screen.changed_timestep = true
+		msg.post(screen.proxy, "set_time_step", { mode = 0, factor = screen.timestep_below_popup })
+	end
 end
 
 local function reset_timestep(screen)
-	if screen.changed_timestep then
+	if screen.proxy and screen.changed_timestep then
 		msg.post(screen.proxy, "set_time_step", { mode = 0, factor = 1 })
 		screen.changed_timestep = false
 	end
@@ -264,7 +357,7 @@ local function disable(screen, next_screen)
 		screen.co = nil
 		if cb then cb() end
 	end)
-	coroutine.resume(co)
+	assert(coroutine.resume(co))
 end
 
 local function enable(screen, previous_screen)
@@ -279,7 +372,7 @@ local function enable(screen, previous_screen)
 		screen.co = nil
 		if cb then cb() end
 	end)
-	coroutine.resume(co)
+	assert(coroutine.resume(co))
 end
 
 local function show_out(screen, next_screen, cb)
@@ -323,7 +416,7 @@ local function show_in(screen, previous_screen, reload, cb)
 			log("show_in() reloading", screen.id)
 			unload(screen)
 		end
-		async_load(screen)
+		load(screen)
 		stack[#stack + 1] = screen
 		reset_timestep(screen)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id })
@@ -345,7 +438,7 @@ local function back_in(screen, previous_screen, cb)
 		notify_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		screen.co = co
 		change_context(screen)
-		async_load(screen)
+		load(screen)
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id })
@@ -364,7 +457,7 @@ local function back_out(screen, next_screen, cb)
 	log("back_out()", screen.id)
 	local co
 	co = coroutine.create(function()
-		notify_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
+		notify_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 		active_transition_count = active_transition_count + 1
 		screen.co = co
 		change_context(screen)
@@ -378,7 +471,7 @@ local function back_out(screen, next_screen, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
-		notify_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen.id })
+		notify_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 	end)
 	coroutine.resume(co)
 end
@@ -522,6 +615,7 @@ function M.back(data, cb)
 	return true
 end
 
+
 --- Preload a screen. This will load but not enable and show a screen. Useful for "heavier" screens
 -- that you wish to show without any delay.
 -- @param id (string|hash) - Id of the screen to preload
@@ -532,6 +626,7 @@ function M.preload(id, cb)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
 	local screen = screens[id]
+	log("preload()", screen.id)
 	if screen.preloaded or screen.loaded then
 		if cb then cb() end
 		return
@@ -540,14 +635,10 @@ function M.preload(id, cb)
 	co = coroutine.create(function()
 		screen.co = co
 		change_context(screen)
-		screen.wait_for = PROXY_LOADED
-		msg.post(screen.proxy, ASYNC_LOAD)
-		coroutine.yield()
-		screen.preloaded = true
-		screen.wait_for = nil
+		preload(screen)
 		if cb then cb() end
 	end)
-	coroutine.resume(co)
+	assert(coroutine.resume(co))
 end
 
 
