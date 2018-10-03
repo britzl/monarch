@@ -34,7 +34,7 @@ For proxies the recommended setup is to create one game object per screen and pe
 * **Transition Url (url)** - Optional URL to call when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Url (url)** - Optional URL to call when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 
-![](docs/setup.png)
+![](docs/setup_proxy.png)
 
 ### Collection factories
 For factories the recommended setup is to create one game object per screen and per game object attach a collection factory component and an instance of the ```screen_factory.script``` provided by Monarch. The ```screen_factory.script``` will take care of the setup of the screen. All you need to do is to make sure that the script properties on the script are correct:
@@ -45,6 +45,8 @@ For factories the recommended setup is to create one game object per screen and 
 * **Popup on Popup (boolean)** - Check this if the screen is a [popup](#popups) and it can be shown on top of other popups.
 * **Transition Id (url)** - Optional id of the game object to send a message to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Id (url)** - Optional id of the game object to send a message to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
+
+![](docs/setup_factory.png)
 
 
 ## Navigating between screens
