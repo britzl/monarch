@@ -621,6 +621,11 @@ end
 -- @param id (string|hash) - Id of the screen to preload
 -- @param cb (function) - Optional callback to invoke when screen is loaded
 function M.preload(id, cb)
+	if M.is_busy() then
+		log("preload() monarch is busy, ignoring request")
+		return false
+	end
+
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
