@@ -238,6 +238,14 @@ return function()
 			assert(wait_until_not_busy())
 		end)
 
+		it("should ignore any preload calls while busy", function()
+			monarch.show(TRANSITION1)
+			-- previously a call to preload() while also showing a screen would
+			-- lock up monarch. See issue #32
+			monarch.preload(TRANSITION1)
+			assert(wait_until_shown(TRANSITION1), "Transition1 was never shown")
+		end)
+		
 		it("should be able to notify listeners of navigation events", function()
 			local URL1 = msg.url(screens_instances[hash("/listener1")])
 			local URL2 = msg.url(screens_instances[hash("/listener2")])
