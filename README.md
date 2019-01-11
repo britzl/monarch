@@ -33,6 +33,7 @@ For proxies the recommended setup is to create one game object per screen and pe
 * **Timestep below Popup (number)** - Timestep to set on screen proxy when it is below a popup. This is useful when pausing animations and gameplay while a popup is open.
 * **Transition Url (url)** - Optional URL to call when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Url (url)** - Optional URL to call when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
+* **Preload (boolean)** - Check this if the screen should be preloaded and kept loaded at all times. For a collection proxy it means that it will be async loaded but not enabled at all times while not visible. This can also temporarily be achieved through the `monarch.preload()` function.
 
 ![](docs/setup_proxy.png)
 
@@ -45,6 +46,7 @@ For factories the recommended setup is to create one game object per screen and 
 * **Popup on Popup (boolean)** - Check this if the screen is a [popup](#popups) and it can be shown on top of other popups.
 * **Transition Id (url)** - Optional id of the game object to send a message to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Id (url)** - Optional id of the game object to send a message to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
+* **Preload (boolean)** - Check this if the screen should be preloaded and kept loaded at all times. For a collection factory this means that its resources will be dynamically loaded at all times. This can also temporarily be achieved through the `monarch.preload()` function.
 
 ![](docs/setup_factory.png)
 
@@ -356,6 +358,26 @@ Check if Monarch is busy showing and/or hiding a screen.
 
 **RETURN**
 * ```busy``` (boolean) - True if busy hiding and/or showing a screen.
+
+
+### monarch.is_top(id)
+Check if a Monarch screen is at the top of the view stack.
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to check
+
+**RETURN**
+* ```exists``` (boolean) - True if the screen is at the top of the stack.
+
+
+### monarch.is_visible(id)
+Check if a Monarch screen is visible.
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to check
+
+**RETURN**
+* ```exists``` (boolean) - True if the screen is visible.
 
 
 ### monarch.add_listener([url])

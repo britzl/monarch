@@ -7,6 +7,7 @@ go.property("popup_on_popup", false)
 go.property("timestep_below_popup", 1)
 go.property("transition_url", msg.url())
 go.property("focus_url", msg.url())
+go.property("preload", false)
 
 
 function init(self)
@@ -22,6 +23,7 @@ function init(self)
 		transition_url = self.transition_url ~= url and self.transition_url or nil,
 		focus_url = self.focus_url ~= url and self.focus_url or nil,
 		timestep_below_popup = self.timestep_below_popup,
+		auto_preload = self.preload,
 	}
 
 	monarch.register_proxy(self.screen_id, self.screen_proxy, settings)

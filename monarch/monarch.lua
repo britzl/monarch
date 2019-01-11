@@ -11,6 +11,7 @@ local ACQUIRE_INPUT_FOCUS = hash("acquire_input_focus")
 local ASYNC_LOAD = hash("async_load")
 local UNLOAD = hash("unload")
 local ENABLE = hash("enable")
+local DISABLE = hash("disable")
 
 -- transition messages
 M.TRANSITION = {}
@@ -112,6 +113,17 @@ function M.is_top(id)
 end
 
 
+--- Check if a screen is visible
+-- @param id (string|hash)
+-- @return true if the screen is visible
+function M.is_visible(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	return screens[id].loaded
+end
+
+
 local function register(id, settings)
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
@@ -142,12 +154,17 @@ end
 -- 		* focus_url - URL to a script that is to be notified of focus
 --		  lost/gained events
 --		* timestep_below_popup - Timestep to set on proxy when below a popup
+--		* auto_preload - true if the screen should be automatically preloaded
 function M.register_proxy(id, proxy, settings)
 	assert(proxy, "You must provide a collection proxy URL")
 	local screen = register(id, settings)
 	screen.proxy = proxy
 	screen.transition_url = settings and settings.transition_url
 	screen.focus_url = settings and settings.focus_url
+	screen.auto_preload = settings and settings.auto_preload
+	if screen.auto_preload then
+		M.preload(id)
+	end
 end
 M.register = M.register_proxy
 
@@ -167,12 +184,17 @@ M.register = M.register_proxy
 --		  for the screen transitions
 -- 		* focus_id - Id of the game object in the collection that is to be notified
 --		  of focus lost/gained events
+--		* auto_preload - true if the screen should be automatically preloaded
 function M.register_factory(id, factory, settings)
 	assert(factory, "You must provide a collection factory URL")
 	local screen = register(id, settings)
 	screen.factory = factory
 	screen.transition_id = settings and settings.transition_id
 	screen.focus_id = settings and settings.focus_id
+	screen.auto_preload = settings and settings.auto_preload
+	if screen.auto_preload then
+		M.preload(id)
+	end
 end
 
 --- Unregister a screen
@@ -225,18 +247,31 @@ local function unload(screen)
 	log("unload()", screen.id)
 
 	if screen.proxy then
-		screen.wait_for = PROXY_UNLOADED
-		msg.post(screen.proxy, UNLOAD)
-		coroutine.yield()
-		screen.loaded = false
-		screen.wait_for = nil
+		if screen.auto_preload then
+			msg.post(screen.proxy, DISABLE)
+			screen.loaded = false
+			screen.preloaded = true
+		else
+			screen.wait_for = PROXY_UNLOADED
+			msg.post(screen.proxy, UNLOAD)
+			coroutine.yield()
+			screen.loaded = false
+			screen.preloaded = false
+			screen.wait_for = nil
+		end
 	elseif screen.factory then
 		for id, instance in pairs(screen.factory_ids) do
 			go.delete(instance)
 		end
 		screen.factory_ids = nil
-		collectionfactory.unload(screen.factory)
-		screen.loaded = false
+		if screen.auto_preload then
+			screen.loaded = false
+			screen.preloaded = true
+		else
+			collectionfactory.unload(screen.factory)
+			screen.loaded = false
+			screen.preloaded = false
+		end
 	end
 end
 
@@ -273,7 +308,7 @@ end
 local function load(screen)
 	log("load()", screen.id)
 	assert(screen.co, "You must assign a coroutine to the screen")
-	
+
 	if screen.loaded then
 		log("load() screen already loaded", screen.id)
 		return
@@ -285,7 +320,7 @@ local function load(screen)
 		log("load() screen wasn't preloaded", screen.id)
 		return
 	end
-	
+
 	if screen.proxy then
 		msg.post(screen.proxy, ENABLE)
 	elseif screen.factory then
@@ -522,7 +557,7 @@ function M.show(id, options, data, cb)
 	end
 
 	local callbacks = callback_tracker()
-	
+
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
@@ -585,7 +620,7 @@ function M.back(data, cb)
 	end
 
 	local callbacks = callback_tracker()
-	
+
 	local screen = table.remove(stack)
 	if screen then
 		log("back()", screen.id)
@@ -611,7 +646,7 @@ function M.back(data, cb)
 	end
 
 	if cb then callbacks.when_done(cb) end
-	
+
 	return true
 end
 
@@ -634,7 +669,7 @@ function M.preload(id, cb)
 	log("preload()", screen.id)
 	if screen.preloaded or screen.loaded then
 		if cb then cb() end
-		return
+		return true
 	end
 	local co
 	co = coroutine.create(function()
@@ -644,6 +679,7 @@ function M.preload(id, cb)
 		if cb then cb() end
 	end)
 	assert(coroutine.resume(co))
+	return true
 end
 
 

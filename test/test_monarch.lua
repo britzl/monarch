@@ -103,6 +103,28 @@ return function()
 			assert_stack({ })
 		end)
 
+		it("should be able to tell if a screen is visible or not", function()
+			assert(not monarch.is_visible(SCREEN1))
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+			assert(monarch.is_visible(SCREEN1))
+			
+			monarch.show(SCREEN2)
+			assert(wait_until_hidden(SCREEN1), "Screen1 was never hidden")
+			assert(wait_until_shown(SCREEN2), "Screen2 was never shown")
+			assert_stack({ SCREEN1, SCREEN2 })
+			assert(not monarch.is_visible(SCREEN1))
+			assert(monarch.is_visible(SCREEN2))
+			
+			monarch.show(POPUP1)
+			assert(wait_until_shown(POPUP1), "Popup1 was never shown")
+			assert_stack({ SCREEN1, SCREEN2, POPUP1 })
+			assert(not monarch.is_visible(SCREEN1))
+			assert(monarch.is_visible(SCREEN2))
+			assert(monarch.is_visible(POPUP1))
+		end)
+		
 
 		it("should be able to pass data to a screen when showning it or going back to it", function()
 			local data1 = { foo = "bar" }
@@ -147,7 +169,7 @@ return function()
 		end)
 		
 
-		it("should be able to show one popup on top of another the Popup On Popup flag is set", function()
+		it("should be able to show one popup on top of another if the Popup On Popup flag is set", function()
 			monarch.show(SCREEN1)
 			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
 			assert_stack({ SCREEN1 })

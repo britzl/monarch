@@ -6,6 +6,7 @@ go.property("popup", false)
 go.property("popup_on_popup", false)
 go.property("transition_id", hash(""))
 go.property("focus_id", hash(""))
+go.property("preload", false)
 
 
 function init(self)
@@ -18,6 +19,7 @@ function init(self)
 		popup_on_popup = self.popup_on_popup,
 		transition_id = self.transition_id,
 		focus_id = self.focus_id,
+		auto_preload = self.preload,
 	}
 	monarch.register_factory(self.screen_id, self.screen_factory, settings)
 end
