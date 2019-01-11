@@ -48,6 +48,10 @@ For factories the recommended setup is to create one game object per screen and 
 
 ![](docs/setup_factory.png)
 
+Note: Monarch supports dynamic collection factories (ie where the "Load Dynamically" checkbox is checked).
+
+## Nesting screens
+Sometimes it might be desirable to have a screen that contains one or more sub-screens or children, for instance popups that are used only by that screen. Monarch supports nested screens only when the parent screen is created via a collection factory. If the parent screen is loaded via a collection proxy the sub/child-screens won't be able to receive any input.
 
 ## Navigating between screens
 The navigation in Monarch is based around a stack of screens. When a screen is shown it is pushed to the top of the stack. When going back to a previous screen the topmost screen on the stack is removed. Example:
