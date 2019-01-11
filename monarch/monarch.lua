@@ -676,6 +676,39 @@ function M.preload(id, cb)
 		screen.co = co
 		change_context(screen)
 		preload(screen)
+		log("preload() done", screen.id)
+		if cb then cb() end
+	end)
+	assert(coroutine.resume(co))
+	return true
+end
+
+
+function M.unload(id, cb)
+	if M.is_busy() then
+		log("unload() monarch is busy, ignoring request")
+		return false
+	end
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+
+	if M.is_visible(id) then
+		log("You can't unload a visible screen")
+		return false
+	end
+
+	local screen = screens[id]
+	if not screen.preloaded and not screen.loaded then
+		log("unload() screen is not loaded", tostring(id))
+		if cb then cb() end
+		return true
+	end
+	local co
+	co = coroutine.create(function()
+		screen.co = co
+		change_context(screen)
+		unload(screen)
 		if cb then cb() end
 	end)
 	assert(coroutine.resume(co))
