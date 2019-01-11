@@ -439,7 +439,7 @@ local function show_out(screen, next_screen, cb)
 	coroutine.resume(co)
 end
 
-local function show_in(screen, previous_screen, reload, cb)
+local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 	log("show_in()", screen.id)
 	local co
 	co = coroutine.create(function()
@@ -452,7 +452,9 @@ local function show_in(screen, previous_screen, reload, cb)
 			unload(screen)
 		end
 		load(screen)
-		stack[#stack + 1] = screen
+		if add_to_stack then
+			stack[#stack + 1] = screen
+		end
 		reset_timestep(screen)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id })
 		acquire_input(screen)
@@ -566,29 +568,33 @@ function M.show(id, options, data, cb)
 
 	log("show()", screen.id)
 
-	-- manipulate the current top
-	-- close popup if needed
-	-- transition out
-	local top = stack[#stack]
-	if top then
-		-- keep top popup visible if new screen can be shown on top of a popup
-		if top.popup and screen.popup_on_popup then
-			disable(top, screen)
-		else
-			-- close all popups
-			while top.popup do
-				stack[#stack] = nil
-				show_out(top, screen, callbacks.track())
-				top = stack[#stack]
-			end
-			-- unload and transition out from top
-			-- unless we're showing the same screen as is already visible
-			if top and top.id ~= screen.id then
-				show_out(top, screen, callbacks.track())
+	-- a screen can ignore the stack by setting the no_stack to true
+	local add_to_stack = not options or not options.no_stack
+	if add_to_stack then
+		-- manipulate the current top
+		-- close popup if needed
+		-- transition out
+		local top = stack[#stack]
+		if top then
+			-- keep top popup visible if new screen can be shown on top of a popup
+			if top.popup and screen.popup_on_popup then
+				disable(top, screen)
+			else
+				-- close all popups
+				while top.popup do
+					stack[#stack] = nil
+					show_out(top, screen, callbacks.track())
+					top = stack[#stack]
+				end
+				-- unload and transition out from top
+				-- unless we're showing the same screen as is already visible
+				if top and top.id ~= screen.id then
+					show_out(top, screen, callbacks.track())
+				end
 			end
 		end
 	end
-
+	
 	-- if the screen we want to show is in the stack
 	-- already and the clear flag is set then we need
 	-- to remove every screen on the stack up until and
@@ -601,10 +607,42 @@ function M.show(id, options, data, cb)
 	end
 
 	-- show screen
-	show_in(screen, top, options and options.reload, callbacks.track())
+	show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
 
 	if cb then callbacks.when_done(cb) end
 
+	return true
+end
+
+
+-- Hide a screen. The screen must either be at the top of the stack or
+-- visible but not added to the stack (through the no_stack option)
+-- @param id (string|hash) - Id of the screen to show
+-- @param cb (function) - Optional callback to invoke when the screen is hidden
+-- @return true if successfully hiding, false if busy performing another operation
+function M.hide(id, cb)
+	if M.is_busy() then
+		log("hide() monarch is busy, ignoring request")
+		return false
+	end
+	
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+
+	local screen = screens[id]
+	if M.in_stack(id) then
+		if not M.is_top(id) then
+			log("hide() you can only hide the screen at the top of the stack", id)
+			return false
+		end
+		return M.back(id, cb)
+	else
+		if M.is_visible(id) then
+			back_out(screen, nil, cb)
+		elseif cb then
+			cb()
+		end
+	end
 	return true
 end
 

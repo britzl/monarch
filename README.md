@@ -96,6 +96,15 @@ As opposed to if the ```clear``` flag was not set:
 * A call to ```monarch.show(B, { clear = false })``` is made
 * Stack is ```[A, B, C, D, B]``` - (B is on top)
 
+#### Showing a screen without adding it to the stack
+Monarch can also show a screen without adding it to the stack. This can be used to for instance load a collection containing a background that you want to have visible at all times. You show and hide such a screen like this:
+
+	-- show the background without adding it to the stack
+	monarch.show(hash("background"), { no_stack = true })
+
+	-- hide the background
+	monarch.hide(hash("background"))
+
 ### Going back to a previous screen
 You navigate back in the screen hierarchy in one of two ways:
 
@@ -287,11 +296,23 @@ Show a Monarch screen. Note that the screen must be registered before it can be 
 
 The options table can contain the following fields:
 
-* ```clear``` (boolean) - If the clear flag is set Monarch will search the stack for the screen that is to be shown. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question.
-* ```reload``` (boolean) - If the reload flag is set Monarch will reload the collection proxy if it's already loaded (this can happen if the previous screen was a popup).
+* ```clear``` (boolean) - If the `clear` flag is set Monarch will search the stack for the screen that is to be shown. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question.
+* ```reload``` (boolean) - If the `reload` flag is set Monarch will reload the collection proxy if it's already loaded (this can happen if the previous screen was a popup).
+* ```no_stack``` (boolean) - If the `no_stack` flag is set Monarch will load the screen without adding it to the screen stack.
 
 **RETURN**
 * ```success``` (boolean) - True if the process of showing the screen was started successfully. False if already busy showing/hiding a screen.
+
+
+### monarch.hide(screen_id, [callback])
+Hide a screen that has been shown using the `no_stack` option. If used on a screen that was shown without the `no_stack` option it will only hide it if the screen is on top of the stack and the behavior will be exactly like if `monarch.back()` had been called.
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to hide.
+* ```callback``` (function) - Optional function to call when the screen has been hidden.
+
+**RETURN**
+* ```success``` (boolean) - True if the process of hiding the screen was started successfully.
 
 
 ### monarch.back([data], [callback])

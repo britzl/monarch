@@ -8,6 +8,8 @@ end
 
 function on_message(self, message_id, message, sender)
 	if message_id == hash("init_monarch") then
-		monarch.show(hash("menu"))
+		monarch.show(hash("background"), { no_stack = true }, nil, function()
+			monarch.show(hash("menu"))
+		end)
 	end
 end

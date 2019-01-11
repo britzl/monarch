@@ -6,6 +6,7 @@ local monarch = require "monarch.monarch"
 local SCREEN1_STR = hash("screen1")
 local SCREEN1 = hash(SCREEN1_STR)
 local SCREEN2 = hash("screen2")
+local BACKGROUND = hash("background")
 local POPUP1 = hash("popup1")
 local POPUP2 = hash("popup2")
 local FOOBAR = hash("foobar")
@@ -16,11 +17,11 @@ return function()
 	local screens_instances = {}
 
 	local function is_shown(screen_id)
-		return monarch.is_top(screen_id)
+		return monarch.is_visible(screen_id)
 	end
 
 	local function is_hidden(screen_id)
-		return not monarch.is_top(screen_id)
+		return not monarch.is_visible(screen_id)
 	end
 
 	local function wait_timeout(fn, ...)
@@ -31,7 +32,10 @@ return function()
 		end)
 		return fn(...)
 	end
-		
+
+	local function wait_until_visible(screen_id)
+		return wait_timeout(is_visible, screen_id)
+	end
 	local function wait_until_shown(screen_id)
 		return wait_timeout(is_shown, screen_id)
 	end
@@ -60,6 +64,7 @@ return function()
 			mock_msg.mock()
 			monarch = require "monarch.monarch"
 			screens_instances = collectionfactory.create("#screensfactory")
+			monarch.debug()
 		end)
 
 		after(function()
@@ -124,7 +129,43 @@ return function()
 			assert(monarch.is_visible(SCREEN2))
 			assert(monarch.is_visible(POPUP1))
 		end)
-		
+
+		it("should be able to show a screen without adding it to the stack", function()
+			monarch.show(BACKGROUND, { no_stack = true })
+			assert(wait_until_shown(BACKGROUND), "Background was never shown")
+			assert_stack({ })
+
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+		end)
+
+		it("should be able to hide a screen not added to the stack", function()
+			monarch.show(BACKGROUND, { no_stack = true })
+			assert(wait_until_shown(BACKGROUND), "Background was never shown")
+			assert_stack({ })
+
+			monarch.hide(BACKGROUND)
+			assert(wait_until_hidden(BACKGROUND), "Background was never hidden")
+			assert_stack({ })
+		end)
+
+		it("should be able to hide the top screen", function()
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+
+			monarch.show(SCREEN2)
+			assert(wait_until_hidden(SCREEN1), "Screen1 was never hidden")
+			assert(wait_until_shown(SCREEN2), "Screen2 was never shown")
+			assert_stack({ SCREEN1, SCREEN2 })
+
+			assert(monarch.hide(SCREEN1) == false)
+			assert(monarch.hide(SCREEN2) == true)
+			assert(wait_until_hidden(SCREEN2), "Screen2 was never hidden")
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert_stack({ SCREEN1 })
+		end)
 
 		it("should be able to pass data to a screen when showning it or going back to it", function()
 			local data1 = { foo = "bar" }
