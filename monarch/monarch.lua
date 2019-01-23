@@ -568,48 +568,55 @@ function M.show(id, options, data, cb)
 
 	log("show()", screen.id)
 
-	-- a screen can ignore the stack by setting the no_stack to true
-	local add_to_stack = not options or not options.no_stack
-	if add_to_stack then
-		-- manipulate the current top
-		-- close popup if needed
-		-- transition out
-		local top = stack[#stack]
-		if top then
-			-- keep top popup visible if new screen can be shown on top of a popup
-			if top.popup and screen.popup_on_popup then
-				disable(top, screen)
-			else
-				-- close all popups
-				while top.popup do
-					stack[#stack] = nil
-					show_out(top, screen, callbacks.track())
-					top = stack[#stack]
-				end
-				-- unload and transition out from top
-				-- unless we're showing the same screen as is already visible
-				if top and top.id ~= screen.id then
-					show_out(top, screen, callbacks.track())
+	local co
+	co = coroutine.create(function()
+		-- a screen can ignore the stack by setting the no_stack to true
+		local add_to_stack = not options or not options.no_stack
+		if add_to_stack then
+			-- manipulate the current top
+			-- close popup(s) if needed
+			-- transition out
+			local top = stack[#stack]
+			if top then
+				-- keep top popup visible if new screen can be shown on top of a popup
+				if top.popup and screen.popup_on_popup then
+					disable(top, screen)
+				else
+					-- close all popups, one by one
+					while top.popup do
+						stack[#stack] = nil
+						show_out(top, screen, function()
+							coroutine.resume(co)
+						end)
+						coroutine.yield()
+						top = stack[#stack]
+					end
+					-- unload and transition out from top
+					-- unless we're showing the same screen as is already visible
+					if top and top.id ~= screen.id then
+						show_out(top, screen, callbacks.track())
+					end
 				end
 			end
 		end
-	end
-	
-	-- if the screen we want to show is in the stack
-	-- already and the clear flag is set then we need
-	-- to remove every screen on the stack up until and
-	-- including the screen itself
-	if options and options.clear then
-		log("show() clearing")
-		while M.in_stack(id) do
-			table.remove(stack)
+
+		-- if the screen we want to show is in the stack
+		-- already and the clear flag is set then we need
+		-- to remove every screen on the stack up until and
+		-- including the screen itself
+		if options and options.clear then
+			log("show() clearing")
+			while M.in_stack(id) do
+				table.remove(stack)
+			end
 		end
-	end
 
-	-- show screen
-	show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
+		-- show screen
+		show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
 
-	if cb then callbacks.when_done(cb) end
+		if cb then callbacks.when_done(cb) end
+	end)
+	coroutine.resume(co)
 
 	return true
 end
