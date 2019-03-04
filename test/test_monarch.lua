@@ -6,6 +6,7 @@ local monarch = require "monarch.monarch"
 local SCREEN1_STR = hash("screen1")
 local SCREEN1 = hash(SCREEN1_STR)
 local SCREEN2 = hash("screen2")
+local SCREEN_PRELOAD = hash("screen_preload")
 local BACKGROUND = hash("background")
 local POPUP1 = hash("popup1")
 local POPUP2 = hash("popup2")
@@ -354,6 +355,32 @@ return function()
 			assert(mock_msg.messages(URL1)[9].message.screen == SCREEN2)
 			assert(mock_msg.messages(URL1)[10].message_id == monarch.SCREEN_TRANSITION_IN_FINISHED)
 			assert(mock_msg.messages(URL1)[10].message.screen == SCREEN1)
+		end)
+
+
+		it("should be able to preload a screen and always keep it loaded", function()
+			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
+			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+			-- first time the screen gets loaded it will increment the count
+			assert(monarch.data(SCREEN_PRELOAD).count == 2)
+
+			monarch.show(SCREEN_PRELOAD, { clear = true }, { count = 1 })
+			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+			-- second time the screen gets shown it will already be loaded and not increment the count
+			assert(monarch.data(SCREEN_PRELOAD).count == 1)
+		end)
+
+
+		it("should be able to reload a preloaded screen", function()
+			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
+			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+			-- first time the screen gets loaded it will increment the count
+			assert(monarch.data(SCREEN_PRELOAD).count == 2)
+
+			monarch.show(SCREEN_PRELOAD, { clear = true, reload = true }, { count = 1 })
+			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+			-- second time the screen gets shown it will be reloaded and increment the count
+			assert(monarch.data(SCREEN_PRELOAD).count == 2)
 		end)
 	end)
 end

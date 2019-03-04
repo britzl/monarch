@@ -243,11 +243,11 @@ local function change_context(screen)
 	screen.wait_for = nil
 end
 
-local function unload(screen)
+local function unload(screen, force)
 	log("unload()", screen.id)
 
 	if screen.proxy then
-		if screen.auto_preload then
+		if screen.auto_preload and not force then
 			msg.post(screen.proxy, DISABLE)
 			screen.loaded = false
 			screen.preloaded = true
@@ -264,7 +264,7 @@ local function unload(screen)
 			go.delete(instance)
 		end
 		screen.factory_ids = nil
-		if screen.auto_preload then
+		if screen.auto_preload and not force then
 			screen.loaded = false
 			screen.preloaded = true
 		else
@@ -449,7 +449,7 @@ local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 		change_context(screen)
 		if reload and screen.loaded then
 			log("show_in() reloading", screen.id)
-			unload(screen)
+			unload(screen, reload)
 		end
 		load(screen)
 		if add_to_stack then
