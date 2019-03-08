@@ -382,11 +382,21 @@ local function reset_timestep(screen)
 	end
 end
 
-local function disable(screen, next_screen)
-	log("disable()", screen.id)
+local function run_coroutine(screen, cb, fn)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
+		fn()
+		screen.co = nil
+		pcallfn(cb)
+		notify_if_idle()
+	end)
+	assert(coroutine.resume(co))
+end
+
+local function disable(screen, next_screen)
+	log("disable()", screen.id)
+	run_coroutine(screen, nil, function()
 		change_context(screen)
 		release_input(screen)
 		focus_lost(screen, next_screen)
@@ -395,33 +405,23 @@ local function disable(screen, next_screen)
 		else
 			reset_timestep(screen)
 		end
-		screen.co = nil
-		if cb then cb() end
 	end)
-	assert(coroutine.resume(co))
 end
 
 local function enable(screen, previous_screen)
 	log("enable()", screen.id)
-	local co
-	co = coroutine.create(function()
-		screen.co = co
+	run_coroutine(screen, nil, function()
 		change_context(screen)
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		reset_timestep(screen)
-		screen.co = nil
-		if cb then cb() end
 	end)
-	assert(coroutine.resume(co))
 end
 
 local function show_out(screen, next_screen, cb)
 	log("show_out()", screen.id)
-	local co
-	co = coroutine.create(function()
+	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
-		screen.co = co
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
 		change_context(screen)
 		release_input(screen)
@@ -437,20 +437,15 @@ local function show_out(screen, next_screen, cb)
 		elseif next_is_popup then
 			change_timestep(screen)
 		end
-		screen.co = nil
 		active_transition_count = active_transition_count - 1
-		if cb then cb() end
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen.id })
 	end)
-	coroutine.resume(co)
 end
 
 local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 	log("show_in()", screen.id)
-	local co
-	co = coroutine.create(function()
+	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
-		screen.co = co
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		change_context(screen)
 		if reload and screen.loaded then
@@ -465,20 +460,15 @@ local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id })
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
-		screen.co = nil
 		active_transition_count = active_transition_count - 1
-		if cb then cb() end
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_FINISHED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 	end)
-	coroutine.resume(co)
 end
 
 local function back_in(screen, previous_screen, cb)
 	log("back_in()", screen.id)
-	local co
-	co = coroutine.create(function()
+	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
-		screen.co = co
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		change_context(screen)
 		load(screen)
@@ -488,21 +478,16 @@ local function back_in(screen, previous_screen, cb)
 		end
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
-		screen.co = nil
 		active_transition_count = active_transition_count - 1
-		if cb then cb() end
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_FINISHED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 	end)
-	coroutine.resume(co)
 end
 
 local function back_out(screen, next_screen, cb)
 	log("back_out()", screen.id)
-	local co
-	co = coroutine.create(function()
+	run_coroutine(screen, cb, function()
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 		active_transition_count = active_transition_count + 1
-		screen.co = co
 		change_context(screen)
 		release_input(screen)
 		focus_lost(screen, next_screen)
@@ -511,12 +496,9 @@ local function back_out(screen, next_screen, cb)
 		end
 		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id })
 		unload(screen)
-		screen.co = nil
 		active_transition_count = active_transition_count - 1
-		if cb then cb() end
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 	end)
-	coroutine.resume(co)
 end
 
 
@@ -722,15 +704,10 @@ function M.preload(id, cb)
 		pcallfn(cb)
 		return true
 	end
-	local co
-	co = coroutine.create(function()
-		screen.co = co
+	run_coroutine(screen, cb, function()
 		change_context(screen)
 		preload(screen)
-		log("preload() done", screen.id)
-		if cb then cb() end
 	end)
-	assert(coroutine.resume(co))
 	return true
 end
 
@@ -755,14 +732,10 @@ function M.unload(id, cb)
 		pcallfn(cb)
 		return true
 	end
-	local co
-	co = coroutine.create(function()
-		screen.co = co
+	run_coroutine(screen, cb, function()
 		change_context(screen)
 		unload(screen)
-		if cb then cb() end
 	end)
-	assert(coroutine.resume(co))
 	return true
 end
 
