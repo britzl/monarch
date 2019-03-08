@@ -39,8 +39,8 @@ local screens = {}
 -- the current stack of screens
 local stack = {}
 
--- navigation listeners
-local listeners = {}
+-- transition listeners
+local transition_listeners = {}
 
 -- the number of active transitions
 -- monarch is considered busy while there are active transitions
@@ -61,9 +61,9 @@ local function tohash(s)
 	return hash_lookup[s]
 end
 
-local function notify_listeners(message_id, message)
-	log("notify_listeners()", message_id)
-	for _,url in pairs(listeners) do
+local function notify_transition_listeners(message_id, message)
+	log("notify_transition_listeners()", message_id)
+	for _,url in pairs(transition_listeners) do
 		msg.post(url, message_id, message or {})
 	end
 end
@@ -415,8 +415,8 @@ local function show_out(screen, next_screen, cb)
 	local co
 	co = coroutine.create(function()
 		active_transition_count = active_transition_count + 1
-		notify_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
 		screen.co = co
+		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
 		change_context(screen)
 		release_input(screen)
 		focus_lost(screen, next_screen)
@@ -434,7 +434,7 @@ local function show_out(screen, next_screen, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
-		notify_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen.id })
+		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen.id })
 	end)
 	coroutine.resume(co)
 end
@@ -444,8 +444,8 @@ local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 	local co
 	co = coroutine.create(function()
 		active_transition_count = active_transition_count + 1
-		notify_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		screen.co = co
+		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		change_context(screen)
 		if reload and screen.loaded then
 			log("show_in() reloading", screen.id)
@@ -462,7 +462,7 @@ local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
-		notify_listeners(M.SCREEN_TRANSITION_IN_FINISHED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
+		notify_transition_listeners(M.SCREEN_TRANSITION_IN_FINISHED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 	end)
 	coroutine.resume(co)
 end
@@ -472,8 +472,8 @@ local function back_in(screen, previous_screen, cb)
 	local co
 	co = coroutine.create(function()
 		active_transition_count = active_transition_count + 1
-		notify_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		screen.co = co
+		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		change_context(screen)
 		load(screen)
 		reset_timestep(screen)
@@ -485,7 +485,7 @@ local function back_in(screen, previous_screen, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
-		notify_listeners(M.SCREEN_TRANSITION_IN_FINISHED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
+		notify_transition_listeners(M.SCREEN_TRANSITION_IN_FINISHED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 	end)
 	coroutine.resume(co)
 end
@@ -494,7 +494,7 @@ local function back_out(screen, next_screen, cb)
 	log("back_out()", screen.id)
 	local co
 	co = coroutine.create(function()
-		notify_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen and next_screen.id })
+		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 		active_transition_count = active_transition_count + 1
 		screen.co = co
 		change_context(screen)
@@ -508,7 +508,7 @@ local function back_out(screen, next_screen, cb)
 		screen.co = nil
 		active_transition_count = active_transition_count - 1
 		if cb then cb() end
-		notify_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen and next_screen.id })
+		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 	end)
 	coroutine.resume(co)
 end
@@ -828,7 +828,7 @@ end
 -- @param url The url to notify, nil for current url
 function M.add_listener(url)
 	url = url or msg.url()
-	listeners[url_to_key(url)] = url
+	transition_listeners[url_to_key(url)] = url
 end
 
 
@@ -836,7 +836,7 @@ end
 -- @param url The url to remove, nil for current url
 function M.remove_listener(url)
 	url = url or msg.url()
-	listeners[url_to_key(url)] = nil
+	transition_listeners[url_to_key(url)] = nil
 end
 
 
