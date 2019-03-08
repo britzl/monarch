@@ -1,7 +1,7 @@
 [project]
 title = Monarch
 version = 0.9
-dependencies = https://github.com/britzl/deftest/archive/2.4.3.zip
+dependencies = https://github.com/britzl/deftest/archive/2.7.0.zip
 
 [bootstrap]
 main_collection = /test/test.collectionc

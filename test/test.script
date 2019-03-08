@@ -5,5 +5,8 @@ local test_monarch = require "test.test_monarch"
 
 function init(self)
 	deftest.add(test_monarch)
-	deftest.run({ coverage = { enabled = true }})
+	deftest.run({ 
+		coverage = { enabled = true },
+		--pattern = "preload",
+	})
 end

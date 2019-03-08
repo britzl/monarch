@@ -34,6 +34,14 @@ return function()
 		return fn(...)
 	end
 
+	local function wait_until_done(fn)
+		local is_done = false
+		local function done()
+			is_done = true
+		end
+		fn(done)
+		wait_timeout(function() return is_done end)
+	end
 	local function wait_until_visible(screen_id)
 		return wait_timeout(is_visible, screen_id)
 	end
@@ -302,6 +310,16 @@ return function()
 			assert(wait_until_not_busy())
 		end)
 
+		it("should be able to preload a screen and wait for it", function()
+			assert(not monarch.is_preloading(TRANSITION1))
+			monarch.preload(TRANSITION1)
+			assert(monarch.is_preloading(TRANSITION1))
+			wait_until_done(function(done)
+				monarch.when_preloaded(TRANSITION1, done)
+			end)
+			assert(not monarch.is_preloading(TRANSITION1))
+		end)
+		
 		it("should ignore any preload calls while busy", function()
 			monarch.show(TRANSITION1)
 			-- previously a call to preload() while also showing a screen would
@@ -357,7 +375,12 @@ return function()
 			assert(mock_msg.messages(URL1)[10].message.screen == SCREEN1)
 		end)
 
-
+		it("should be able to show a screen even while it is preloading", function()
+			assert(monarch.is_preloading(SCREEN_PRELOAD))
+			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
+			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+		end)
+		
 		it("should be able to preload a screen and always keep it loaded", function()
 			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
 			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
