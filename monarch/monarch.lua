@@ -61,6 +61,12 @@ local function tohash(s)
 	return hash_lookup[s]
 end
 
+local function pcallfn(fn, ...)
+	if fn then
+		local ok, err = pcall(fn, ...)
+		if not ok then print(err) end
+	end
+end
 local function notify_transition_listeners(message_id, message)
 	log("notify_transition_listeners()", message_id)
 	for _,url in pairs(transition_listeners) do
@@ -646,8 +652,8 @@ function M.hide(id, cb)
 	else
 		if M.is_visible(id) then
 			back_out(screen, nil, cb)
-		elseif cb then
-			cb()
+		else
+			pcallfn(cb)
 		end
 	end
 	return true
@@ -713,7 +719,7 @@ function M.preload(id, cb)
 	local screen = screens[id]
 	log("preload()", screen.id)
 	if screen.preloaded or screen.loaded then
-		if cb then cb() end
+		pcallfn(cb)
 		return true
 	end
 	local co
@@ -746,7 +752,7 @@ function M.unload(id, cb)
 	local screen = screens[id]
 	if not screen.preloaded and not screen.loaded then
 		log("unload() screen is not loaded", tostring(id))
-		if cb then cb() end
+		pcallfn(cb)
 		return true
 	end
 	local co
