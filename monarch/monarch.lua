@@ -140,6 +140,7 @@ local function register(id, settings)
 		popup = settings and settings.popup,
 		popup_on_popup = settings and settings.popup_on_popup,
 		timestep_below_popup = settings and settings.timestep_below_popup or 1,
+		preload_listeners = {},
 	}
 	return screens[id]
 end
@@ -389,7 +390,6 @@ local function run_coroutine(screen, cb, fn)
 		fn()
 		screen.co = nil
 		pcallfn(cb)
-		notify_if_idle()
 	end)
 	assert(coroutine.resume(co))
 end
@@ -599,7 +599,15 @@ function M.show(id, options, data, cb)
 			end
 		end
 
-		-- show screen
+		-- show screen, wait until preloaded if it is already preloading
+		-- this can typpically happen if you do a show() on app start for a
+		-- screen that has Preload set to true
+		if M.is_preloading(id) then
+			M.when_preloaded(id, function()
+				coroutine.resume(co)
+			end)
+			coroutine.yield()
+		end
 		show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
 
 		if cb then callbacks.when_done(cb) end
@@ -625,6 +633,7 @@ function M.hide(id, cb)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
 	local screen = screens[id]
+	log("hide()", screen.id)
 	if M.in_stack(id) then
 		if not M.is_top(id) then
 			log("hide() you can only hide the screen at the top of the stack", id)
@@ -684,6 +693,36 @@ function M.back(data, cb)
 end
 
 
+--- Check if a screen is preloading via monarch.preload() or automatically
+-- via the Preload screen option
+-- @param id Screen id
+-- @return true if preloading
+function M.is_preloading(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	local screen = screens[id]
+	return screen.preloading
+end
+
+
+--- Invoke a callback when a specific screen has been preloaded
+-- This is mainly useful on app start when wanting to show a screen that
+-- has the Preload flag set (since it will immediately start to load which
+-- would prevent a call to monarch.show from having any effect).
+function M.when_preloaded(id, cb)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	local screen = screens[id]
+	if screen.preloaded or screen.loaded then
+		pcallfn(cb, id)
+	else
+		screen.preload_listeners[#screen.preload_listeners + 1] = cb
+	end
+end
+
+
 --- Preload a screen. This will load but not enable and show a screen. Useful for "heavier" screens
 -- that you wish to show without any delay.
 -- @param id (string|hash) - Id of the screen to preload
@@ -704,14 +743,28 @@ function M.preload(id, cb)
 		pcallfn(cb)
 		return true
 	end
-	run_coroutine(screen, cb, function()
+	
+	local function when_preloaded()
+		-- invoke any listeners added using monarch.when_preloaded()
+		while #screen.preload_listeners > 0 do
+			pcallfn(table.remove(screen.preload_listeners), id)
+		end
+		-- invoke the normal callback
+		pcallfn(cb)
+	end
+	run_coroutine(screen, when_preloaded, function()
+		screen.preloading = true
 		change_context(screen)
 		preload(screen)
+		screen.preloading = false
 	end)
 	return true
 end
 
 
+--- Unload a preloaded monarch screen
+-- @param id (string|hash) - Id of the screen to unload
+-- @param cb (function) - Optional callback to invoke when screen is unloaded
 function M.unload(id, cb)
 	if M.is_busy() then
 		log("unload() monarch is busy, ignoring request")
@@ -727,6 +780,7 @@ function M.unload(id, cb)
 	end
 
 	local screen = screens[id]
+	log("unload()", screen.id)
 	if not screen.preloaded and not screen.loaded then
 		log("unload() screen is not loaded", tostring(id))
 		pcallfn(cb)

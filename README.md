@@ -334,8 +334,26 @@ Preload a Monarch screen. This will load but not enable the screen. This is usef
 * ```callback``` (function) - Optional function to call when the screen is preloaded.
 
 
+### monarch.is_preloading(screen_id)
+Check if a Monarch screen is preloading (via monarch.preload() or the Preload screen setting).
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to check
+
+**RETURN**
+* ```preloading``` (boolean) - True if the screen is preloading.
+
+
+### monarch.when_preloaded(screen_id, callback)
+Invoke a callback when a screen has been preloaded.
+
+**PARAMETERS**
+* ```screen_id``` (hash) - Id of the screen to check
+* ```callback``` (function) - Function to call when the screen has been preloaded.
+
+
 ### monarch.unload(screen_id, [callback])
-Unload a preloaded Monarch screen. A preloaded screen will automatically get unloaded when hidden, but this function can be useful if a screen has been preloaded and it needs to be unloaded again.
+Unload a preloaded Monarch screen. A preloaded screen will automatically get unloaded when hidden, but this function can be useful if a screen has been preloaded and it needs to be unloaded again without actually hiding it.
 
 **PARAMETERS**
 * ```screen_id``` (hash) - Id of the screen to unload.
