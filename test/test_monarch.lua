@@ -7,6 +7,7 @@ local SCREEN1_STR = hash("screen1")
 local SCREEN1 = hash(SCREEN1_STR)
 local SCREEN2 = hash("screen2")
 local SCREEN_PRELOAD = hash("screen_preload")
+local FOCUS1 = hash("focus1")
 local BACKGROUND = hash("background")
 local POPUP1 = hash("popup1")
 local POPUP2 = hash("popup2")
@@ -404,6 +405,22 @@ return function()
 			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
 			-- second time the screen gets shown it will be reloaded and increment the count
 			assert(monarch.data(SCREEN_PRELOAD).count == 2)
+		end)
+
+
+		it("should send focus messages", function()
+			_G.focus1_gained = nil
+			_G.focus1_lost = nil
+
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			monarch.show(FOCUS1)
+			assert(wait_until_shown(FOCUS1), "Screen1 was never shown")
+			assert(_G.focus1_gained)
+			monarch.show(SCREEN1)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert(wait_until_hidden(FOCUS1), "Focus1 was never hidden")
+			assert(_G.focus1_lost)
 		end)
 	end)
 end

@@ -67,6 +67,16 @@ local function pcallfn(fn, ...)
 		if not ok then print(err) end
 	end
 end
+
+local function cowait(delay)
+	local co = coroutine.running()
+	assert(co, "You must run this form within a coroutine")
+	timer.delay(delay, false, function()
+		coroutine.resume(co)
+	end)
+	coroutine.yield()
+end
+
 local function notify_transition_listeners(message_id, message)
 	log("notify_transition_listeners()", message_id)
 	for _,url in pairs(transition_listeners) do
@@ -364,6 +374,11 @@ local function focus_lost(screen, next_screen)
 	log("focus_lost()", screen.id)
 	if screen.focus_url then
 		msg.post(screen.focus_url, M.FOCUS.LOST, { id = next_screen and next_screen.id })
+		-- if there's no transition on the screen losing focus and it gets
+		-- unloaded this will happen before the focus_lost message reaches
+		-- the focus_url
+		-- we add a delay to ensure the message queue has time to be processed
+		cowait(0)
 	else
 		log("focus_lost() no focus url - ignoring")
 	end

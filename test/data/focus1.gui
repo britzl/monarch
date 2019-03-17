@@ -1,4 +1,4 @@
-script: "/test/data/screen1.gui_script"
+script: "/test/data/focus1.gui_script"
 fonts {
   name: "example"
   font: "/assets/example.font"
@@ -96,7 +96,7 @@ nodes {
   }
   type: TYPE_TEXT
   blend_mode: BLEND_MODE_ALPHA
-  text: "FOCUS 1"
+  text: "1"
   font: "example"
   id: "text"
   xanchor: XANCHOR_NONE

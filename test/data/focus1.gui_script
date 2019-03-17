@@ -1,0 +1,9 @@
+local monarch = require "monarch.monarch"
+
+function on_message(self, message_id, message, sender)
+	if message_id == monarch.FOCUS.GAINED then
+		_G.focus1_gained = true
+	elseif message_id == monarch.FOCUS.LOST then
+		_G.focus1_lost = true
+	end
+end
