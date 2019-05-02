@@ -72,7 +72,7 @@ local function cowait(delay)
 	local co = coroutine.running()
 	assert(co, "You must run this form within a coroutine")
 	timer.delay(delay, false, function()
-		coroutine.resume(co)
+		assert(coroutine.resume(co))
 	end)
 	coroutine.yield()
 end
@@ -594,7 +594,7 @@ function M.show(id, options, data, cb)
 					while top.popup do
 						stack[#stack] = nil
 						show_out(top, screen, function()
-							coroutine.resume(co)
+							assert(coroutine.resume(co))
 						end)
 						coroutine.yield()
 						top = stack[#stack]
@@ -624,7 +624,7 @@ function M.show(id, options, data, cb)
 		-- screen that has Preload set to true
 		if M.is_preloading(id) then
 			M.when_preloaded(id, function()
-				coroutine.resume(co)
+				assert(coroutine.resume(co))
 			end)
 			coroutine.yield()
 		end
@@ -632,7 +632,7 @@ function M.show(id, options, data, cb)
 
 		if cb then callbacks.when_done(cb) end
 	end)
-	coroutine.resume(co)
+	assert(coroutine.resume(co))
 
 	return true
 end
