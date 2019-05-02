@@ -578,13 +578,13 @@ function M.show(id, options, data, cb)
 
 	local co
 	co = coroutine.create(function()
+		local top = stack[#stack]
 		-- a screen can ignore the stack by setting the no_stack to true
 		local add_to_stack = not options or not options.no_stack
 		if add_to_stack then
 			-- manipulate the current top
 			-- close popup(s) if needed
 			-- transition out
-			local top = stack[#stack]
 			if top then
 				-- keep top popup visible if new screen can be shown on top of a popup
 				if top.popup and screen.popup_on_popup then
