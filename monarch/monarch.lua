@@ -466,6 +466,11 @@ local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 		if reload and screen.loaded then
 			log("show_in() reloading", screen.id)
 			unload(screen, reload)
+			-- we need to wait here in case the unloaded screen contained any screens
+			-- if this is the case we need to let these sub-screens have their final()
+			-- functions called so that they have time to call unregister()
+			cowait(0)
+			cowait(0)
 		end
 		load(screen)
 		if add_to_stack then
