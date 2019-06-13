@@ -20,8 +20,8 @@ jdk:
 #DEFOLD_AUTH=auth token
 env:
   global:
-    - secure: "1rVLsDcb7dFdgyB9D1JQDr4JhWSosoMvgYgrqZNPxJ/Du3qtY3bk6dgQim+g2fDMQpDOPCQ/EhmhtrLJrIgBhhvOcsrVKT8gl9ZnATw5tHGI6XTw3eod8WgsU8owlc7CaT3XaUgwVshmW3oB/257SDf6kHwsCv/gAJuCEL5RZp76BhTWsfyeDCgz5XXgWx4a21tcIWz96jxEsrYQKLLV2ne55CxU5Hw9IMU7Ig7pkGoYCf1g+iUEA39NC8nIrQibUoJj3yNB2u3ZFwGf2LuDjjkSIsyYWn1LzA2fQYw5uAcjiQ/aDkj6sAEvwrWsIsJhOon5cQBFIU6cIIN2oK3A7BA0zJj0EsTFPUMIeryyoqiuLUDoIvHD/eEqouNduP6Kml02Ql0pDZnjDy/+nzp2e7VA5Sd9Xg1XKd1mmHKx4nc2U+IcIDZWAerFKcqQqeZSwzz5igv07w5zYZ99KCSBMH2K/2H/CNekHa6SQQ29mC8D3lDXOfwEq3fAhsabgUGe2uAgUY1nKwJBKEi7r+KEROBr5ydkWenzbCXv3GNNsuCHKpNFuoZv3QMyjUjlPBxZVndNLSv85juhkBx6wXAh8CxTt78Y8GV0xI8oazSM065gpDmENGVqyO1bUn2CZF8YRC4MLfHK+245QN82ui+YOqVudTX8RGWnX0GFUncjaRQ="
-    - DEFOLD_USER=bjorn.ritzl@king.com
+    - DEFOLD_AUTH=foobar
+    - DEFOLD_USER=bjorn.ritzl@gmail.com
     - DEFOLD_BOOSTRAP_COLLECTION=/test/test.collectionc
 
 script:
