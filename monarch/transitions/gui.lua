@@ -104,114 +104,163 @@ function M.fade_in(node, from, easing, duration, delay, cb)
 	gui.animate(node, gui.PROP_COLOR, to, easing, duration, delay, cb)
 end
 
---- Create a transition for a node
--- @return Transition instance
-function M.create(node)
-	assert(node, "You must provide a node")
 
+
+--- Create a transition
+-- @return Transition instance
+local function create()
 	local instance = {}
 
-	local transitions = {}
+	local transitions = {
+		[monarch.TRANSITION.SHOW_IN] = { urls = {}, transitions = {}, in_progress_count = 0, },
+		[monarch.TRANSITION.SHOW_OUT] = { urls = {}, transitions = {}, in_progress_count = 0, },
+		[monarch.TRANSITION.BACK_IN] = { urls = {}, transitions = {}, in_progress_count = 0, },
+		[monarch.TRANSITION.BACK_OUT] = { urls = {}, transitions = {}, in_progress_count = 0, },
+	}
 
 	local current_transition = nil
-	
-	local initial_data = {}
-	initial_data.pos = gui.get_position(node)
-	initial_data.scale = gui.get_scale(node)
 
-	local function create_transition(fn, easing, duration, delay)
-		return {
+	local function create_transition(transition_id, node, fn, easing, duration, delay)
+		local t = transitions[transition_id]
+		t.transitions[#t.transitions + 1] = {
+			node = node,
+			node_data = {
+				pos = gui.get_position(node),
+				scale = gui.get_scale(node),
+			},
 			fn = fn,
 			easing = easing,
 			duration = duration,
 			delay = delay,
-			in_progress = false,
-			urls = {},
-			id = nil
+			id = transition_id
 		}
 	end
 
-	local function finish_transition(transition)
-		transition.in_progress = false
-		local message = { transition = transition.id }
-		while #transition.urls > 0 do
-			local url = table.remove(transition.urls)
-			msg.post(url, monarch.TRANSITION.DONE, message)
+	local function finish_transition(transition_id)
+		local t = transitions[transition_id]
+		if #t.urls > 0 then
+			local message = { transition = transition_id }
+			while #t.urls > 0 do
+				local url = table.remove(t.urls)
+				msg.post(url, monarch.TRANSITION.DONE, message)
+			end
+		end
+		current_transition = nil
+	end
+
+	local function check_and_finish_transition(transition_id)
+		local t = transitions[transition_id]
+		if t.in_progress_count == 0 then
+			finish_transition(transition_id)
 		end
 	end
 
-	local function start_transition(transition, transition_id, url)
-		table.insert(transition.urls, url)
-		if not transition.in_progress then
-			table.insert(transition.urls, msg.url())
-			transition.in_progress = true
-			transition.id = transition_id
-			current_transition = transition
-			transition.fn(node, initial_data, transition.easing, transition.duration, transition.delay or 0, function()
-				finish_transition(transition)
-			end)
+	local function start_transition(transition_id, url)
+		local t = transitions[transition_id]
+		table.insert(t.urls, url)
+		if t.in_progress_count == 0 then
+			table.insert(t.urls, msg.url())
+			current_transition = t
+			if #t.transitions > 0 then
+				for i=1,#t.transitions do
+					local transition = t.transitions[i]
+					t.in_progress_count = t.in_progress_count + 1
+					transition.fn(transition.node, transition.node_data, transition.easing, transition.duration, transition.delay or 0, function()
+						t.in_progress_count = t.in_progress_count - 1
+						check_and_finish_transition(transition_id)
+					end)
+				end
+			else
+				check_and_finish_transition(transition_id)
+			end
 		end
 	end
 
 	-- Forward on_message calls here
 	function instance.handle(message_id, message, sender)
 		if message_id == LAYOUT_CHANGED then
-			initial_data.pos = gui.get_position(node)
+			for _,t in pairs(transitions) do
+				for _,transitions in pairs(t.transitions) do
+					transitions.node_data.pos = gui.get_position(transitions.node)
+				end
+			end
 			-- replay the current transition if the layout changes
 			-- this will ensure that things are still hidden if they
 			-- were transitioned out
 			if current_transition then
-				current_transition.fn(node, initial_data, current_transition.easing, 0, 0)
-				if current_transition.in_progress then
-					finish_transition(current_transition)
+				for _,transition in pairs(current_transition.transitions) do
+					local node = transition.node
+					transition.fn(transition.node, transition.node_data, transition.easing, 0, 0)
+				end
+				if current_transition.in_progress_count > 0 then
+					finish_transition(message_id)
 				end
 			end
-		else
-			local transition = transitions[message_id]
-			if transition then
-				start_transition(transition, message_id, sender)
-			end
+		elseif message_id == monarch.TRANSITION.SHOW_IN
+		or message_id == monarch.TRANSITION.SHOW_OUT
+		or message_id == monarch.TRANSITION.BACK_IN
+		or message_id == monarch.TRANSITION.BACK_OUT then
+			start_transition(message_id, sender)
 		end
 	end
-	
+
 	-- Specify the transition function when this node is transitioned
 	-- to
 	-- @param fn Transition function (see slide_in_left and other above)
 	-- @param easing Easing function to use
 	-- @param duration Transition duration
 	-- @param delay Transition delay
-	function instance.show_in(fn, easing, duration, delay)
-		transitions[monarch.TRANSITION.SHOW_IN] = create_transition(fn, easing, duration, delay)
+	function instance.show_in(node, fn, easing, duration, delay)
+		create_transition(monarch.TRANSITION.SHOW_IN, node, fn, easing, duration, delay)
 		return instance
 	end
 
 	-- Specify the transition function when this node is transitioned
 	-- from when showing another screen
-	function instance.show_out(fn, easing, duration, delay)
-		transitions[monarch.TRANSITION.SHOW_OUT] = create_transition(fn, easing, duration, delay)
+	function instance.show_out(node, fn, easing, duration, delay)
+		create_transition(monarch.TRANSITION.SHOW_OUT, node, fn, easing, duration, delay)
 		return instance
 	end
 
 	--- Specify the transition function when this node is transitioned
 	-- to when navigating back in the screen stack
-	function instance.back_in(fn, easing, duration, delay)
-		transitions[monarch.TRANSITION.BACK_IN] = create_transition(fn, easing, duration, delay)
+	function instance.back_in(node, fn, easing, duration, delay)
+		create_transition(monarch.TRANSITION.BACK_IN, node, fn, easing, duration, delay)
 		return instance
 	end
 
 	--- Specify the transition function when this node is transitioned
 	-- from when navigating back in the screen stack
-	function instance.back_out(fn, easing, duration, delay)
-		transitions[monarch.TRANSITION.BACK_OUT] = create_transition(fn, easing, duration, delay)
+	function instance.back_out(node, fn, easing, duration, delay)
+		create_transition(monarch.TRANSITION.BACK_OUT, node, fn, easing, duration, delay)
 		return instance
 	end
 
-	-- set default transitions (instant)
-	instance.show_in(M.instant)
-	instance.show_out(M.instant)
-	instance.back_in(M.instant)
-	instance.back_out(M.instant)
-	
+	return instance
+end
+
+function M.create(node)
+	local instance = create()
+	-- backward compatibility with the old version of create
+	-- where a single node was used
+	if node then
+		local show_in = instance.show_in
+		local show_out = instance.show_out
+		local back_in = instance.back_in
+		local back_out = instance.back_out
+		instance.show_in = function(fn, easing, duration, delay)
+			return show_in(node, fn, easing, duration, delay)
+		end
+		instance.show_out = function(fn, easing, duration, delay)
+			return show_out(node, fn, easing, duration, delay)
+		end
+		instance.back_in = function(fn, easing, duration, delay)
+			return back_in(node, fn, easing, duration, delay)
+		end
+		instance.back_out = function(fn, easing, duration, delay)
+			return back_out(node, fn, easing, duration, delay)
+		end
+	end
 	return instance
 end
 
