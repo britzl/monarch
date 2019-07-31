@@ -17,6 +17,8 @@ language: java
 jdk:
   - oraclejdk8
 
+dist: trusty
+
 #DEFOLD_AUTH=auth token
 env:
   global:
