@@ -1,10 +1,12 @@
 local deftest = require "deftest.deftest"
 
 local test_monarch = require "test.test_monarch"
+local test_callback_tracker = require "test.test_callback_tracker"
 
 
 function init(self)
 	deftest.add(test_monarch)
+	deftest.add(test_callback_tracker)
 	deftest.run({ 
 		coverage = { enabled = true },
 		--pattern = "preload",

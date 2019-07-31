@@ -18,9 +18,15 @@ function M.create()
 	-- @return Callback function
 	function instance.track()
 		callback_count = callback_count + 1
+		local done = false
 		return function()
+			if done then
+				return false, "The callback has already been invoked once"
+			end
+			done = true
 			callback_count = callback_count - 1
 			invoke_if_done()
+			return true
 		end
 	end
 
