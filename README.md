@@ -287,7 +287,7 @@ Both the ```monarch.show()``` and ```monarch.back()``` functions take an optiona
 ## Monarch API
 
 ### monarch.show(screen_id, [options], [data], [callback])
-Show a Monarch screen. Note that the screen must be registered before it can be shown. The ```init()``` function of the ```screen.script``` takes care of registration.
+Show a Monarch screen. Note that the screen must be registered before it can be shown. The ```init()``` function of the ```screen.script``` takes care of registration. This operation will be added to the queue if Monarch is busy.
 
 **PARAMETERS**
 * ```screen_id``` (string|hash) - Id of the screen to show.
@@ -301,12 +301,9 @@ The options table can contain the following fields:
 * ```reload``` (boolean) - If the `reload` flag is set Monarch will reload the collection proxy if it's already loaded (this can happen if the previous screen was a popup).
 * ```no_stack``` (boolean) - If the `no_stack` flag is set Monarch will load the screen without adding it to the screen stack.
 
-**RETURN**
-* ```success``` (boolean) - True if the process of showing the screen was started successfully. False if already busy showing/hiding a screen.
-
 
 ### monarch.hide(screen_id, [callback])
-Hide a screen that has been shown using the `no_stack` option. If used on a screen that was shown without the `no_stack` option it will only hide it if the screen is on top of the stack and the behavior will be exactly like if `monarch.back()` had been called.
+Hide a screen that has been shown using the `no_stack` option. If used on a screen that was shown without the `no_stack` option it will only hide it if the screen is on top of the stack and the behavior will be exactly like if `monarch.back()` had been called. This operation will be added to the queue if Monarch is busy.
 
 **PARAMETERS**
 * ```screen_id``` (string|hash) - Id of the screen to hide.
@@ -317,18 +314,15 @@ Hide a screen that has been shown using the `no_stack` option. If used on a scre
 
 
 ### monarch.back([data], [callback])
-Go back to a previous Monarch screen
+Go back to a previous Monarch screen. This operation will be added to the queue if Monarch is busy.
 
 **PARAMETERS**
 * ```data``` (table) - Optional data to associate with the screen you are going back to.  Retrieve using ```monarch.data()```.
 * ```callback``` (function) - Optional function to call when the previous screen is visible.
 
-**RETURN**
-* ```success``` (boolean) - True if the process of going back to a previous screen was started successfully. False if already busy showing/hiding a screen.
-
 
 ### monarch.preload(screen_id, [callback])
-Preload a Monarch screen. This will load but not enable the screen. This is useful for content heavy screens that you wish to be able to show without having to wait for it load.
+Preload a Monarch screen. This will load but not enable the screen. This is useful for content heavy screens that you wish to be able to show without having to wait for it load. This operation will be added to the queue if Monarch is busy.
 
 **PARAMETERS**
 * ```screen_id``` (string|hash) - Id of the screen to preload.
@@ -354,7 +348,7 @@ Invoke a callback when a screen has been preloaded.
 
 
 ### monarch.unload(screen_id, [callback])
-Unload a preloaded Monarch screen. A preloaded screen will automatically get unloaded when hidden, but this function can be useful if a screen has been preloaded and it needs to be unloaded again without actually hiding it.
+Unload a preloaded Monarch screen. A preloaded screen will automatically get unloaded when hidden, but this function can be useful if a screen has been preloaded and it needs to be unloaded again without actually hiding it. This operation will be added to the queue if Monarch is busy.
 
 **PARAMETERS**
 * ```screen_id``` (string|hash) - Id of the screen to unload.

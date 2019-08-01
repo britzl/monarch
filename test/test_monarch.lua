@@ -6,6 +6,7 @@ local monarch = require "monarch.monarch"
 local SCREEN1_STR = hash("screen1")
 local SCREEN1 = hash(SCREEN1_STR)
 local SCREEN2 = hash("screen2")
+local CHILD = hash("child")
 local SCREEN_PRELOAD = hash("screen_preload")
 local FOCUS1 = hash("focus1")
 local BACKGROUND = hash("background")
@@ -13,6 +14,26 @@ local POPUP1 = hash("popup1")
 local POPUP2 = hash("popup2")
 local FOOBAR = hash("foobar")
 local TRANSITION1 = hash("transition1")
+
+local function check_stack(expected_screens)
+	local actual_screens = monarch.get_stack()
+	if #actual_screens ~= #expected_screens then
+		return false, "Stack length mismatch"
+	end
+	for i=1,#actual_screens do
+		if actual_screens[i] ~= expected_screens[i] then
+			return false, "Stack content not matching"
+		end
+	end
+	return true
+end
+
+local telescope = require "deftest.telescope"
+telescope.make_assertion(
+	"stack",
+	function(_, ...) return telescope.assertion_message_prefix .. "stack to match" end,
+	function(expected_screens) return check_stack(expected_screens) end
+)
 
 return function()
 
@@ -24,6 +45,10 @@ return function()
 
 	local function is_hidden(screen_id)
 		return not monarch.is_visible(screen_id)
+	end
+
+	local function is_preloading(screen_id)
+		return monarch.is_preloading(screen_id)
 	end
 
 	local function wait_timeout(fn, ...)
@@ -46,23 +71,18 @@ return function()
 	local function wait_until_hidden(screen_id)
 		return wait_timeout(is_hidden, screen_id)
 	end
+	local function wait_until_preloading(screen_id)
+		return wait_timeout(is_preloading, screen_id)
+	end
 	local function wait_until_not_busy()
 		return wait_timeout(function() return not monarch.is_busy() end)
 	end
-
-	local function assert_stack(expected_screens)
-		local actual_screens = monarch.get_stack()
-		if #actual_screens ~= #expected_screens then
-			error("Stack length mismatch", 2)
-		end
-		for i=1,#actual_screens do
-			if actual_screens[i] ~= expected_screens[i] then
-				error("Stack content not matching", 2)
-			end
-		end
+	local function wait_until_loaded(screen_id)
+		wait_until_done(function(done)
+			monarch.when_preloaded(screen_id, done)
+		end)
 	end
-
-	
+		
 	describe("monarch", function()
 		before(function()
 			mock_msg.mock()
@@ -72,6 +92,7 @@ return function()
 		end)
 
 		after(function()
+			print("[TEST] done")
 			while #monarch.get_stack() > 0 do
 				monarch.back()
 				wait_until_not_busy()
@@ -171,7 +192,7 @@ return function()
 			assert_stack({ SCREEN1 })
 		end)
 
-		it("should be able to pass data to a screen when showning it or going back to it", function()
+		it("should be able to pass data to a screen when showing it or going back to it", function()
 			local data1 = { foo = "bar" }
 			monarch.show(SCREEN1, nil, data1)
 			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
@@ -185,7 +206,7 @@ return function()
 
 			local data_back = { going = "back" }
 			monarch.back(data_back)
-			assert_stack({ SCREEN1 })
+			assert(wait_until_shown(SCREEN1))
 
 			assert(monarch.data(SCREEN1) == data_back, "Expected data on screen1 doesn't match actual data")
 		end)
@@ -226,23 +247,32 @@ return function()
 			assert_stack({ SCREEN1, POPUP1, POPUP2 })
 		end)
 
-		
-		it("should prevent further operations while hiding/showing a screen", function()
-			assert(monarch.show(SCREEN1) == true)
-			assert(monarch.show(SCREEN2) == false)
-			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
-			assert_stack({ SCREEN1 })
 
-			assert(monarch.show(SCREEN2) == true)
+		it("should prevent further operations while hiding/showing a screen", function()
+			monarch.show(SCREEN1)
+			monarch.show(SCREEN2)
+			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
 			assert(wait_until_shown(SCREEN2), "Screen2 was never shown")
 			assert_stack({ SCREEN1, SCREEN2 })
 
-			assert(monarch.back() == true)
-			assert(monarch.back() == false)
-			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
-			assert_stack({ SCREEN1 })
+			assert(monarch.back())
+			assert(monarch.back())
+			assert(wait_until_hidden(SCREEN1), "Screen1 was never hidden")
+			assert(wait_until_hidden(SCREEN2), "Screen2 was never hidden")
 		end)
-		
+
+
+		it("should not perform further operations if an operation fails", function()
+			monarch.show(SCREEN2) -- SCREEN2 contains CHILD
+			wait_until_not_busy()
+			assert_stack({ SCREEN2 })
+			monarch.back() -- this will unload SCREEN2 and CHILD
+			monarch.show(CHILD) -- this will fail since CHILD has been unloaded
+			monarch.show(SCREEN1) -- this should be ignored
+			wait_until_not_busy()
+			assert_stack({ })
+		end)
+				
 		
 		it("should close any open popups when showing a popup without the Popup On Popup flag", function()
 			monarch.show(SCREEN1)
@@ -308,7 +338,6 @@ return function()
 		it("should be able to preload a screen and wait for it", function()
 			assert(not monarch.is_preloading(TRANSITION1))
 			monarch.preload(TRANSITION1)
-			assert(monarch.is_preloading(TRANSITION1))
 			wait_until_done(function(done)
 				monarch.when_preloaded(TRANSITION1, done)
 			end)
@@ -364,14 +393,13 @@ return function()
 			assert(mock_msg.messages(URL1)[7].message.screen == SCREEN2)
 			assert(mock_msg.messages(URL1)[8].message_id == monarch.SCREEN_TRANSITION_IN_STARTED)
 			assert(mock_msg.messages(URL1)[8].message.screen == SCREEN1)
-			assert(mock_msg.messages(URL1)[9].message_id == monarch.SCREEN_TRANSITION_OUT_FINISHED)
-			assert(mock_msg.messages(URL1)[9].message.screen == SCREEN2)
-			assert(mock_msg.messages(URL1)[10].message_id == monarch.SCREEN_TRANSITION_IN_FINISHED)
-			assert(mock_msg.messages(URL1)[10].message.screen == SCREEN1)
+			assert(mock_msg.messages(URL1)[9].message_id == monarch.SCREEN_TRANSITION_IN_FINISHED)
+			assert(mock_msg.messages(URL1)[9].message.screen == SCREEN1)
+			assert(mock_msg.messages(URL1)[10].message_id == monarch.SCREEN_TRANSITION_OUT_FINISHED)
+			assert(mock_msg.messages(URL1)[10].message.screen == SCREEN2)
 		end)
 
 		it("should be able to show a screen even while it is preloading", function()
-			assert(monarch.is_preloading(SCREEN_PRELOAD))
 			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
 			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
 		end)
