@@ -19,7 +19,6 @@ jdk:
 
 dist: trusty
 
-#DEFOLD_AUTH=auth token
 env:
   global:
     - DEFOLD_AUTH=foobar
