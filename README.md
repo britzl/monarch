@@ -33,7 +33,7 @@ For proxies the recommended setup is to create one game object per screen and pe
 * **Timestep below Popup (number)** - Timestep to set on screen proxy when it is below a popup. This is useful when pausing animations and gameplay while a popup is open.
 * **Transition Url (url)** - Optional URL to post messages to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Url (url)** - Optional URL to post messages to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
-* **Receiver Url (url)** - Optional URL to post messages to using monarch.post().
+* **Receiver Url (url)** - Optional URL to post messages to using `monarch.post()`.
 * **Preload (boolean)** - Check this if the screen should be preloaded and kept loaded at all times. For a collection proxy it means that it will be async loaded but not enabled at all times while not visible. This can also temporarily be achieved through the `monarch.preload()` function.
 
 ![](docs/setup_proxy.png)
@@ -148,7 +148,7 @@ If a screen is shown on top of one or more popups they will all be removed from 
 
 
 ## Transitions
-You can add optional transitions when navigating between screens. The default behavior is that screen navigation is instant but if you have defined a transition for a screen Monarch will wait until the transition is completed before proceeding. The Transition Url property described above should be the URL to a script with an ```on_message``` handlers for the following messages:
+You can add optional transitions when navigating between screens. The default behavior is that screen navigation is instant but if you have defined a transition for a screen Monarch will wait until the transition is completed before proceeding. The `Transition Url` (proxy) or `Transition Id` (collectionfactory) property described above should be the URL/Id to a script with an ```on_message``` handlers for the following messages:
 
 * ```transition_show_in``` (constant defined as ```monarch.TRANSITION.SHOW_IN```)
 * ```transition_show_out``` (constant defined as ```monarch.TRANSITION.SHOW_OUT```)
@@ -267,7 +267,7 @@ This information can be used to create dynamic transitions where the direction o
 
 
 ## Screen focus gain/loss
-Monarch will send focus gain and focus loss messages if a Focus Url was provided when the screen was created. The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
+Monarch will send focus gain and focus loss messages if a `Focus Url` (proxy) or `Focus Id` (collectionfactory) was provided when the screen was created. The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
 
 	local monarch = require "monarch.monarch"
 
@@ -460,7 +460,7 @@ Enable verbose logging of the internals of Monarch.
 
 
 ### monarch.SCREEN_TRANSITION_IN_STARTED
-Message sent to listeners when a screen has started to transition in.
+Message sent to listeners added using `monarch.add_listener()` when a screen has started to transition in.
 
 **PARAMETERS**
 * ```screen``` (hash) - Id of the screen
@@ -468,7 +468,7 @@ Message sent to listeners when a screen has started to transition in.
 
 
 ### monarch.SCREEN_TRANSITION_IN_FINISHED
-Message sent to listeners when a screen has finished to transition in.
+Message sent to listeners added using `monarch.add_listener()` when a screen has finished to transition in.
 
 **PARAMETERS**
 * ```screen``` (hash) - Id of the screen
@@ -476,7 +476,7 @@ Message sent to listeners when a screen has finished to transition in.
 
 
 ### monarch.SCREEN_TRANSITION_OUT_STARTED
-Message sent to listeners when a screen has started to transition out.
+Message sent to listeners added using `monarch.add_listener()` when a screen has started to transition out.
 
 **PARAMETERS**
 * ```screen``` (hash) - Id of the screen
@@ -484,7 +484,7 @@ Message sent to listeners when a screen has started to transition out.
 
 
 ### monarch.SCREEN_TRANSITION_OUT_FINISHED
-Message sent to listeners when a screen has finished to transition out.
+Message sent to listeners added using `monarch.add_listener()` when a screen has finished to transition out.
 
 **PARAMETERS**
 * ```screen``` (hash) - Id of the screen
