@@ -4,6 +4,7 @@ go.property("screen_factory", msg.url("#collectionfactory"))
 go.property("screen_id", hash("UNIQUE ID HERE"))
 go.property("popup", false)
 go.property("popup_on_popup", false)
+go.property("input_below_popup", false)
 go.property("transition_id", hash(""))
 go.property("focus_id", hash(""))
 go.property("preload", false)
@@ -17,6 +18,7 @@ function init(self)
 	local settings = {
 		popup = self.popup,
 		popup_on_popup = self.popup_on_popup,
+		input_below_popup = self.input_below_popup,
 		transition_id = self.transition_id,
 		focus_id = self.focus_id,
 		auto_preload = self.preload,

@@ -150,6 +150,7 @@ local function register(id, settings)
 		popup = settings and settings.popup,
 		popup_on_popup = settings and settings.popup_on_popup,
 		timestep_below_popup = settings and settings.timestep_below_popup or 1,
+		input_below_popup = settings and settings.input_below_popup or false,
 		preload_listeners = {},
 	}
 	return screens[id]
@@ -166,13 +167,14 @@ end
 -- 		* popup - true the screen is a popup
 --		* popup_on_popup - true if this popup can be shown on top of
 --		  another popup or false if an underlying popup should be closed
+--		* timestep_below_popup - Timestep to set on proxy when below a popup
+--		* input_below_popup - If this screen should maintain input when below a popup
 -- 		* transition_url - URL to a script that is responsible for the
 --		  screen transitions
 -- 		* focus_url - URL to a script that is to be notified of focus
 --		  lost/gained events
 --		* receiver_url - URL to a script that is to receive messages sent
 --		  using monarch.send()
---		* timestep_below_popup - Timestep to set on proxy when below a popup
 --		* auto_preload - true if the screen should be automatically preloaded
 function M.register_proxy(id, proxy, settings)
 	assert(proxy, "You must provide a collection proxy URL")
@@ -200,6 +202,7 @@ M.register = M.register_proxy
 -- 		* popup - true the screen is a popup
 --		* popup_on_popup - true if this popup can be shown on top of
 --		  another popup or false if an underlying popup should be closed
+--		* input_below_popup - If this screen should maintain input when below a popup
 -- 		* transition_id - Id of the game object in the collection that is responsible
 --		  for the screen transitions
 -- 		* focus_id - Id of the game object in the collection that is to be notified
@@ -241,17 +244,21 @@ local function acquire_input(screen)
 	end
 end
 
-local function release_input(screen)
+local function release_input(screen, next_screen)
 	log("release_input()", screen.id)
+	pprint(screen)
+	local next_is_popup = next_screen and next_screen.popup
 	if screen.input then
-		if screen.proxy then
-			msg.post(screen.script, RELEASE_INPUT_FOCUS)
-		elseif screen.factory then
-			for id,instance in pairs(screen.factory_ids) do
-				msg.post(instance, RELEASE_INPUT_FOCUS)
+		if not next_is_popup or (next_is_popup and not screen.input_below_popup) then
+			if screen.proxy then
+				msg.post(screen.script, RELEASE_INPUT_FOCUS)
+			elseif screen.factory then
+				for id,instance in pairs(screen.factory_ids) do
+					msg.post(instance, RELEASE_INPUT_FOCUS)
+				end
 			end
+			screen.input = false
 		end
-		screen.input = false
 	end
 end
 
@@ -414,9 +421,10 @@ end
 
 local function disable(screen, next_screen)
 	log("disable()", screen.id)
+	local next_is_popup = next_screen and next_screen.popup
 	run_coroutine(screen, nil, function()
 		change_context(screen)
-		release_input(screen)
+		release_input(screen, next_screen)
 		focus_lost(screen, next_screen)
 		if next_screen and next_screen.popup then
 			change_timestep(screen)
@@ -442,7 +450,7 @@ local function show_out(screen, next_screen, cb)
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
 		change_context(screen)
-		release_input(screen)
+		release_input(screen, next_screen)
 		focus_lost(screen, next_screen)
 		reset_timestep(screen)
 		-- if the next screen is a popup we want the current screen to stay visible below the popup
@@ -512,7 +520,7 @@ local function back_out(screen, next_screen, cb)
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 		active_transition_count = active_transition_count + 1
 		change_context(screen)
-		release_input(screen)
+		release_input(screen, next_screen)
 		focus_lost(screen, next_screen)
 		if next_screen and screen.popup then
 			reset_timestep(next_screen)

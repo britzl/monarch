@@ -31,6 +31,7 @@ For proxies the recommended setup is to create one game object per screen and pe
 * **Popup (boolean)** - Check this if the screen should be treated as a [popup](#popups).
 * **Popup on Popup (boolean)** - Check this if the screen is a [popup](#popups) and it can be shown on top of other popups.
 * **Timestep below Popup (number)** - Timestep to set on screen proxy when it is below a popup. This is useful when pausing animations and gameplay while a popup is open.
+* **Input below Popup (boolean)** - Check this if the popup should keep input when it is below a popup.
 * **Transition Url (url)** - Optional URL to post messages to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Url (url)** - Optional URL to post messages to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 * **Receiver Url (url)** - Optional URL to post messages to using `monarch.post()`.
@@ -45,6 +46,7 @@ For factories the recommended setup is to create one game object per screen and 
 * **Screen Id (hash)** - A unique id that can be used to reference the screen when navigating your app.
 * **Popup (boolean)** - Check this if the screen should be treated as a [popup](#popups).
 * **Popup on Popup (boolean)** - Check this if the screen is a [popup](#popups) and it can be shown on top of other popups.
+* **Input below Popup (boolean)** - Check this if the popup should keep input when it is below a popup.
 * **Transition Id (hash)** - Optional id of the game object to send a message to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Id (hash)** - Optional id of the game object to send a message to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 * **Preload (boolean)** - Check this if the screen should be preloaded and kept loaded at all times. For a collection factory this means that its resources will be dynamically loaded at all times. This can also temporarily be achieved through the `monarch.preload()` function.
@@ -114,7 +116,7 @@ You navigate back in the screen hierarchy in one of two ways:
 
 
 ## Input focus
-Monarch will acquire and release input focus on the game objects containing the proxies to the screens and ensure that only the top-most screen will ever have input focus.
+Monarch will acquire and release input focus on the game objects containing the proxies to the screens and ensure that only the top-most screen will ever have input focus. The screen settings above provide an `Input below Popup` setting to override this behavior so that a screen can continue to have focus even when below a popup. This is useful when you have for instance a tabbed popup where the tabs are in a root screen and the content of the individual tabs are separate screens. In this case you want the tabs to have input as well as the tab content.
 
 ## Popups
 A screen that is flagged as a popup (see [list of screen properties](#creating-screens) above) will be treated slightly differently when it comes to navigation.
