@@ -150,7 +150,8 @@ local function register(id, settings)
 		popup = settings and settings.popup,
 		popup_on_popup = settings and settings.popup_on_popup,
 		timestep_below_popup = settings and settings.timestep_below_popup or 1,
-		input_below_popup = settings and settings.input_below_popup or false,
+		screen_keeps_input_focus_when_below_popup = settings and settings.screen_keeps_input_focus_when_below_popup or false,
+		others_keep_input_focus_when_below_screen = settings and settings.others_keep_input_focus_when_below_screen or false,
 		preload_listeners = {},
 	}
 	return screens[id]
@@ -168,7 +169,10 @@ end
 --		* popup_on_popup - true if this popup can be shown on top of
 --		  another popup or false if an underlying popup should be closed
 --		* timestep_below_popup - Timestep to set on proxy when below a popup
---		* input_below_popup - If this screen should maintain input when below a popup
+--		* screen_keeps_input_focus_when_below_popup - If this screen should
+--		  keep input focus when below a popup
+--		* others_keep_input_focus_when_below_screen - If screens below this
+--		  screen should keep input focus
 -- 		* transition_url - URL to a script that is responsible for the
 --		  screen transitions
 -- 		* focus_url - URL to a script that is to be notified of focus
@@ -202,7 +206,10 @@ M.register = M.register_proxy
 -- 		* popup - true the screen is a popup
 --		* popup_on_popup - true if this popup can be shown on top of
 --		  another popup or false if an underlying popup should be closed
---		* input_below_popup - If this screen should maintain input when below a popup
+--		* screen_keeps_input_focus_when_below_popup - If this screen should
+--		  keep input focus when below a popup
+--		* others_keep_input_focus_when_below_screen - If screens below this
+--		  screen should keep input focus
 -- 		* transition_id - Id of the game object in the collection that is responsible
 --		  for the screen transitions
 -- 		* focus_id - Id of the game object in the collection that is to be notified
@@ -246,10 +253,14 @@ end
 
 local function release_input(screen, next_screen)
 	log("release_input()", screen.id)
-	pprint(screen)
-	local next_is_popup = next_screen and next_screen.popup
 	if screen.input then
-		if not next_is_popup or (next_is_popup and not screen.input_below_popup) then
+		local next_is_popup = next_screen and next_screen.popup
+
+		local keep_if_next_is_popup = next_is_popup and screen.screen_keeps_input_focus_when_below_popup
+		local keep_when_below_next = next_screen and next_screen.others_keep_input_focus_when_below_screen
+
+		local release_focus = not keep_if_next_is_popup and not keep_when_below_next
+		if release_focus then
 			if screen.proxy then
 				msg.post(screen.script, RELEASE_INPUT_FOCUS)
 			elseif screen.factory then
