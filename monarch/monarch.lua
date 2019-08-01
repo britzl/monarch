@@ -70,7 +70,7 @@ end
 
 local function cowait(delay)
 	local co = coroutine.running()
-	assert(co, "You must run this form within a coroutine")
+	assert(co, "You must run this from within a coroutine")
 	timer.delay(delay, false, function()
 		assert(coroutine.resume(co))
 	end)
