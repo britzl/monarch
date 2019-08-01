@@ -28,20 +28,14 @@ return function()
 
 	local function wait_timeout(fn, ...)
 		local args = { ... }
-		local time = socket.gettime()
-		cowait(function()
-			return fn(unpack(args)) or socket.gettime() > time + 5	
-		end)
+		cowait(function() return fn(unpack(args)) end, 5)
 		return fn(...)
 	end
 
 	local function wait_until_done(fn)
-		local is_done = false
-		local function done()
-			is_done = true
-		end
-		fn(done)
-		wait_timeout(function() return is_done end)
+		local done = false
+		fn(function() done = true end)
+		wait_timeout(function() return done end)
 	end
 	local function wait_until_visible(screen_id)
 		return wait_timeout(is_visible, screen_id)

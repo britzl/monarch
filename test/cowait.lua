@@ -1,38 +1,25 @@
 local M = {}
 
-
-local instances = {}
-
-local function create(fn)
-	local instance = {
-		co = coroutine.running(),
-		fn = fn,
-	}
-	table.insert(instances, instance)
-	coroutine.yield(instance.co)
-end
-
-	
-
 function M.seconds(amount)
-	local time = socket.gettime() + amount
-	create(function()
-		return socket.gettime() >= time
+	local co = coroutine.running()
+	assert(co, "You must run this from within a coroutine")
+	timer.delay(amount, false, function()
+		coroutine.resume(co)
 	end)
+	coroutine.yield()
 end
 
-
-function M.eval(fn)
-	create(fn)
-end
-
-function M.update()
-	for k,instance in pairs(instances) do
-		if instance.fn() then
-			instances[k] = nil
-			coroutine.resume(instance.co)
+function M.eval(fn, timeout)
+	local co = coroutine.running()
+	assert(co, "You must run this from within a coroutine")
+	local start = socket.gettime()
+	timer.delay(0.01, true, function(self, handle, time_elapsed)
+		if fn() or (timeout and socket.gettime() > (start + timeout)) then
+			timer.cancel(handle)
+			coroutine.resume(co)
 		end
-	end
+	end)
+	coroutine.yield()
 end
 
 return setmetatable(M, {
