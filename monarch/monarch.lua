@@ -225,7 +225,7 @@ function M.unregister(id)
 end
 
 local function acquire_input(screen)
-	log("change_context()", screen.id)
+	log("acquire_input()", screen.id)
 	if not screen.input then
 		if screen.proxy then
 			msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
@@ -239,7 +239,7 @@ local function acquire_input(screen)
 end
 
 local function release_input(screen)
-	log("change_context()", screen.id)
+	log("release_input()", screen.id)
 	if screen.input then
 		if screen.proxy then
 			msg.post(screen.script, RELEASE_INPUT_FOCUS)
