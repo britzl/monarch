@@ -553,6 +553,29 @@ function M.is_busy()
 end
 
 
+
+local queue = {}
+
+local process_queue
+process_queue = function()
+	if M.is_busy() then
+		log("process_queue() busy")
+		return
+	end
+	action = table.remove(queue, 1)
+	if not action then
+		log("process_queue() empty")
+		return
+	end
+	action(process_queue)
+end
+
+local function queue_action(action)
+	table.insert(queue, action)
+	process_queue()
+end
+
+
 --- Show a new screen
 -- @param id (string|hash) - Id of the screen to show
 -- @param options (table) - Table with options when showing the screen (can be nil). Valid values:
@@ -564,79 +587,77 @@ end
 -- @return success True if screen is successfully shown, false if busy performing another operation
 function M.show(id, options, data, cb)
 	assert(id, "You must provide a screen id")
-	if M.is_busy() then
-		log("show() monarch is busy, ignoring request")
-		return false
-	end
 
-	local callbacks = callback_tracker()
+	queue_action(function(action_done)
+		local screen = screens[id]
+		assert(screen, ("There is no screen registered with id %s"):format(tostring(id)))
+		screen.data = data
+		log("show()", screen.id)
 
-	id = tohash(id)
-	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+		local co
+		co = coroutine.create(function()
 
-	local screen = screens[id]
-	screen.data = data
+			local callbacks = callback_tracker()
 
-	log("show()", screen.id)
-
-	local co
-	co = coroutine.create(function()
-		local top = stack[#stack]
-		-- a screen can ignore the stack by setting the no_stack to true
-		local add_to_stack = not options or not options.no_stack
-		if add_to_stack then
-			-- manipulate the current top
-			-- close popup(s) if needed
-			-- transition out
-			if top then
-				-- keep top popup visible if new screen can be shown on top of a popup
-				if top.popup and screen.popup_on_popup then
-					disable(top, screen)
-				else
-					-- close all popups, one by one
-					while top.popup do
-						stack[#stack] = nil
-						show_out(top, screen, function()
-							assert(coroutine.resume(co))
-						end)
-						coroutine.yield()
-						top = stack[#stack]
-					end
-					-- unload and transition out from top
-					-- unless we're showing the same screen as is already visible
-					if top and top.id ~= screen.id then
-						show_out(top, screen, callbacks.track())
+			local top = stack[#stack]
+			-- a screen can ignore the stack by setting the no_stack to true
+			local add_to_stack = not options or not options.no_stack
+			if add_to_stack then
+				-- manipulate the current top
+				-- close popup(s) if needed
+				-- transition out
+				if top then
+					-- keep top popup visible if new screen can be shown on top of a popup
+					if top.popup and screen.popup_on_popup then
+						disable(top, screen)
+					else
+						-- close all popups, one by one
+						while top.popup do
+							stack[#stack] = nil
+							show_out(top, screen, function()
+								assert(coroutine.resume(co))
+							end)
+							coroutine.yield()
+							top = stack[#stack]
+						end
+						-- unload and transition out from top
+						-- unless we're showing the same screen as is already visible
+						if top and top.id ~= screen.id then
+							show_out(top, screen, callbacks.track())
+						end
 					end
 				end
 			end
-		end
 
-		-- if the screen we want to show is in the stack
-		-- already and the clear flag is set then we need
-		-- to remove every screen on the stack up until and
-		-- including the screen itself
-		if options and options.clear then
-			log("show() clearing")
-			while M.in_stack(id) do
-				table.remove(stack)
+			-- if the screen we want to show is in the stack
+			-- already and the clear flag is set then we need
+			-- to remove every screen on the stack up until and
+			-- including the screen itself
+			if options and options.clear then
+				log("show() clearing")
+				while M.in_stack(id) do
+					table.remove(stack)
+				end
 			end
-		end
 
-		-- show screen, wait until preloaded if it is already preloading
-		-- this can typpically happen if you do a show() on app start for a
-		-- screen that has Preload set to true
-		if M.is_preloading(id) then
-			M.when_preloaded(id, function()
-				assert(coroutine.resume(co))
+			-- show screen, wait until preloaded if it is already preloading
+			-- this can typpically happen if you do a show() on app start for a
+			-- screen that has Preload set to true
+			if M.is_preloading(id) then
+				M.when_preloaded(id, function()
+					assert(coroutine.resume(co))
+				end)
+				coroutine.yield()
+			end
+			show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
+
+			callbacks.when_done(function()
+				if cb then cb() end
+				action_done()
 			end)
-			coroutine.yield()
-		end
-		show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
-
-		if cb then callbacks.when_done(cb) end
+		end)
+		assert(coroutine.resume(co))
 	end)
-	assert(coroutine.resume(co))
-
 	return true
 end
 
