@@ -9,6 +9,6 @@ function init(self)
 	deftest.add(test_callback_tracker)
 	deftest.run({ 
 		coverage = { enabled = true },
-		--pattern = "preload",
+		pattern = "",
 	})
 end

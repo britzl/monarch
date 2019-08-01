@@ -170,6 +170,8 @@ end
 --		  screen transitions
 -- 		* focus_url - URL to a script that is to be notified of focus
 --		  lost/gained events
+--		* receiver_url - URL to a script that is to receive messages sent
+--		  using monarch.send()
 --		* timestep_below_popup - Timestep to set on proxy when below a popup
 --		* auto_preload - true if the screen should be automatically preloaded
 function M.register_proxy(id, proxy, settings)
@@ -178,6 +180,7 @@ function M.register_proxy(id, proxy, settings)
 	screen.proxy = proxy
 	screen.transition_url = settings and settings.transition_url
 	screen.focus_url = settings and settings.focus_url
+	screen.receiver_url = settings and settings.receiver_url
 	screen.auto_preload = settings and settings.auto_preload
 	if screen.auto_preload then
 		M.preload(id)
@@ -810,6 +813,43 @@ function M.unload(id, cb)
 		change_context(screen)
 		unload(screen)
 	end)
+	return true
+end
+
+
+--- Post a message to a screen (using msg.post)
+-- @param id (string|hash) Id of the screen to send message to
+-- @param message_id (string|hash) Id of the message to send
+-- @param message (table|nil) Optional message data to send
+-- @return result (boolean) true if successful
+-- @return error (string|nil) Error message if unable to send message
+function M.post(id, message_id, message)
+	assert(id, "You must provide a screen id")
+	if not M.is_visible(id) then
+		return false, "Unable to post message to screen if it isn't visible"
+	end
+
+	assert(message_id, "You must provide a message_id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	local screen = screens[id]
+
+	if screen.proxy then
+		if screen.receiver_url then
+			log("post() sending message to", screen.receiver_url)
+			msg.post(screen.receiver_url, message_id, message)
+		else
+			return false, "Unable to post message since screen has no receiver url specified"
+		end
+	else
+		run_coroutine(screen, nil, function()
+			change_context(screen)
+			log("post() sending message to", screen.receiver_url)
+			for id,instance in pairs(screen.factory_ids) do
+				msg.post(instance, message_id, message)
+			end
+		end)
+	end
 	return true
 end
 

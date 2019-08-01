@@ -33,6 +33,7 @@ For proxies the recommended setup is to create one game object per screen and pe
 * **Timestep below Popup (number)** - Timestep to set on screen proxy when it is below a popup. This is useful when pausing animations and gameplay while a popup is open.
 * **Transition Url (url)** - Optional URL to post messages to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
 * **Focus Url (url)** - Optional URL to post messages to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
+* **Receiver Url (url)** - Optional URL to post messages to using monarch.post().
 * **Preload (boolean)** - Check this if the screen should be preloaded and kept loaded at all times. For a collection proxy it means that it will be async loaded but not enabled at all times while not visible. This can also temporarily be achieved through the `monarch.preload()` function.
 
 ![](docs/setup_proxy.png)
@@ -439,6 +440,19 @@ Remove a previously added listener.
 
 **PARAMETERS**
 * ```url``` (url) - URL to remove. Will use current URL if omitted.
+
+
+### monarch.post(screen_id, message_id, [message])
+Post a message to a visible screen. If the screen is created through a collection proxy it must have specified a receiver url. If the screen is created through a collection factory the function will post the message to all game objects within the collection.
+
+**PARAMETERS**
+* ```screen_id``` (string|hash) - Id of the screen to post message to
+* ```message_id``` (string|hash) - Id of the message to send
+* ```message``` (table|nil) - Optional message data to send
+
+**RETURN**
+* ```result``` (boolean) - True if the message was sent
+* ```error``` (string|nil) - Error message if unable to send message
 
 
 ### monarch.debug()

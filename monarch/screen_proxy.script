@@ -7,6 +7,7 @@ go.property("popup_on_popup", false)
 go.property("timestep_below_popup", 1)
 go.property("transition_url", msg.url())
 go.property("focus_url", msg.url())
+go.property("receiver_url", msg.url())
 go.property("preload", false)
 
 
@@ -22,6 +23,7 @@ function init(self)
 		popup_on_popup = self.popup_on_popup,
 		transition_url = self.transition_url ~= url and self.transition_url or nil,
 		focus_url = self.focus_url ~= url and self.focus_url or nil,
+		receiver_url = self.receiver_url ~= url and self.receiver_url or nil,
 		timestep_below_popup = self.timestep_below_popup,
 		auto_preload = self.preload,
 	}

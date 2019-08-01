@@ -416,5 +416,69 @@ return function()
 			assert(wait_until_hidden(FOCUS1), "Focus1 was never hidden")
 			assert(_G.focus1_lost)
 		end)
+
+
+		it("should be able to post messages without message data to visible screens", function()
+			_G.screen1_foobar = nil
+			_G.screen2_foobar = nil
+
+			-- proxy screen
+			monarch.show(SCREEN1)
+			wait_until_shown(SCREEN1)
+			assert(monarch.post(SCREEN1, "foobar"), "Expected monarch.post() to return true")
+			cowait(0.1)
+			assert(_G.screen1_foobar, "Screen1 never received a message")
+
+			-- factory screen
+			monarch.show(SCREEN2)
+			wait_until_shown(SCREEN2)
+			assert(monarch.post(SCREEN2, "foobar"), "Expected monarch.post() to return true")
+			cowait(0.1)
+			assert(_G.screen2_foobar, "Screen2 never received a message")
+		end)
+
+
+		it("should be able to post messages with message data to visible screens", function()
+			_G.screen1_foobar = nil
+			_G.screen2_foobar = nil
+
+			-- proxy screen
+			monarch.show(SCREEN1)
+			wait_until_shown(SCREEN1)
+			assert(monarch.post(SCREEN1, "foobar", { foo = "bar" }), "Expected monarch.post() to return true")
+			cowait(0.1)
+			assert(_G.screen1_foobar, "Screen1 never received a message")
+			assert(_G.screen1_foobar.foo == "bar", "Screen1 never received message data")
+			
+			-- factory screen
+			monarch.show(SCREEN2)
+			wait_until_shown(SCREEN2)
+			assert(monarch.post(SCREEN2, "foobar", { foo = "bar" }), "Expected monarch.post() to return true")
+			cowait(0.1)
+			assert(_G.screen2_foobar, "Screen2 never received a message")
+			assert(_G.screen2_foobar.foo == "bar", "Screen2 never received message data")
+		end)
+
+
+		it("should not be able to post messages to hidden screens", function()
+			_G.screen1_foobar = nil
+
+			monarch.show(SCREEN1)
+			wait_until_shown(SCREEN1)
+			monarch.show(SCREEN2)
+			wait_until_shown(SCREEN2)
+			local ok, err = monarch.post(SCREEN1, "foobar")
+			assert(not ok and err, "Expected monarch.post() to return false plus an error message")
+			cowait(0.1)
+			assert(not _G.screen1_foobar, "Screen1 should not have received a message")
+		end)
+
+
+		it("should not be able to post messages to proxy screens without a receiver url", function()
+			monarch.show(POPUP1)
+			wait_until_shown(POPUP1)
+			local ok, err = monarch.post(POPUP1, "foobar")
+			assert(not ok and err, "Expected monarch.post() to return false plus an error message")
+		end)
 	end)
 end
