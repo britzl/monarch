@@ -122,6 +122,19 @@ local function create()
 
 	local function create_transition(transition_id, node, fn, easing, duration, delay)
 		local t = transitions[transition_id]
+		-- find if there's already a transition for the node in
+		-- question and if so update it instead of creating a new
+		-- transition
+		for _,transition in ipairs(t) do
+			if transition.node == node then
+				transition.fn = fn
+				transition.easing = easing
+				transition.duration = duration
+				transitions.delay = delay
+				return
+			end
+		end
+		-- create new transition
 		t.transitions[#t.transitions + 1] = {
 			node = node,
 			node_data = {
