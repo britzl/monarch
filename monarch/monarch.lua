@@ -816,7 +816,6 @@ function M.is_preloading(id)
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	local screen = screens[id]
-	print("is preloading", screen.preloading)
 	return screen.preloading
 end
 
