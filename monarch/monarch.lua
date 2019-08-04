@@ -472,16 +472,15 @@ local function reset_timestep(screen)
 	end
 end
 
-local function run_coroutine(screen, done_cb, error_cb, fn)
+local function run_coroutine(screen, done_cb, fn)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
-		local ok, err = pcall(fn)
+		-- don't pcall the function!
+		-- it may contain a call to for instance change_context()
+		-- this will result in a yield across metamethod/C call boundary
+		fn()
 		screen.co = nil
-		if not ok then
-			print(err)
-			pcallfn(error_cb, err)
-		end
 		pcallfn(done_cb)
 	end)
 	assert(coroutine.resume(co))
@@ -489,7 +488,7 @@ end
 
 local function disable(screen, next_screen)
 	log("disable()", screen.id)
-	run_coroutine(screen, nil, nil, function()
+	run_coroutine(screen, nil, function()
 		change_context(screen)
 		release_input(screen, next_screen)
 		focus_lost(screen, next_screen)
@@ -503,7 +502,7 @@ end
 
 local function enable(screen, previous_screen)
 	log("enable()", screen.id)
-	run_coroutine(screen, nil, nil, function()
+	run_coroutine(screen, nil, function()
 		change_context(screen)
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
@@ -513,7 +512,7 @@ end
 
 local function show_out(screen, next_screen, cb)
 	log("show_out()", screen.id)
-	run_coroutine(screen, cb, nil, function()
+	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
 		change_context(screen)
@@ -537,7 +536,7 @@ end
 
 local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 	log("show_in()", screen.id)
-	run_coroutine(screen, cb, nil, function()
+	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		change_context(screen)
@@ -566,7 +565,7 @@ end
 
 local function back_in(screen, previous_screen, cb)
 	log("back_in()", screen.id)
-	run_coroutine(screen, cb, nil, function()
+	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		change_context(screen)
@@ -590,7 +589,7 @@ end
 
 local function back_out(screen, next_screen, cb)
 	log("back_out()", screen.id)
-	run_coroutine(screen, cb, nil, function()
+	run_coroutine(screen, cb, function()
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 		active_transition_count = active_transition_count + 1
 		change_context(screen)
@@ -871,7 +870,7 @@ function M.preload(id, cb)
 			pcallfn(cb)
 			pcallfn(action_done)
 		end
-		run_coroutine(screen, when_preloaded, action_error, function()
+		run_coroutine(screen, when_preloaded, function()
 			change_context(screen)
 			local ok, err = preload(screen)
 			if not ok then
@@ -916,7 +915,7 @@ function M.unload(id, cb)
 			pcallfn(cb)
 			pcallfn(action_done)
 		end
-		run_coroutine(screen, when_unloaded, action_error, function()
+		run_coroutine(screen, when_unloaded, function()
 			change_context(screen)
 			unload(screen)
 		end)
@@ -950,7 +949,7 @@ function M.post(id, message_id, message)
 			return false, "Unable to post message since screen has no receiver url specified"
 		end
 	else
-		run_coroutine(screen, nil, nil, function()
+		run_coroutine(screen, nil, function()
 			change_context(screen)
 			log("post() sending message to", screen.receiver_url)
 			for id,instance in pairs(screen.factory_ids) do
