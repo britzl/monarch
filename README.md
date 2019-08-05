@@ -188,6 +188,15 @@ Monarch comes with a system for setting up transitions easily in a gui_script us
 		end
 	end
 
+It is also possible to assign transitions to multiple nodes:
+
+	function init(self)
+		self.transition = transitions.create() -- note that no node is passed to transition.create()!
+			.show_in(gui.get_node("node1"), transitions.slide_in_right, gui.EASING_OUTQUAD, 0.6, 0)
+			.show_in(gui.get_node("node2"), transitions.slide_in_right, gui.EASING_OUTQUAD, 0.6, 0)
+	end
+
+
 The predefined transitions provided by ```monarch.transitions.gui``` are:
 
 * ```slide_in_right```
