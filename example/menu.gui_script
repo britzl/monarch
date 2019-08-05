@@ -19,7 +19,7 @@ function on_input(self, action_id, action)
 			end)
 		elseif gui.pick_node(gui.get_node("about_button"), action.x, action.y) then
 			monarch.show(hash("about"), nil, nil, function()
-			print("showing about done")
+				print("showing about done")
 			end)
 		elseif gui.pick_node(gui.get_node("back_button"), action.x, action.y) then
 			monarch.back()

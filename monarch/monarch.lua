@@ -31,6 +31,7 @@ M.SCREEN_TRANSITION_IN_STARTED = hash("monarch_screen_transition_in_started")
 M.SCREEN_TRANSITION_IN_FINISHED = hash("monarch_screen_transition_in_finished")
 M.SCREEN_TRANSITION_OUT_STARTED = hash("monarch_screen_transition_out_started")
 M.SCREEN_TRANSITION_OUT_FINISHED = hash("monarch_screen_transition_out_finished")
+M.SCREEN_TRANSITION_FAILED = hash("monarch_screen_transition_failed")
 
 
 -- all registered screens
@@ -76,6 +77,43 @@ local function cowait(delay)
 	end)
 	coroutine.yield()
 end
+
+
+
+local queue = {}
+
+local function queue_error(message)
+	log(message)
+	log("queue() error - clearing queue")
+	while next(queue) do
+		table.remove(queue)
+	end
+end
+
+local process_queue
+process_queue = function()
+	if M.is_busy() then
+		log("queue() busy")
+		return
+	end
+	action = table.remove(queue, 1)
+	if not action then
+		log("queue() empty")
+		return
+	end
+	log("queue() next action", action)
+	local ok, err = pcall(action, process_queue, queue_error)
+	if not ok then
+		queue_error(err)
+	end
+end
+
+local function queue_action(action)
+	log("queue() adding", action)
+	table.insert(queue, action)
+	process_queue()
+end
+
 
 local function notify_transition_listeners(message_id, message)
 	log("notify_transition_listeners()", message_id)
@@ -234,6 +272,8 @@ function M.unregister(id)
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	log("unregister()", id)
+	local screen = screens[id]
 	screens[id] = nil
 end
 
@@ -282,9 +322,8 @@ local function change_context(screen)
 end
 
 local function unload(screen, force)
-	log("unload()", screen.id)
-
 	if screen.proxy then
+		log("unload() proxy", screen.id)
 		if screen.auto_preload and not force then
 			msg.post(screen.proxy, DISABLE)
 			screen.loaded = false
@@ -298,6 +337,7 @@ local function unload(screen, force)
 			screen.wait_for = nil
 		end
 	elseif screen.factory then
+		log("unload() factory", screen.id)
 		for id, instance in pairs(screen.factory_ids) do
 			go.delete(instance)
 		end
@@ -311,6 +351,11 @@ local function unload(screen, force)
 			screen.preloaded = false
 		end
 	end
+	-- we need to wait here in case the unloaded screen contained any screens
+	-- if this is the case we need to let these sub-screens have their final()
+	-- functions called so that they have time to call unregister()
+	cowait(0)
+	cowait(0)
 end
 
 
@@ -320,14 +365,17 @@ local function preload(screen)
 
 	if screen.preloaded then
 		log("preload() screen already preloaded", screen.id)
-		return
+		return true
 	end
 
+	screen.preloading = true
 	if screen.proxy then
+		log("preload() proxy")
 		screen.wait_for = PROXY_LOADED
 		msg.post(screen.proxy, ASYNC_LOAD)
 		coroutine.yield()
 	elseif screen.factory then
+		log("preload() factory")
 		if collectionfactory.get_status(screen.factory) == collectionfactory.STATUS_UNLOADED then
 			collectionfactory.load(screen.factory, function(self, url, result)
 				assert(coroutine.resume(screen.co))
@@ -336,11 +384,16 @@ local function preload(screen)
 		end
 
 		if collectionfactory.get_status(screen.factory) ~= collectionfactory.STATUS_LOADED then
-			log("preload() error loading factory resources")
-			return
+			local error_message = ("preload() error while loading factory resources for screen %s"):format(tostring(screen.id))
+			log(error_message)
+			screen.preloading = false
+			return false, error_message
 		end
 	end
+	log("preload() preloading done", screen.id)
 	screen.preloaded = true
+	screen.preloading = false
+	return true
 end
 
 local function load(screen)
@@ -349,14 +402,13 @@ local function load(screen)
 
 	if screen.loaded then
 		log("load() screen already loaded", screen.id)
-		return
+		return true
 	end
 
-	preload(screen)
-
-	if not screen.preloaded then
+	local ok, err = preload(screen)
+	if not ok then
 		log("load() screen wasn't preloaded", screen.id)
-		return
+		return false, err
 	end
 
 	if screen.proxy then
@@ -368,6 +420,7 @@ local function load(screen)
 	end
 	screen.loaded = true
 	screen.preloaded = false
+	return true
 end
 
 local function transition(screen, message_id, message)
@@ -419,20 +472,22 @@ local function reset_timestep(screen)
 	end
 end
 
-local function run_coroutine(screen, cb, fn)
+local function run_coroutine(screen, done_cb, fn)
 	local co
 	co = coroutine.create(function()
 		screen.co = co
+		-- don't pcall the function!
+		-- it may contain a call to for instance change_context()
+		-- this will result in a yield across metamethod/C call boundary
 		fn()
 		screen.co = nil
-		pcallfn(cb)
+		pcallfn(done_cb)
 	end)
 	assert(coroutine.resume(co))
 end
 
 local function disable(screen, next_screen)
 	log("disable()", screen.id)
-	local next_is_popup = next_screen and next_screen.popup
 	run_coroutine(screen, nil, function()
 		change_context(screen)
 		release_input(screen, next_screen)
@@ -488,13 +543,14 @@ local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 		if reload and screen.loaded then
 			log("show_in() reloading", screen.id)
 			unload(screen, reload)
-			-- we need to wait here in case the unloaded screen contained any screens
-			-- if this is the case we need to let these sub-screens have their final()
-			-- functions called so that they have time to call unregister()
-			cowait(0)
-			cowait(0)
 		end
-		load(screen)
+		local ok, err = load(screen)
+		if not ok then
+			log("show_in()", err)
+			active_transition_count = active_transition_count - 1
+			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
+			return
+		end
 		if add_to_stack then
 			stack[#stack + 1] = screen
 		end
@@ -513,7 +569,13 @@ local function back_in(screen, previous_screen, cb)
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		change_context(screen)
-		load(screen)
+		local ok, err = load(screen)
+		if not ok then
+			log("back_in()", err)
+			active_transition_count = active_transition_count - 1
+			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
+			return
+		end
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id })
@@ -580,83 +642,86 @@ end
 --				   This would be the case if doing a show() from a popup on the screen just below the popup.
 -- @param data (*) - Optional data to set on the screen. Can be retrieved by the data() function
 -- @param cb (function) - Optional callback to invoke when screen is shown
--- @return success True if screen is successfully shown, false if busy performing another operation
 function M.show(id, options, data, cb)
 	assert(id, "You must provide a screen id")
-	if M.is_busy() then
-		log("show() monarch is busy, ignoring request")
-		return false
-	end
-
-	local callbacks = callback_tracker()
-
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
-	local screen = screens[id]
-	screen.data = data
+	log("show() queuing action", id)
+	queue_action(function(action_done, action_error)
+		log("show()", id)
+		local screen = screens[id]
+		if not screen then
+			action_error(("show() there is no longer a screen with id %s"):format(tostring(id)))
+			return
+		end
+		screen.data = data
 
-	log("show()", screen.id)
+		local co
+		co = coroutine.create(function()
 
-	local co
-	co = coroutine.create(function()
-		local top = stack[#stack]
-		-- a screen can ignore the stack by setting the no_stack to true
-		local add_to_stack = not options or not options.no_stack
-		if add_to_stack then
-			-- manipulate the current top
-			-- close popup(s) if needed
-			-- transition out
-			if top then
-				-- keep top popup visible if new screen can be shown on top of a popup
-				if top.popup and screen.popup_on_popup then
-					disable(top, screen)
-				else
-					-- close all popups, one by one
-					while top.popup do
-						stack[#stack] = nil
-						show_out(top, screen, function()
-							assert(coroutine.resume(co))
-						end)
-						coroutine.yield()
-						top = stack[#stack]
-					end
-					-- unload and transition out from top
-					-- unless we're showing the same screen as is already visible
-					if top and top.id ~= screen.id then
-						show_out(top, screen, callbacks.track())
+			local callbacks = callback_tracker()
+
+			local top = stack[#stack]
+			-- a screen can ignore the stack by setting the no_stack to true
+			local add_to_stack = not options or not options.no_stack
+			if add_to_stack then
+				-- manipulate the current top
+				-- close popup(s) if needed
+				-- transition out
+				if top then
+					-- keep top popup visible if new screen can be shown on top of a popup
+					if top.popup and screen.popup_on_popup then
+						disable(top, screen)
+					else
+						-- close all popups, one by one
+						while top.popup do
+							stack[#stack] = nil
+							show_out(top, screen, function()
+								assert(coroutine.resume(co))
+							end)
+							coroutine.yield()
+							top = stack[#stack]
+						end
+						-- unload and transition out from top
+						-- unless we're showing the same screen as is already visible
+						if top and top.id ~= screen.id then
+							show_out(top, screen, callbacks.track())
+						end
 					end
 				end
 			end
-		end
 
-		-- if the screen we want to show is in the stack
-		-- already and the clear flag is set then we need
-		-- to remove every screen on the stack up until and
-		-- including the screen itself
-		if options and options.clear then
-			log("show() clearing")
-			while M.in_stack(id) do
-				table.remove(stack)
+			-- if the screen we want to show is in the stack
+			-- already and the clear flag is set then we need
+			-- to remove every screen on the stack up until and
+			-- including the screen itself
+			if options and options.clear then
+				log("show() clearing")
+				while M.in_stack(id) do
+					table.remove(stack)
+				end
 			end
-		end
 
-		-- show screen, wait until preloaded if it is already preloading
-		-- this can typpically happen if you do a show() on app start for a
-		-- screen that has Preload set to true
-		if M.is_preloading(id) then
-			M.when_preloaded(id, function()
-				assert(coroutine.resume(co))
+			-- show screen, wait until preloaded if it is already preloading
+			-- this can typpically happen if you do a show() on app start for a
+			-- screen that has Preload set to true
+			if M.is_preloading(id) then
+				M.when_preloaded(id, function()
+					assert(coroutine.resume(co))
+				end)
+				coroutine.yield()
+			end
+			show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
+
+			callbacks.when_done(function()
+				pcallfn(cb)
+				pcallfn(action_done)
 			end)
-			coroutine.yield()
-		end
-		show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
-
-		if cb then callbacks.when_done(cb) end
+		end)
+		assert(coroutine.resume(co))
 	end)
-	assert(coroutine.resume(co))
-
-	return true
+	return true -- return true for legacy reasons (before queue existed)
 end
 
 
@@ -664,18 +729,12 @@ end
 -- visible but not added to the stack (through the no_stack option)
 -- @param id (string|hash) - Id of the screen to show
 -- @param cb (function) - Optional callback to invoke when the screen is hidden
--- @return true if successfully hiding, false if busy performing another operation
+-- @return true if successfully hiding, false if busy or for some other reason unable to hide the screen
 function M.hide(id, cb)
-	if M.is_busy() then
-		log("hide() monarch is busy, ignoring request")
-		return false
-	end
-	
+	assert(id, "You must provide a screen id")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
-	local screen = screens[id]
-	log("hide()", screen.id)
 	if M.in_stack(id) then
 		if not M.is_top(id) then
 			log("hide() you can only hide the screen at the top of the stack", id)
@@ -683,55 +742,67 @@ function M.hide(id, cb)
 		end
 		return M.back(id, cb)
 	else
-		if M.is_visible(id) then
-			back_out(screen, nil, cb)
-		else
-			pcallfn(cb)
-		end
+		log("hide() queuing action", id)
+		queue_action(function(action_done, action_error)
+			log("hide()", id)
+			local callbacks = callback_tracker()
+			if M.is_visible(id) then
+				local screen = screens[id]
+				if not screen then
+					action_error(("hide() there is no longer a screen with id %s"):format(tostring(id)))
+					return
+				end
+				back_out(screen, nil, callbacks.track())
+			end
+			callbacks.when_done(function()
+				pcallfn(cb)
+				pcallfn(action_done)
+			end)
+		end)
 	end
 	return true
 end
 
 
--- Go back to the previous screen in the stack
+-- Go back to the previous screen in the stack.
 -- @param data (*) - Optional data to set for the previous screen
 -- @param cb (function) - Optional callback to invoke when the previous screen is visible again
--- @return true if successfully going back, false if busy performing another operation
 function M.back(data, cb)
-	if M.is_busy() then
-		log("back() monarch is busy, ignoring request")
-		return false
-	end
+	log("back() queuing action")
 
-	local callbacks = callback_tracker()
-
-	local screen = table.remove(stack)
-	if screen then
-		log("back()", screen.id)
-		local top = stack[#stack]
-		-- if we go back to the same screen we need to first hide it
-		-- and wait until it is hidden before we show it again
-		if top and screen.id == top.id then
-			back_out(screen, top, function()
-				if data then
-					top.data = data
+	queue_action(function(action_done)
+		local callbacks = callback_tracker()
+		local screen = table.remove(stack)
+		if screen then
+			log("back()", screen.id)
+			local top = stack[#stack]
+			-- if we go back to the same screen we need to first hide it
+			-- and wait until it is hidden before we show it again
+			if top and screen.id == top.id then
+				back_out(screen, top, function()
+					if data then
+						top.data = data
+					end
+					back_in(top, screen, callbacks.track())
+				end)
+			else
+				back_out(screen, top, callbacks.track())
+				if top then
+					if data then
+						top.data = data
+					end
+					back_in(top, screen, callbacks.track())
 				end
-				back_in(top, screen, callbacks.track())
-			end)
-		else
-			back_out(screen, top)
-			if top then
-				if data then
-					top.data = data
-				end
-				back_in(top, screen, callbacks.track())
 			end
 		end
-	end
 
-	if cb then callbacks.when_done(cb) end
+		callbacks.when_done(function()
+			pcallfn(cb)
+			pcallfn(action_done)
+		end)
+	end)
 
-	return true
+	return true -- return true for legacy reasons (before queue existed)
 end
 
 
@@ -770,37 +841,44 @@ end
 -- @param id (string|hash) - Id of the screen to preload
 -- @param cb (function) - Optional callback to invoke when screen is loaded
 function M.preload(id, cb)
-	if M.is_busy() then
-		log("preload() monarch is busy, ignoring request")
-		return false
-	end
-
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
-	local screen = screens[id]
-	log("preload()", screen.id)
-	if screen.preloaded or screen.loaded then
-		pcallfn(cb)
-		return true
-	end
-	
-	local function when_preloaded()
-		-- invoke any listeners added using monarch.when_preloaded()
-		while #screen.preload_listeners > 0 do
-			pcallfn(table.remove(screen.preload_listeners), id)
+	log("preload() queuing action", id)
+	queue_action(function(action_done, action_error)
+		log("preload()", id)
+
+		local screen = screens[id]
+		if not screen then
+			action_error(("preload() there is no longer a screen with id %s"):format(tostring(id)))
+			return
 		end
-		-- invoke the normal callback
-		pcallfn(cb)
-	end
-	run_coroutine(screen, when_preloaded, function()
-		screen.preloading = true
-		change_context(screen)
-		preload(screen)
-		screen.preloading = false
+
+		if screen.preloaded or screen.loaded then
+			pcallfn(cb)
+			pcallfn(action_done)
+			return
+		end
+
+		local function when_preloaded()
+			-- invoke any listeners added using monarch.when_preloaded()
+			while #screen.preload_listeners > 0 do
+				pcallfn(table.remove(screen.preload_listeners), id)
+			end
+			-- invoke the normal callback
+			pcallfn(cb)
+			pcallfn(action_done)
+		end
+		run_coroutine(screen, when_preloaded, function()
+			change_context(screen)
+			local ok, err = preload(screen)
+			if not ok then
+				action_error(err)
+			end
+		end)
 	end)
-	return true
+	return true -- return true for legacy reasons (before queue existed)
 end
 
 
@@ -808,31 +886,41 @@ end
 -- @param id (string|hash) - Id of the screen to unload
 -- @param cb (function) - Optional callback to invoke when screen is unloaded
 function M.unload(id, cb)
-	if M.is_busy() then
-		log("unload() monarch is busy, ignoring request")
-		return false
-	end
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
-	if M.is_visible(id) then
-		log("You can't unload a visible screen")
-		return false
-	end
+	log("unload() queuing action", id)
+	queue_action(function(action_done, action_error)
+		if M.is_visible(id) then
+			action_error("unload() you can't unload a visible screen")
+			return
+		end
 
-	local screen = screens[id]
-	log("unload()", screen.id)
-	if not screen.preloaded and not screen.loaded then
-		log("unload() screen is not loaded", tostring(id))
-		pcallfn(cb)
-		return true
-	end
-	run_coroutine(screen, cb, function()
-		change_context(screen)
-		unload(screen)
+		log("unload()", id)
+		local screen = screens[id]
+		if not screen then
+			action_error(("unload() there is no longer a screen with id %s"):format(tostring(id)))
+			return
+		end
+
+		if not screen.preloaded and not screen.loaded then
+			log("unload() screen is not loaded", tostring(id))
+			pcallfn(cb)
+			pcallfn(action_done)
+			return
+		end
+
+		local function when_unloaded()
+			pcallfn(cb)
+			pcallfn(action_done)
+		end
+		run_coroutine(screen, when_unloaded, function()
+			change_context(screen)
+			unload(screen)
+		end)
 	end)
-	return true
+	return true -- return true for legacy reasons (before queue existed)
 end
 
 
@@ -851,8 +939,8 @@ function M.post(id, message_id, message)
 	assert(message_id, "You must provide a message_id")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
-	local screen = screens[id]
 
+	local screen = screens[id]
 	if screen.proxy then
 		if screen.receiver_url then
 			log("post() sending message to", screen.receiver_url)
