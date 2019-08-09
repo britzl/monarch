@@ -1,0 +1,16 @@
+name: CI
+
+on: [push]
+
+jobs:
+    build_and_run:
+        name: Build and run
+        runs-on: ubuntu-latest
+        steps:
+          - name:
+            env:
+                DEFOLD_USER: bjorn.ritzl@gmail.com
+                DEFOLD_AUTH: foobar
+                DEFOLD_BOOSTRAP_COLLECTION: /test/test.collectionc
+            run:
+                .travis/run.sh
