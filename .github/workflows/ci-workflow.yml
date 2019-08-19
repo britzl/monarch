@@ -7,8 +7,8 @@ jobs:
         name: Build and run
         runs-on: ubuntu-latest
         steps:
-          - name:
-            uses: actions/checkout@v1
+          - uses: actions/checkout@v1
+          - name: Run.sh
             env:
                 DEFOLD_USER: bjorn.ritzl@gmail.com
                 DEFOLD_AUTH: foobar
