@@ -8,6 +8,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - name:
+            uses: actions/checkout@v1
             env:
                 DEFOLD_USER: bjorn.ritzl@gmail.com
                 DEFOLD_AUTH: foobar
