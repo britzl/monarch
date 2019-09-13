@@ -685,7 +685,7 @@ function M.show(id, options, data, cb)
 						-- wait until we are done if showing the same screen as is already visible
 						local same_screen = top and top.id == screen.id
 						show_out(top, screen, callbacks.track())
-						if same_screen and  then
+						if same_screen then
 							callbacks.yield_until_done()
 						end
 					end
