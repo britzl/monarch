@@ -7,6 +7,10 @@ function M.create()
 	local callback = nil
 	local callback_count = 0
 
+	local function is_done()
+		return callback_count == 0
+	end
+
 	local function invoke_if_done()
 		if callback_count == 0 and callback then
 			local ok, err = pcall(callback)
@@ -35,6 +39,17 @@ function M.create()
 	function instance.when_done(cb)
 		callback = cb
 		invoke_if_done()
+	end
+
+	function instance.yield_until_done()
+		local co = coroutine.running()
+		callback = function()
+			coroutine.resume(co)
+		end
+		invoke_if_done()
+		if not is_done() then
+			coroutine.yield()
+		end
 	end
 
 	return instance

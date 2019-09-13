@@ -677,16 +677,16 @@ function M.show(id, options, data, cb)
 						-- close all popups, one by one
 						while top.popup do
 							stack[#stack] = nil
-							show_out(top, screen, function()
-								assert(coroutine.resume(co))
-							end)
-							coroutine.yield()
+							show_out(top, screen, callbacks.track())
+							callbacks.yield_until_done()
 							top = stack[#stack]
 						end
 						-- unload and transition out from top
-						-- unless we're showing the same screen as is already visible
-						if top and top.id ~= screen.id then
-							show_out(top, screen, callbacks.track())
+						-- wait until we are done if showing the same screen as is already visible
+						local same_screen = top and top.id == screen.id
+						show_out(top, screen, callbacks.track())
+						if same_screen and  then
+							callbacks.yield_until_done()
 						end
 					end
 				end
@@ -817,7 +817,13 @@ function M.is_preloading(id)
 	local screen = screens[id]
 	return screen.preloading
 end
-
+function M.is_preloaded(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	local screen = screens[id]
+	return screen.preloaded
+end
 
 --- Invoke a callback when a specific screen has been preloaded
 -- This is mainly useful on app start when wanting to show a screen that

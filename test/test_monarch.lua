@@ -405,17 +405,12 @@ return function()
 		end)
 		
 		it("should be able to preload a screen and always keep it loaded", function()
-			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
+			monarch.show(SCREEN_PRELOAD)
 			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
-			-- first time the screen gets loaded it will increment the count
-			assert(monarch.data(SCREEN_PRELOAD).count == 2)
-
-			monarch.show(SCREEN_PRELOAD, { clear = true }, { count = 1 })
-			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
-			-- second time the screen gets shown it will already be loaded and not increment the count
-			assert(monarch.data(SCREEN_PRELOAD).count == 1)
+			monarch.back()
+			assert(wait_until_hidden(SCREEN_PRELOAD), "Screen_preload was never hidden")
+			assert(monarch.is_preloaded(SCREEN_PRELOAD))
 		end)
-
 
 		it("should be able to reload a preloaded screen", function()
 			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
