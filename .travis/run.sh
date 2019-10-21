@@ -26,11 +26,9 @@ chmod +x dmengine_headless
 echo "Downloading ${BOB_URL}"
 curl -o bob.jar ${BOB_URL}
 
-# Fetch libraries if DEFOLD_AUTH and DEFOLD_USER are set
-if [ -n "${DEFOLD_AUTH}" ] && [ -n "${DEFOLD_USER}" ]; then
-	echo "Running bob.jar - resolving dependencies"
-	java -jar bob.jar --auth "${DEFOLD_AUTH}" --email "${DEFOLD_USER}" resolve
-fi
+# Fetch libraries
+echo "Running bob.jar - resolving dependencies"
+java -jar bob.jar --auth "foobar" --email "john@doe.com" resolve
 
 echo "Running bob.jar - building"
 java -jar bob.jar --debug build --keep-unused
