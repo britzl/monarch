@@ -19,8 +19,6 @@ jdk:
 
 env:
   global:
-    - DEFOLD_AUTH=foobar
-    - DEFOLD_USER=bjorn.ritzl@gmail.com
     - DEFOLD_BOOSTRAP_COLLECTION=/test/test.collectionc
 
 script:
