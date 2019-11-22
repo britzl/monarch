@@ -80,7 +80,7 @@ end
 
 function M.scale_in(node, to, easing, duration, delay, cb)
 	gui.set_scale(node, ZERO_SCALE)
-	gui.animate(node, gui.PROP_SCALE, to.scale, easing, duration, delay, cb)
+	gui.animate(node, gui.PROP_SCALE, to, easing, duration, delay, cb)
 end
 
 function M.scale_out(node, from, easing, duration, delay, cb)
