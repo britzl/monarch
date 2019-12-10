@@ -371,6 +371,13 @@ local function preload(screen)
 	screen.preloading = true
 	if screen.proxy then
 		log("preload() proxy")
+		local missing_resources = collectionproxy.missing_resources(screen.proxy)
+		if #missing_resources > 0 then
+			local error_message = ("preload() collection proxy %s is missing resources"):format(tostring(screen.id))
+			log(error_message)
+			screen.preloading = false
+			return false, error_message
+		end
 		screen.wait_for = PROXY_LOADED
 		msg.post(screen.proxy, ASYNC_LOAD)
 		coroutine.yield()
