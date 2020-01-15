@@ -19,6 +19,10 @@ Or point to the ZIP file of a [specific release](https://github.com/britzl/monar
 # Usage
 Using Monarch requires that screens are created in a certain way. Once you have one or more screens created you can start navigating between the screens.
 
+## Editor Script
+Right click in on a`.gui` file in the outline and selected the menu item, it creates a `.collection` and a `.gui_script` with the same name as the `.gui` file. It adds the file with some basic setup done to them, adding the selected gui script to the created gui scene and in turns adds the gui scene to the newly created collection.
+
+<img src="/docs/editor_script.gif" width="200px">
 
 ## Creating screens
 Monarch screens are created in individual collections and either loaded through collection proxies or created through collection factories.
