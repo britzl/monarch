@@ -1,0 +1,161 @@
+local M = {}
+
+local collection_template
+local gui_script_content
+local gui_file_content
+
+local function ends_with(str, ending)
+    return ending == "" or str:sub(-#ending) == ending
+end
+
+local function file_exists(name)
+    local f=io.open(name,"r")
+    if f~=nil then io.close(f) return true else return false end
+end
+
+local function get_filename(path)   
+    local main, filename, extension = path:match("(.-)([^\\/]-%.?([^%.\\/]*))$")
+    return main, filename
+end
+
+local function create_files(file_path)
+    -- Construct paths
+    local path = editor.get(file_path, "path")
+    local main, filename = get_filename(path)
+    local basename = filename:match("(.+)%..+")
+    local target_collection_path = "." .. main .. basename .. ".collection"
+    local target_gui_script_path = "." .. main .. basename .. ".gui_script"
+    local target_gui_path = "." .. main .. basename .. ".gui"
+
+    -- Create the files if they don't exists
+    if not file_exists(target_collection_path) then
+        local collection_content = collection_template(path, basename)
+        local collection = io.open(target_collection_path, "w")
+        collection:write(collection_content)
+        collection:close()
+    end
+    if not file_exists(target_gui_script_path) then
+        local gui_script = io.open(target_gui_script_path, "w")
+        gui_script:write(gui_script_content)
+        gui_script:close()
+
+        -- Put the gui_script path into the gui file
+        local gui_file = io.open("." .. path, "rb")
+        local gui_text = gui_file:read("*a")
+        gui_file:close()
+
+        gui_text = string.gsub(gui_text, 'script: "%.*"', [[script: "]] .. main .. basename .. ".gui_script" .. [["]])
+
+        gui_file = io.open("." .. path, "w")
+        gui_file:write(gui_text)
+        gui_file:close()
+    end
+    if not file_exists(target_gui_path) then
+        local gui_content = gui_template(path)
+        local gui = io.open(target_gui_path, "w")
+        gui:write(gui_content)
+        gui:close()
+    end
+end
+
+function M.get_commands()
+    return {
+        {
+            label="Create Monarch Scene From...",
+            locations = {"Assets"},
+            query = {
+                selection = {type = "resource", cardinality = "one"}
+            },
+            active = function(opts)
+                local path = editor.get(opts.selection, "path")
+                return ends_with(path, ".gui") or ends_with(path, ".collection") or ends_with(path, ".gui_script")
+            end,
+            run = function(opts)
+                create_files(opts.selection)
+            end
+        }
+    }
+end
+
+gui_template = function(gui_script)
+    return [[script: "]].. gui_script .. [["
+background_color {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 0.0
+}
+material: "/builtins/materials/gui.material"
+adjust_reference: ADJUST_REFERENCE_PARENT
+max_nodes: 512
+]] 
+end
+
+gui_script_content = [[local monarch = require "monarch.monarch"
+
+function init(self)
+    msg.post(".", "acquire_input_focus")
+end
+
+function final(self)
+end
+
+function update(self, dt)
+end
+
+function on_message(self, message_id, message, sender)
+end
+
+function on_input(self, action_id, action)
+end
+
+function on_reload(self)
+end
+]]
+
+
+collection_template = function(gui_script, name)
+    return [[name: "]].. name .. [["
+scale_along_z: 0
+embedded_instances {
+  id: "go"
+  data: "components {\n"
+  "  id: \"monarch\"\n"
+  "  component: \"]].. gui_script .. [[\"\n"
+  "  position {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "  }\n"
+  "  rotation {\n"
+  "    x: 0.0\n"
+  "    y: 0.0\n"
+  "    z: 0.0\n"
+  "    w: 1.0\n"
+  "  }\n"
+  "}\n"
+  ""
+  position {
+      x: 0.0
+      y: 0.0
+      z: 0.0
+  }
+  rotation {
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+  }
+  scale3 {
+      x: 1.0
+      y: 1.0
+      z: 1.0
+  }
+}
+]]
+
+end
+
+
+
+return M
