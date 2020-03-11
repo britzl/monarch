@@ -1,6 +1,6 @@
 ![](docs/logo.jpg)
 
-[![Build Status](https://travis-ci.org/britzl/monarch.svg?branch=master)](https://travis-ci.org/britzl/monarch)
+[![Build Status](https://travis-ci.com/britzl/monarch.svg?branch=master)](https://travis-ci.org/britzl/monarch)
 [![Code Coverage](https://codecov.io/gh/britzl/monarch/branch/master/graph/badge.svg)](https://codecov.io/gh/britzl/monarch)
 [![Latest Release](https://img.shields.io/github/release/britzl/monarch.svg)](https://github.com/britzl/monarch/releases)
 
