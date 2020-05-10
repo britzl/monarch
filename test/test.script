@@ -2,11 +2,13 @@ local deftest = require "deftest.deftest"
 
 local test_monarch = require "test.test_monarch"
 local test_callback_tracker = require "test.test_callback_tracker"
+local test_transitions = require "test.test_transitions"
 
 
 function init(self)
 	deftest.add(test_monarch)
 	deftest.add(test_callback_tracker)
+	deftest.add(test_transitions)
 	deftest.run({ 
 		coverage = { enabled = true },
 		pattern = "",
