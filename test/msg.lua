@@ -8,9 +8,25 @@ local recipients = {}
 
 local history = {}
 
+local function url_to_key(url)
+	if type(url) == "string" then
+		url = msg.url(url)
+	end
+	local ok, err = pcall(function() return url.socket end)
+	if not ok then
+		return url
+	end
+	if url.socket then
+		return hash_to_hex(url.socket or hash("")) ..  hash_to_hex(url.path or hash("")) ..  hash_to_hex(url.fragment or hash(""))
+	else
+		return url
+	end
+end
+
 local function get_recipient(url)
-	recipients[url] = recipients[url] or {}
-	return recipients[url]
+	local key = url_to_key(url)
+	recipients[key] = recipients[key] or {}
+	return recipients[key]
 end
 
 local function post(url, message_id, message)
