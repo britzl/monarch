@@ -174,6 +174,7 @@ local function create()
 		if t.in_progress_count == 0 then
 			table.insert(t.urls, msg.url())
 			current_transition = t
+			current_transition.id = transition_id
 			if #t.transitions > 0 then
 				for i=1,#t.transitions do
 					local transition = t.transitions[i]
@@ -206,7 +207,7 @@ local function create()
 					transition.fn(transition.node, transition.node_data, transition.easing, 0, 0)
 				end
 				if current_transition.in_progress_count > 0 then
-					finish_transition(message_id)
+					finish_transition(current_transition.id)
 				end
 			end
 		elseif message_id == monarch.TRANSITION.SHOW_IN
