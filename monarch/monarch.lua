@@ -69,6 +69,16 @@ local function pcallfn(fn, ...)
 	end
 end
 
+local function assign(to, from)
+	if not from then
+		return to
+	end
+	for k, v in pairs(from) do
+		to[k] = v
+	end
+	return to
+end
+
 local function cowait(delay)
 	local co = coroutine.running()
 	assert(co, "You must run this from within a coroutine")
@@ -649,6 +659,8 @@ end
 --				   This would be the case if doing a show() from a popup on the screen just below the popup.
 -- 		* sequential - Set to true to wait for the previous screen to show itself out before starting the
 --				   show in transition even when transitioning to a different scene ID.
+-- 		* no_stack - Set to true to load the screen without adding it to the screen stack.
+-- 		* pop - The number of screens to pop from the stack before adding the new one.
 -- @param data (*) - Optional data to set on the screen. Can be retrieved by the data() function
 -- @param cb (function) - Optional callback to invoke when screen is shown
 function M.show(id, options, data, cb)
@@ -712,6 +724,14 @@ function M.show(id, options, data, cb)
 				end
 			end
 
+			if options and options.pop then
+				for i = 1, options.pop do
+					local stack_top = #stack
+					if stack_top < 1 then break end
+					stack[stack_top] = nil
+				end
+			end
+
 			-- show screen, wait until preloaded if it is already preloading
 			-- this can typpically happen if you do a show() on app start for a
 			-- screen that has Preload set to true
@@ -731,6 +751,20 @@ function M.show(id, options, data, cb)
 		assert(coroutine.resume(co))
 	end)
 	return true -- return true for legacy reasons (before queue existed)
+end
+
+
+--- Replace the top of the stack with a new screen
+-- @param id (string|hash) - Id of the screen to show
+-- @param options (table) - Table with options when showing the screen (can be nil). Valid values:
+-- 		* clear - Set to true if the stack should be cleared down to an existing instance of the screen
+-- 		* reload - Set to true if screen should be reloaded if it already exists in the stack and is loaded.
+--				   This would be the case if doing a show() from a popup on the screen just below the popup.
+-- 		* no_stack - Set to true to load the screen without adding it to the screen stack.
+-- @param data (*) - Optional data to set on the screen. Can be retrieved by the data() function
+-- @param cb (function) - Optional callback to invoke when screen is shown
+function M.replace(id, options, data, cb)
+	return M.show(id, assign({ pop = 1 }, options), data, cb)
 end
 
 
