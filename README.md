@@ -319,6 +319,10 @@ The options table can contain the following fields:
 * ```reload``` (boolean) - If the `reload` flag is set Monarch will reload the collection proxy if it's already loaded (this can happen if the previous screen was a popup).
 * ```no_stack``` (boolean) - If the `no_stack` flag is set Monarch will load the screen without adding it to the screen stack.
 * ```sequential``` (boolean) - If the `sequential` flag is set Monarch will start loading the screen only after the previous screen finished transitioning out.
+* ```pop``` (number) - If `pop` is set to a number, Monarch will pop that number of screens from the stack before adding the new one.
+
+### monarch.replace(screen_id, [options], [data], [callback])
+Replace the top of the stack with a new screen. Equivalent to calling `monarch.show()` with `pop = 1`. It takes the same parameters as `monarch.show()`.
 
 
 ### monarch.hide(screen_id, [callback])
