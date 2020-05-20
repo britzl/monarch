@@ -318,6 +318,7 @@ The options table can contain the following fields:
 * ```clear``` (boolean) - If the `clear` flag is set Monarch will search the stack for the screen that is to be shown. If the screen already exists in the stack and the clear flag is set Monarch will remove all screens between the current top and the screen in question.
 * ```reload``` (boolean) - If the `reload` flag is set Monarch will reload the collection proxy if it's already loaded (this can happen if the previous screen was a popup).
 * ```no_stack``` (boolean) - If the `no_stack` flag is set Monarch will load the screen without adding it to the screen stack.
+* ```sequential``` (boolean) - If the `sequential` flag is set Monarch will start loading the screen only after the previous screen finished transitioning out.
 
 
 ### monarch.hide(screen_id, [callback])
