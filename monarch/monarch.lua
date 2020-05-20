@@ -647,6 +647,8 @@ end
 -- 		* clear - Set to true if the stack should be cleared down to an existing instance of the screen
 -- 		* reload - Set to true if screen should be reloaded if it already exists in the stack and is loaded.
 --				   This would be the case if doing a show() from a popup on the screen just below the popup.
+-- 		* sequential - Set to true to wait for the previous screen to show itself out before starting the
+--				   show in transition even when transitioning to a different scene ID.
 -- @param data (*) - Optional data to set on the screen. Can be retrieved by the data() function
 -- @param cb (function) - Optional callback to invoke when screen is shown
 function M.show(id, options, data, cb)
@@ -692,7 +694,7 @@ function M.show(id, options, data, cb)
 						-- wait until we are done if showing the same screen as is already visible
 						local same_screen = top and top.id == screen.id
 						show_out(top, screen, callbacks.track())
-						if same_screen then
+						if same_screen or (options and options.sequential) then
 							callbacks.yield_until_done()
 						end
 					end
