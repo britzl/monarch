@@ -93,7 +93,7 @@ end
 local queue = {}
 
 local function queue_error(message)
-	log(message)
+	print(message)
 	log("queue() error - clearing queue")
 	while next(queue) do
 		table.remove(queue)
