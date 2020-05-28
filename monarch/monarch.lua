@@ -686,49 +686,61 @@ function M.show(id, options, data, cb)
 			local top = stack[#stack]
 			-- a screen can ignore the stack by setting the no_stack to true
 			local add_to_stack = not options or not options.no_stack
-			if add_to_stack then
+			if add_to_stack and top then
 				-- manipulate the current top
 				-- close popup(s) if needed
 				-- transition out
-				if top then
-					-- keep top popup visible if new screen can be shown on top of a popup
-					if top.popup and screen.popup_on_popup then
-						disable(top, screen)
-					else
-						-- close all popups, one by one
-						while top.popup do
-							stack[#stack] = nil
-							show_out(top, screen, callbacks.track())
-							callbacks.yield_until_done()
-							top = stack[#stack]
-						end
-						-- unload and transition out from top
-						-- wait until we are done if showing the same screen as is already visible
-						local same_screen = top and top.id == screen.id
-						show_out(top, screen, callbacks.track())
-						if same_screen or (options and options.sequential) then
-							callbacks.yield_until_done()
-						end
+				local pop = options and options.pop or 0
+				local is_not_popup = not screen.popup
+				local pop_all_popups = is_not_popup -- pop all popups when transitioning screens
+
+				-- keep top popup visible if new screen can be shown on top of a popup
+				if top.popup and screen.popup and screen.popup_on_popup then
+					disable(top, screen)
+				else
+					pop_all_popups = true
+				end
+
+				-- close popups, one by one, either all of them or the number specified by options.pop
+				while top and top.popup do
+					if not pop_all_popups then
+						if pop <= 0 then break end
+						pop = pop - 1
+					end
+					stack[#stack] = nil
+					show_out(top, screen, callbacks.track())
+					callbacks.yield_until_done()
+					top = stack[#stack]
+				end
+
+				-- unload the previous screen and transition out from top
+				-- wait until we are done if showing the same screen as is already visible
+				if top and not top.popup then
+					local same_screen = top and top.id == screen.id
+					show_out(top, screen, callbacks.track())
+					if same_screen or (options and options.sequential) then
+						callbacks.yield_until_done()
 					end
 				end
-			end
 
-			-- if the screen we want to show is in the stack
-			-- already and the clear flag is set then we need
-			-- to remove every screen on the stack up until and
-			-- including the screen itself
-			if options and options.clear then
-				log("show() clearing")
-				while M.in_stack(id) do
-					table.remove(stack)
+				-- if the screen we want to show is in the stack
+				-- already and the clear flag is set then we need
+				-- to remove every screen on the stack up until and
+				-- including the screen itself
+				if options and options.clear then
+					log("show() clearing")
+					while M.in_stack(id) do
+						table.remove(stack)
+					end
 				end
-			end
 
-			if options and options.pop then
-				for i = 1, options.pop do
-					local stack_top = #stack
-					if stack_top < 1 then break end
-					stack[stack_top] = nil
+				-- pop screens off the stack
+				if is_not_popup then
+					for i = 1, pop do
+						local stack_top = #stack
+						if stack_top < 1 then break end
+						stack[stack_top] = nil
+					end
 				end
 			end
 
