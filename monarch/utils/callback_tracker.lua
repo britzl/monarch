@@ -44,7 +44,10 @@ function M.create()
 	function instance.yield_until_done()
 		local co = coroutine.running()
 		callback = function()
-			coroutine.resume(co)
+			local ok, err = coroutine.resume(co)
+			if not ok then
+				print(err)
+			end
 		end
 		invoke_if_done()
 		if not is_done() then
