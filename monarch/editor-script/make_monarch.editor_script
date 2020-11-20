@@ -66,9 +66,9 @@ function M.get_commands()
             query = {
                 selection = {type = "resource", cardinality = "one"}
             },
-            active = function(opts)
+            active = function(opts)                
                 local path = editor.get(opts.selection, "path")
-                return ends_with(path, ".gui") or ends_with(path, ".collection") or ends_with(path, ".gui_script")
+                return ends_with(path, ".gui")
             end,
             run = function(opts)
                 create_files(opts.selection)
