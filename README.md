@@ -185,4 +185,5 @@ The full [Monarch API is documented here](/README_API.md).
 ## Monarch FAQ
 
 **Q**: Why am I getting `ERROR GAMEOBJECT: The collection 'default' could not be created since there is already a socket with the same name`?
+
 **A**: Each collection that you use must be given a unique id. In this case you have more than one collection loaded with the id `default`.  Select the root of each collection in the Outline panel and change the Name field in the properties panel from the default value of `default`.
