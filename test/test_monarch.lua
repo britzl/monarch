@@ -572,5 +572,11 @@ return function()
 			local ok, err = monarch.post(POPUP1, "foobar")
 			assert(not ok and err, "Expected monarch.post() to return false plus an error message")
 		end)
+
+
+		it("should be able to check if a screen is is a popup", function()
+			assert(not monarch.is_popup(SCREEN1))
+			assert(monarch.is_popup(POPUP1))
+		end)
 	end)
 end
