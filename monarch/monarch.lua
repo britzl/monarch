@@ -188,6 +188,17 @@ function M.is_visible(id)
 end
 
 
+--- Check if a screen is a popup
+-- @param id Screen id
+-- @return true if the screen is a popup
+function M.is_popup(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	return screens[id].popup
+end
+
+
 local function register(id, settings)
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
