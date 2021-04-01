@@ -33,6 +33,8 @@ M.SCREEN_TRANSITION_OUT_STARTED = hash("monarch_screen_transition_out_started")
 M.SCREEN_TRANSITION_OUT_FINISHED = hash("monarch_screen_transition_out_finished")
 M.SCREEN_TRANSITION_FAILED = hash("monarch_screen_transition_failed")
 
+local WAIT_FOR_TRANSITION = true
+local DO_NOT_WAIT_FOR_TRANSITION = false
 
 -- all registered screens
 local screens = {}
@@ -47,8 +49,7 @@ local transition_listeners = {}
 -- monarch is considered busy while there are active transitions
 local active_transition_count = 0
 
-
-local function log(...) end
+local function log(...) end 
 
 function M.debug()
 	log = print
@@ -93,8 +94,8 @@ end
 local queue = {}
 
 local function queue_error(message)
-	print(message)
 	log("queue() error - clearing queue")
+	print(message)
 	while next(queue) do
 		table.remove(queue)
 	end
@@ -337,7 +338,7 @@ end
 local function change_context(screen)
 	log("change_context()", screen.id)
 	screen.wait_for = CONTEXT
-	msg.post(screen.script, CONTEXT)
+	msg.post(screen.script, CONTEXT, { id = screen.id })
 	coroutine.yield()
 	screen.wait_for = nil
 end
@@ -451,12 +452,14 @@ local function load(screen)
 	return true
 end
 
-local function transition(screen, message_id, message)
+local function transition(screen, message_id, message, wait)
 	log("transition()", screen.id)
 	if screen.transition_url then
 		screen.wait_for = M.TRANSITION.DONE
 		msg.post(screen.transition_url, message_id, message)
-		coroutine.yield()
+		if wait then
+			coroutine.yield()
+		end
 		screen.wait_for = nil
 	else
 		log("transition() no transition url - ignoring")
@@ -480,6 +483,7 @@ local function focus_lost(screen, next_screen)
 		-- unloaded this will happen before the focus_lost message reaches
 		-- the focus_url
 		-- we add a delay to ensure the message queue has time to be processed
+		cowait(0)
 		cowait(0)
 	else
 		log("focus_lost() no focus url - ignoring")
@@ -538,8 +542,9 @@ local function enable(screen, previous_screen)
 	end)
 end
 
-local function show_out(screen, next_screen, cb)
+local function show_out(screen, next_screen, wait_for_transition, cb)
 	log("show_out()", screen.id)
+	assert(wait_for_transition ~= nil)
 	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
@@ -552,7 +557,7 @@ local function show_out(screen, next_screen, cb)
 		local next_is_popup = next_screen and next_screen.popup
 		local current_is_popup = screen.popup
 		if (not next_is_popup and not current_is_popup) or (current_is_popup) then
-			transition(screen, M.TRANSITION.SHOW_OUT, { next_screen = next_screen.id })
+			transition(screen, M.TRANSITION.SHOW_OUT, { next_screen = next_screen.id }, wait_for_transition)
 			unload(screen)
 		elseif next_is_popup then
 			change_timestep(screen)
@@ -562,8 +567,9 @@ local function show_out(screen, next_screen, cb)
 	end)
 end
 
-local function show_in(screen, previous_screen, reload, add_to_stack, cb)
-	log("show_in()", screen.id)
+local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_transition, cb)
+	log("show_in()", screen.id, wait_for_transition)
+	assert(wait_for_transition ~= nil)
 	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
@@ -579,11 +585,14 @@ local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
 			return
 		end
+		-- wait until screen has had a chance to render
+		cowait(0)
+		cowait(0)
 		if add_to_stack then
 			stack[#stack + 1] = screen
 		end
 		reset_timestep(screen)
-		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id })
+		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id }, wait_for_transition)
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		active_transition_count = active_transition_count - 1
@@ -591,8 +600,9 @@ local function show_in(screen, previous_screen, reload, add_to_stack, cb)
 	end)
 end
 
-local function back_in(screen, previous_screen, cb)
+local function back_in(screen, previous_screen, wait_for_transition, cb)
 	log("back_in()", screen.id)
+	assert(wait_for_transition ~= nil)
 	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
@@ -606,7 +616,7 @@ local function back_in(screen, previous_screen, cb)
 		end
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
-			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id })
+			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
 		end
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
@@ -615,8 +625,9 @@ local function back_in(screen, previous_screen, cb)
 	end)
 end
 
-local function back_out(screen, next_screen, cb)
+local function back_out(screen, next_screen, wait_for_transition, cb)
 	log("back_out()", screen.id)
+	assert(wait_for_transition ~= nil)
 	run_coroutine(screen, cb, function()
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen and next_screen.id })
 		active_transition_count = active_transition_count + 1
@@ -626,7 +637,7 @@ local function back_out(screen, next_screen, cb)
 		if next_screen and screen.popup then
 			reset_timestep(next_screen)
 		end
-		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id })
+		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id }, wait_for_transition)
 		unload(screen)
 		active_transition_count = active_transition_count - 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen and next_screen.id })
@@ -679,9 +690,7 @@ function M.show(id, options, data, cb)
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
-	log("show() queuing action", id)
 	queue_action(function(action_done, action_error)
-		log("show()", id)
 		local screen = screens[id]
 		if not screen then
 			action_error(("show() there is no longer a screen with id %s"):format(tostring(id)))
@@ -719,19 +728,9 @@ function M.show(id, options, data, cb)
 						pop = pop - 1
 					end
 					stack[#stack] = nil
-					show_out(top, screen, callbacks.track())
+					show_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
 					callbacks.yield_until_done()
 					top = stack[#stack]
-				end
-
-				-- unload the previous screen and transition out from top
-				-- wait until we are done if showing the same screen as is already visible
-				if top and not top.popup then
-					local same_screen = top and top.id == screen.id
-					show_out(top, screen, callbacks.track())
-					if same_screen or (options and options.sequential) then
-						callbacks.yield_until_done()
-					end
 				end
 
 				-- if the screen we want to show is in the stack
@@ -755,8 +754,8 @@ function M.show(id, options, data, cb)
 				end
 			end
 
-			-- show screen, wait until preloaded if it is already preloading
-			-- this can typpically happen if you do a show() on app start for a
+			-- wait until preloaded if it is already preloading
+			-- this can typically happen if you do a show() on app start for a
 			-- screen that has Preload set to true
 			if M.is_preloading(id) then
 				M.when_preloaded(id, function()
@@ -764,7 +763,25 @@ function M.show(id, options, data, cb)
 				end)
 				coroutine.yield()
 			end
-			show_in(screen, top, options and options.reload, add_to_stack, callbacks.track())
+
+			-- showing and hiding the same screen?
+			local same_screen = top and top.id == screen.id
+			if same_screen or (options and options.sequential) then
+				if top then
+					show_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
+					callbacks.yield_until_done()
+				end
+				show_in(screen, top, options and options.reload, add_to_stack, WAIT_FOR_TRANSITION, callbacks.track())
+			else
+				-- show screen
+				local cb = callbacks.track()
+				show_in(screen, top, options and options.reload, add_to_stack, DO_NOT_WAIT_FOR_TRANSITION, function()
+					if top and not top.popup then
+						show_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
+					end
+					cb()
+				end)
+			end
 
 			callbacks.when_done(function()
 				pcallfn(cb)
@@ -818,7 +835,7 @@ function M.hide(id, cb)
 					action_error(("hide() there is no longer a screen with id %s"):format(tostring(id)))
 					return
 				end
-				back_out(screen, nil, callbacks.track())
+				back_out(screen, nil, WAIT_FOR_TRANSITION, callbacks.track())
 			end
 			callbacks.when_done(function()
 				pcallfn(cb)
@@ -845,19 +862,19 @@ function M.back(data, cb)
 			-- if we go back to the same screen we need to first hide it
 			-- and wait until it is hidden before we show it again
 			if top and screen.id == top.id then
-				back_out(screen, top, function()
+				back_out(screen, top, WAIT_FOR_TRANSITION, function()
 					if data then
 						top.data = data
 					end
-					back_in(top, screen, callbacks.track())
+					back_in(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
 				end)
 			else
-				back_out(screen, top, callbacks.track())
+				back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
 				if top then
 					if data then
 						top.data = data
 					end
-					back_in(top, screen, callbacks.track())
+					back_in(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
 				end
 			end
 		end
@@ -1021,13 +1038,9 @@ function M.post(id, message_id, message)
 			return false, "Unable to post message since screen has no receiver url specified"
 		end
 	else
-		run_coroutine(screen, nil, function()
-			change_context(screen)
-			log("post() sending message to", screen.receiver_url)
-			for id,instance in pairs(screen.factory_ids) do
-				msg.post(instance, message_id, message)
-			end
-		end)
+		for id,instance in pairs(screen.factory_ids) do
+			msg.post(instance, message_id, message)
+		end
 	end
 	return true
 end
@@ -1119,5 +1132,10 @@ function M.dump_stack()
 	end
 	return s
 end
+
+function M.queue_size()
+	return #queue
+end
+
 
 return M
