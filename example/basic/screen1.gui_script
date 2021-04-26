@@ -1,0 +1,13 @@
+local monarch = require "monarch.monarch"
+
+function init(self)
+	msg.post(".", "acquire_input_focus")
+end
+
+function on_input(self, action_id, action)
+	if action_id == hash("touch") and action.pressed then
+		if gui.pick_node(gui.get_node("showscreen2"), action.x, action.y) then
+			monarch.show("screen2")
+		end
+	end
+end

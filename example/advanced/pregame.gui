@@ -1,4 +1,4 @@
-script: "/example/pregame.gui_script"
+script: "/example/advanced/pregame.gui_script"
 fonts {
   name: "example"
   font: "/assets/example.font"

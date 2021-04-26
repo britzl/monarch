@@ -1,4 +1,4 @@
-script: "/example/about.gui_script"
+script: "/example/advanced/about.gui_script"
 fonts {
   name: "example"
   font: "/assets/example.font"

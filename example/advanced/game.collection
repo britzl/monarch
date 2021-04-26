@@ -1,10 +1,10 @@
-name: "popup"
+name: "game"
 scale_along_z: 0
 embedded_instances {
   id: "go"
   data: "components {\n"
-  "  id: \"popup\"\n"
-  "  component: \"/example/popup.gui\"\n"
+  "  id: \"game\"\n"
+  "  component: \"/example/advanced/game.gui\"\n"
   "  position {\n"
   "    x: 0.0\n"
   "    y: 0.0\n"

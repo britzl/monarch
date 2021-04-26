@@ -1,10 +1,10 @@
-name: "confirm"
+name: "screen1"
 scale_along_z: 0
 embedded_instances {
   id: "go"
   data: "components {\n"
-  "  id: \"confirm\"\n"
-  "  component: \"/example/confirm.gui\"\n"
+  "  id: \"screen1\"\n"
+  "  component: \"/example/basic/screen1.gui\"\n"
   "  position {\n"
   "    x: 0.0\n"
   "    y: 0.0\n"
