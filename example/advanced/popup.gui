@@ -1,4 +1,4 @@
-script: "/example/popup.gui_script"
+script: "/example/advanced/popup.gui_script"
 fonts {
   name: "example"
   font: "/assets/example.font"

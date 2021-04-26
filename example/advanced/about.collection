@@ -1,10 +1,10 @@
-name: "pregame"
+name: "about"
 scale_along_z: 0
 embedded_instances {
   id: "go"
   data: "components {\n"
-  "  id: \"pregame\"\n"
-  "  component: \"/example/pregame.gui\"\n"
+  "  id: \"about\"\n"
+  "  component: \"/example/advanced/about.gui\"\n"
   "  position {\n"
   "    x: 0.0\n"
   "    y: 0.0\n"
