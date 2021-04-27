@@ -614,6 +614,9 @@ local function back_in(screen, previous_screen, wait_for_transition, cb)
 			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
 			return
 		end
+		-- wait until screen has had a chance to render
+		cowait(0)
+		cowait(0)
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
@@ -869,12 +872,15 @@ function M.back(data, cb)
 					back_in(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
 				end)
 			else
-				back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
 				if top then
 					if data then
 						top.data = data
 					end
-					back_in(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
+					back_in(top, screen, DO_NOT_WAIT_FOR_TRANSITION, function()
+						back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
+					end)
+				else
+					back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
 				end
 			end
 		end
