@@ -168,6 +168,26 @@ return function()
 			assert(wait_until_stack({ SCREEN1 }))
 		end)
 
+		it("should be able to show a screen without adding it to the stack at any time", function()
+			monarch.show(SCREEN1)
+			assert(wait_until_not_busy())
+			assert(wait_until_stack({ SCREEN1 }))
+			
+			monarch.show(BACKGROUND, { no_stack = true })
+			assert(wait_until_not_busy())
+			assert(wait_until_shown(BACKGROUND))
+			assert(wait_until_stack({ SCREEN1 }))
+			
+			monarch.show(SCREEN2)
+			assert(wait_until_not_busy())
+			assert(wait_until_stack({ SCREEN1, SCREEN2 }))
+
+			monarch.back()
+			assert(wait_until_not_busy())
+			assert(wait_until_shown(SCREEN1))
+			assert(wait_until_stack({ SCREEN1 }))
+		end)
+		
 		it("should be able to hide a screen not added to the stack", function()
 			monarch.show(BACKGROUND, { no_stack = true })
 			assert(wait_until_shown(BACKGROUND), "Background was never shown")
@@ -177,7 +197,7 @@ return function()
 			assert(wait_until_hidden(BACKGROUND), "Background was never hidden")
 			assert_stack({ })
 		end)
-
+		
 		it("should be able to hide the top screen", function()
 			monarch.show(SCREEN1)
 			assert(wait_until_stack({ SCREEN1 }))
@@ -400,22 +420,22 @@ return function()
 			assert(mock_msg.messages(URL1)[5].message.screen == SCREEN1)
 			assert(mock_msg.messages(URL1)[6].message_id == monarch.SCREEN_TRANSITION_OUT_FINISHED)
 			assert(mock_msg.messages(URL1)[6].message.screen == SCREEN1)
-						
+
 			monarch.back()
 			assert(wait_until_not_busy())
-						
+
 			assert(#mock_msg.messages(URL1) == 10)
 			assert(#mock_msg.messages(URL2) == 2)
-			assert(mock_msg.messages(URL1)[7].message_id == monarch.SCREEN_TRANSITION_OUT_STARTED)
-			assert(mock_msg.messages(URL1)[7].message.screen == SCREEN2)
-			assert(mock_msg.messages(URL1)[8].message_id == monarch.SCREEN_TRANSITION_IN_STARTED)
+			assert(mock_msg.messages(URL1)[7].message_id == monarch.SCREEN_TRANSITION_IN_STARTED)
+			assert(mock_msg.messages(URL1)[7].message.screen == SCREEN1)
+			assert(mock_msg.messages(URL1)[8].message_id == monarch.SCREEN_TRANSITION_IN_FINISHED)
 			assert(mock_msg.messages(URL1)[8].message.screen == SCREEN1)
-			assert(mock_msg.messages(URL1)[9].message_id == monarch.SCREEN_TRANSITION_IN_FINISHED)
-			assert(mock_msg.messages(URL1)[9].message.screen == SCREEN1)
+			assert(mock_msg.messages(URL1)[9].message_id == monarch.SCREEN_TRANSITION_OUT_STARTED)
+			assert(mock_msg.messages(URL1)[9].message.screen == SCREEN2)
 			assert(mock_msg.messages(URL1)[10].message_id == monarch.SCREEN_TRANSITION_OUT_FINISHED)
 			assert(mock_msg.messages(URL1)[10].message.screen == SCREEN2)
 		end)
-
+		
 		it("should be able to show a screen even while it is preloading", function()
 			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
 			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")

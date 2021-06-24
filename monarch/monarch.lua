@@ -545,6 +545,18 @@ end
 local function show_out(screen, next_screen, wait_for_transition, cb)
 	log("show_out()", screen.id)
 	assert(wait_for_transition ~= nil)
+	-- make sure the screen is loaded. scenario:
+	-- show A - stack [A]
+	--   - show_in for A
+	-- show B with no_stack = true - stack [A]
+	--   - show_in for B and show_out for A
+	-- show C
+	--   - show_in for C and show_out for A again!
+	if not screen.loaded then
+		log("show_out() screen was not loaded")
+		cb()
+		return
+	end
 	run_coroutine(screen, cb, function()
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_STARTED, { screen = screen.id, next_screen = next_screen.id })
