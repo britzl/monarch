@@ -185,7 +185,7 @@ function M.is_visible(id)
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
-	return screens[id].loaded
+	return screens[id].visible
 end
 
 
@@ -570,6 +570,7 @@ local function show_out(screen, next_screen, wait_for_transition, cb)
 		local current_is_popup = screen.popup
 		if (not next_is_popup and not current_is_popup) or (current_is_popup) then
 			transition(screen, M.TRANSITION.SHOW_OUT, { next_screen = next_screen.id }, wait_for_transition)
+			screen.visible = false
 			unload(screen)
 		elseif next_is_popup then
 			change_timestep(screen)
@@ -590,9 +591,15 @@ local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_t
 			log("show_in() reloading", screen.id)
 			unload(screen, reload)
 		end
+		if add_to_stack then
+			stack[#stack + 1] = screen
+		end
 		local ok, err = load(screen)
 		if not ok then
 			log("show_in()", err)
+			if add_to_stack then
+				stack[#stack] = nil
+			end
 			active_transition_count = active_transition_count - 1
 			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
 			return
@@ -600,11 +607,9 @@ local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_t
 		-- wait until screen has had a chance to render
 		cowait(0)
 		cowait(0)
-		if add_to_stack then
-			stack[#stack + 1] = screen
-		end
 		reset_timestep(screen)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id }, wait_for_transition)
+		screen.visible = true
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		active_transition_count = active_transition_count - 1
@@ -633,6 +638,7 @@ local function back_in(screen, previous_screen, wait_for_transition, cb)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
 		end
+		screen.visible = true
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
 		active_transition_count = active_transition_count - 1
@@ -653,6 +659,7 @@ local function back_out(screen, next_screen, wait_for_transition, cb)
 			reset_timestep(next_screen)
 		end
 		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id }, wait_for_transition)
+		screen.visible = false
 		unload(screen)
 		active_transition_count = active_transition_count - 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_OUT_FINISHED, { screen = screen.id, next_screen = next_screen and next_screen.id })

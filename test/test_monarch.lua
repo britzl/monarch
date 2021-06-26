@@ -39,7 +39,7 @@ return function()
 
 	local screens_instances = {}
 
-	local function is_shown(screen_id)
+	local function is_visible(screen_id)
 		return monarch.is_visible(screen_id)
 	end
 
@@ -64,9 +64,6 @@ return function()
 	end
 	local function wait_until_visible(screen_id)
 		return wait_timeout(is_visible, screen_id)
-	end
-	local function wait_until_shown(screen_id)
-		return wait_timeout(is_shown, screen_id)
 	end
 	local function wait_until_hidden(screen_id)
 		return wait_timeout(is_hidden, screen_id)
@@ -145,23 +142,23 @@ return function()
 			assert(not monarch.is_visible(SCREEN1))
 			monarch.show(SCREEN1)
 			assert(wait_until_stack({ SCREEN1 }))
-			assert(monarch.is_visible(SCREEN1))
+			assert(wait_until_visible(SCREEN1))
 			
 			monarch.show(SCREEN2)
 			assert(wait_until_stack({ SCREEN1, SCREEN2 }))
-			assert(not monarch.is_visible(SCREEN1))
-			assert(monarch.is_visible(SCREEN2))
+			assert(wait_until_hidden(SCREEN1))
+			assert(wait_until_visible(SCREEN2))
 			
 			monarch.show(POPUP1)
 			assert(wait_until_stack({ SCREEN1, SCREEN2, POPUP1 }))
-			assert(not monarch.is_visible(SCREEN1))
-			assert(monarch.is_visible(SCREEN2))
-			assert(monarch.is_visible(POPUP1))
+			assert(wait_until_hidden(SCREEN1))
+			assert(wait_until_visible(SCREEN2))
+			assert(wait_until_visible(POPUP1))
 		end)
 
 		it("should be able to show a screen without adding it to the stack", function()
 			monarch.show(BACKGROUND, { no_stack = true })
-			assert(wait_until_shown(BACKGROUND), "Background was never shown")
+			assert(wait_until_visible(BACKGROUND), "Background was never shown")
 			assert(wait_until_stack({ }))
 
 			monarch.show(SCREEN1)
@@ -175,7 +172,7 @@ return function()
 			
 			monarch.show(BACKGROUND, { no_stack = true })
 			assert(wait_until_not_busy())
-			assert(wait_until_shown(BACKGROUND))
+			assert(wait_until_visible(BACKGROUND))
 			assert(wait_until_stack({ SCREEN1 }))
 			
 			monarch.show(SCREEN2)
@@ -184,13 +181,13 @@ return function()
 
 			monarch.back()
 			assert(wait_until_not_busy())
-			assert(wait_until_shown(SCREEN1))
+			assert(wait_until_visible(SCREEN1))
 			assert(wait_until_stack({ SCREEN1 }))
 		end)
 		
 		it("should be able to hide a screen not added to the stack", function()
 			monarch.show(BACKGROUND, { no_stack = true })
-			assert(wait_until_shown(BACKGROUND), "Background was never shown")
+			assert(wait_until_visible(BACKGROUND), "Background was never shown")
 			assert_stack({ })
 
 			monarch.hide(BACKGROUND)
@@ -213,18 +210,18 @@ return function()
 		it("should be able to pass data to a screen when showing it or going back to it", function()
 			local data1 = { foo = "bar" }
 			monarch.show(SCREEN1, nil, data1)
-			assert(wait_until_shown(SCREEN1), "Screen1 was never shown")
+			assert(wait_until_visible(SCREEN1), "Screen1 was never shown")
 
 			local data2 = { boo = "car" }
 			monarch.show(SCREEN2, nil, data2)
-			assert(wait_until_shown(SCREEN2), "Screen2 was never shown")
+			assert(wait_until_visible(SCREEN2), "Screen2 was never shown")
 			
 			assert(monarch.data(SCREEN1) == data1, "Expected data on screen1 doesn't match actual data")
 			assert(monarch.data(SCREEN2) == data2, "Expected data on screen2 doesn't match actual data")
 
 			local data_back = { going = "back" }
 			monarch.back(data_back)
-			assert(wait_until_shown(SCREEN1))
+			assert(wait_until_visible(SCREEN1))
 
 			assert(monarch.data(SCREEN1) == data_back, "Expected data on screen1 doesn't match actual data")
 		end)
@@ -368,7 +365,7 @@ return function()
 		it("should be busy while transition is running", function()
 			monarch.show(TRANSITION1)
 			assert(monarch.is_busy())
-			assert(wait_until_shown(TRANSITION1), "Transition1 was never shown")
+			assert(wait_until_visible(TRANSITION1), "Transition1 was never shown")
 			assert(wait_until_not_busy())
 		end)
 
@@ -386,7 +383,7 @@ return function()
 			-- previously a call to preload() while also showing a screen would
 			-- lock up monarch. See issue #32
 			monarch.preload(TRANSITION1)
-			assert(wait_until_shown(TRANSITION1), "Transition1 was never shown")
+			assert(wait_until_visible(TRANSITION1), "Transition1 was never shown")
 		end)
 		
 		it("should be able to notify listeners of navigation events", function()
@@ -438,12 +435,12 @@ return function()
 		
 		it("should be able to show a screen even while it is preloading", function()
 			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
-			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+			assert(wait_until_visible(SCREEN_PRELOAD), "Screen_preload was never shown")
 		end)
 		
 		it("should be able to preload a screen and always keep it loaded", function()
 			monarch.show(SCREEN_PRELOAD)
-			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+			assert(wait_until_visible(SCREEN_PRELOAD), "Screen_preload was never shown")
 			monarch.back()
 			assert(wait_until_hidden(SCREEN_PRELOAD), "Screen_preload was never hidden")
 			assert(monarch.is_preloaded(SCREEN_PRELOAD))
@@ -451,12 +448,12 @@ return function()
 
 		it("should be able to reload a preloaded screen", function()
 			monarch.show(SCREEN_PRELOAD, nil, { count = 1 })
-			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+			assert(wait_until_visible(SCREEN_PRELOAD), "Screen_preload was never shown")
 			-- first time the screen gets loaded it will increment the count
 			assert(monarch.data(SCREEN_PRELOAD).count == 2)
 
 			monarch.show(SCREEN_PRELOAD, { clear = true, reload = true }, { count = 1 })
-			assert(wait_until_shown(SCREEN_PRELOAD), "Screen_preload was never shown")
+			assert(wait_until_visible(SCREEN_PRELOAD), "Screen_preload was never shown")
 			-- second time the screen gets shown it will be reloaded and increment the count
 			assert(monarch.data(SCREEN_PRELOAD).count == 2)
 		end)
@@ -470,9 +467,11 @@ return function()
 			assert(wait_until_stack({ SCREEN1 }))
 			monarch.show(FOCUS1)
 			assert(wait_until_stack({ SCREEN1, FOCUS1 }))
+			assert(wait_until_visible(FOCUS1))
 			assert(_G.focus1_gained)
 			monarch.show(SCREEN1)
 			assert(wait_until_stack({ SCREEN1, FOCUS1, SCREEN1 }))
+			assert(wait_until_hidden(FOCUS1))
 			assert(_G.focus1_lost)
 		end)
 
@@ -483,14 +482,14 @@ return function()
 
 			-- proxy screen
 			monarch.show(SCREEN1)
-			wait_until_shown(SCREEN1)
+			wait_until_visible(SCREEN1)
 			assert(monarch.post(SCREEN1, "foobar"), "Expected monarch.post() to return true")
 			cowait(0.1)
 			assert(_G.screen1_foobar, "Screen1 never received a message")
 
 			-- factory screen
 			monarch.show(SCREEN2)
-			wait_until_shown(SCREEN2)
+			wait_until_visible(SCREEN2)
 			assert(monarch.post(SCREEN2, "foobar"), "Expected monarch.post() to return true")
 			cowait(0.1)
 			assert(_G.screen2_foobar, "Screen2 never received a message")
@@ -503,7 +502,7 @@ return function()
 
 			-- proxy screen
 			monarch.show(SCREEN1)
-			wait_until_shown(SCREEN1)
+			wait_until_visible(SCREEN1)
 			assert(monarch.post(SCREEN1, "foobar", { foo = "bar" }), "Expected monarch.post() to return true")
 			cowait(0.1)
 			assert(_G.screen1_foobar, "Screen1 never received a message")
@@ -511,7 +510,7 @@ return function()
 			
 			-- factory screen
 			monarch.show(SCREEN2)
-			wait_until_shown(SCREEN2)
+			wait_until_visible(SCREEN2)
 			assert(monarch.post(SCREEN2, "foobar", { foo = "bar" }), "Expected monarch.post() to return true")
 			cowait(0.1)
 			assert(_G.screen2_foobar, "Screen2 never received a message")
@@ -525,6 +524,7 @@ return function()
 			monarch.show(SCREEN1)
 			monarch.show(SCREEN2)
 			assert(wait_until_stack({ SCREEN1, SCREEN2 }))
+			assert(wait_until_hidden(SCREEN1))
 			local ok, err = monarch.post(SCREEN1, "foobar")
 			assert(not ok and err, "Expected monarch.post() to return false plus an error message")
 			cowait(0.1)
@@ -534,7 +534,7 @@ return function()
 
 		it("should not be able to post messages to proxy screens without a receiver url", function()
 			monarch.show(POPUP1)
-			wait_until_shown(POPUP1)
+			wait_until_visible(POPUP1)
 			local ok, err = monarch.post(POPUP1, "foobar")
 			assert(not ok and err, "Expected monarch.post() to return false plus an error message")
 		end)
