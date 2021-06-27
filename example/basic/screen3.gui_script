@@ -6,10 +6,10 @@ end
 
 function on_input(self, action_id, action)
 	if action_id == hash("touch") and action.pressed then
-		if gui.pick_node(gui.get_node("showscreen3"), action.x, action.y) then
-			monarch.show(hash("screen3"))
-		elseif gui.pick_node(gui.get_node("backbutton"), action.x, action.y) then
+		if gui.pick_node(gui.get_node("backbutton"), action.x, action.y) then
 			monarch.back()
+		elseif gui.pick_node(gui.get_node("tostart"), action.x, action.y) then
+			monarch.back_to(hash("screen1"))
 		end
 	end
 end

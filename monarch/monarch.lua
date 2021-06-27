@@ -869,49 +869,84 @@ function M.hide(id, cb)
 end
 
 
+local function internal_back(to, data, cb)
+	if #stack == 0 then
+		cb()
+		return
+	end
+
+	if not to then
+		if #stack > 1 then
+			to = stack[#stack - 1]
+		end
+	end
+
+	queue_action(function(action_done)
+		local co
+		co = coroutine.create(function()
+			local callbacks = callback_tracker()
+			if not to then
+				back_out(table.remove(stack), nil, WAIT_FOR_TRANSITION, callbacks.track())
+			else
+				if data then
+					to.data = data
+				end
+
+				-- close visible screens until target screen is below top screen
+				while to ~= stack[#stack - 1] do
+					local top = table.remove(stack)
+					local below = stack[#stack]
+					if top.visible then
+						back_out(top, below, WAIT_FOR_TRANSITION, callbacks.track())
+						callbacks.yield_until_done()
+					end
+				end
+				
+				local top = table.remove(stack)
+				if to == top then
+					-- if we go back to the same screen we need to first hide it
+					-- and wait until it is hidden before we show it again
+					back_out(to, to, WAIT_FOR_TRANSITION, function()
+						back_in(to, to, WAIT_FOR_TRANSITION, callbacks.track())
+					end)
+				else
+					back_in(to, top, DO_NOT_WAIT_FOR_TRANSITION, function()
+						if top.visible then
+							back_out(top, to, WAIT_FOR_TRANSITION, callbacks.track())
+						end
+					end)
+				end
+			end
+			
+			callbacks.when_done(function()
+				pcallfn(cb)
+				pcallfn(action_done)
+			end)
+		end)
+		assert(coroutine.resume(co))
+	end)
+end
+
 -- Go back to the previous screen in the stack.
 -- @param data (*) - Optional data to set for the previous screen
 -- @param cb (function) - Optional callback to invoke when the previous screen is visible again
 function M.back(data, cb)
 	log("back() queuing action")
-
-	queue_action(function(action_done)
-		local callbacks = callback_tracker()
-		local screen = table.remove(stack)
-		if screen then
-			log("back()", screen.id)
-			local top = stack[#stack]
-			-- if we go back to the same screen we need to first hide it
-			-- and wait until it is hidden before we show it again
-			if top and screen.id == top.id then
-				back_out(screen, top, WAIT_FOR_TRANSITION, function()
-					if data then
-						top.data = data
-					end
-					back_in(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
-				end)
-			else
-				if top then
-					if data then
-						top.data = data
-					end
-					back_in(top, screen, DO_NOT_WAIT_FOR_TRANSITION, function()
-						back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
-					end)
-				else
-					back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
-				end
-			end
-		end
-
-		callbacks.when_done(function()
-			pcallfn(cb)
-			pcallfn(action_done)
-		end)
-	end)
-
-	return true -- return true for legacy reasons (before queue existed)
+	internal_back(nil, data, cb)
 end
+
+
+-- Go back to the previous screen in the stack.
+-- @param data (*) - Optional data to set for the previous screen
+-- @param cb (function) - Optional callback to invoke when the previous screen is visible again
+function M.back_to(id, data, cb)
+	log("back_to() queuing action")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	local screen = screens[id]
+	internal_back(screen, data, cb)
+end
+
 
 
 --- Check if a screen is preloading via monarch.preload() or automatically
