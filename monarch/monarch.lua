@@ -49,7 +49,7 @@ local transition_listeners = {}
 -- monarch is considered busy while there are active transitions
 local active_transition_count = 0
 
-local function log(...) end 
+local function log(...) end
 
 function M.debug()
 	log = print
@@ -604,9 +604,6 @@ local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_t
 			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
 			return
 		end
-		-- wait until screen has had a chance to render
-		cowait(0)
-		cowait(0)
 		reset_timestep(screen)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id }, wait_for_transition)
 		screen.visible = true
@@ -631,9 +628,6 @@ local function back_in(screen, previous_screen, wait_for_transition, cb)
 			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
 			return
 		end
-		-- wait until screen has had a chance to render
-		cowait(0)
-		cowait(0)
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
