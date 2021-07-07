@@ -1,8 +1,8 @@
 local M = {}
 
 local collection_template
-local gui_script_content
-local gui_file_content
+local gui_script_template
+local gui_template
 
 local function ends_with(str, ending)
     return ending == "" or str:sub(-#ending) == ending
@@ -36,6 +36,7 @@ local function create_files(file_path)
     end
     if not file_exists(target_gui_script_path) then
         local gui_script = io.open(target_gui_script_path, "w")
+        local gui_script_content = gui_script_template()
         gui_script:write(gui_script_content)
         gui_script:close()
 
@@ -91,7 +92,8 @@ max_nodes: 512
 ]] 
 end
 
-gui_script_content = [[local monarch = require "monarch.monarch"
+gui_script_template = function()
+    return [[local monarch = require "monarch.monarch"
 
 function init(self)
     msg.post(".", "acquire_input_focus")
@@ -112,7 +114,7 @@ end
 function on_reload(self)
 end
 ]]
-
+end
 
 collection_template = function(gui_script, name)
     return [[name: "]].. name .. [["
@@ -156,6 +158,12 @@ embedded_instances {
 
 end
 
+if file_exists("./editor_script_settings.lua") then
+    local settings = require "editor_script_settings"
+    gui_template = settings.gui_template or gui_template
+    collection_template = settings.collection_template or collection_template
+    gui_script_template = settings.gui_script_template or gui_script_template
+end
 
 
 return M
