@@ -826,7 +826,7 @@ end
 
 -- Hide a screen. The screen must either be at the top of the stack or
 -- visible but not added to the stack (through the no_stack option)
--- @param id (string|hash) - Id of the screen to show
+-- @param id (string|hash) - Id of the screen to .hide
 -- @param cb (function) - Optional callback to invoke when the screen is hidden
 -- @return true if successfully hiding, false if busy or for some other reason unable to hide the screen
 function M.hide(id, cb)
@@ -860,6 +860,42 @@ function M.hide(id, cb)
 		end)
 	end
 	return true
+end
+
+
+
+
+-- Clear stack completely. Any visible screens will be hidden by navigating back out
+-- from them.
+-- @param cb (function) - Optional callback to invoke when the stack has been cleared
+function M.clear(cb)
+	log("clear() queuing action")
+
+	queue_action(function(action_done, action_error)
+		local co
+		co = coroutine.create(function()
+
+			local callbacks = callback_tracker()
+
+			local top = stack[#stack]
+			while top and top.visible do
+				stack[#stack] = nil
+				back_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
+				callbacks.yield_until_done()
+				top = stack[#stack]
+			end
+
+			while stack[#stack] do
+				table.remove(stack)
+			end
+
+			callbacks.when_done(function()
+				pcallfn(cb)
+				pcallfn(action_done)
+			end)
+		end)
+		assert(coroutine.resume(co))
+	end)
 end
 
 
