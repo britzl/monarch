@@ -33,6 +33,13 @@ Hide a screen that has been shown using the `no_stack` option. If used on a scre
 * `success` (boolean) - True if the process of hiding the screen was started successfully.
 
 
+## monarch.clear([callback])
+Clear the stack of screens completely. Any visible screen will be hidden by navigating back out from them. This operation will be added to the queue if Monarch is busy.
+
+**PARAMETERS**
+* `callback` (function) - Optional function to call when the stack has been cleared.
+
+
 ## monarch.back([data], [callback])
 Go back to a previous Monarch screen. This operation will be added to the queue if Monarch is busy.
 
