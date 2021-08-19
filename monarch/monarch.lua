@@ -795,7 +795,7 @@ function M.show(id, options, data, cb)
 				-- show screen
 				local cb = callbacks.track()
 				show_in(screen, top, options and options.reload, add_to_stack, DO_NOT_WAIT_FOR_TRANSITION, function()
-					if top and not top.popup then
+					if add_to_stack and top and not top.popup then
 						show_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
 					end
 					cb()
