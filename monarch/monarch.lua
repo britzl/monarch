@@ -1,4 +1,5 @@
 local callback_tracker = require "monarch.utils.callback_tracker"
+local async = require "monarch.utils.async"
 
 local M = {}
 
@@ -744,8 +745,9 @@ function M.show(id, options, data, cb)
 						pop = pop - 1
 					end
 					stack[#stack] = nil
-					show_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
-					callbacks.yield_until_done()
+					async(function(await, resume)
+						await(show_out, top, screen, WAIT_FOR_TRANSITION, resume)
+					end)
 					top = stack[#stack]
 				end
 
@@ -784,8 +786,9 @@ function M.show(id, options, data, cb)
 			local same_screen = top and top.id == screen.id
 			if same_screen or (options and options.sequential) then
 				if top then
-					show_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
-					callbacks.yield_until_done()
+					async(function(await, resume)
+						await(show_out, top, screen, WAIT_FOR_TRANSITION, resume)
+					end)
 				end
 				show_in(screen, top, options and options.reload, add_to_stack, WAIT_FOR_TRANSITION, callbacks.track())
 			else
@@ -872,16 +875,11 @@ function M.clear(cb)
 	log("clear() queuing action")
 
 	queue_action(function(action_done, action_error)
-		local co
-		co = coroutine.create(function()
-
-			local callbacks = callback_tracker()
-
+		async(function(await, resume)
 			local top = stack[#stack]
 			while top and top.visible do
 				stack[#stack] = nil
-				back_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
-				callbacks.yield_until_done()
+				await(back_out, top, screen, WAIT_FOR_TRANSITION, resume)
 				top = stack[#stack]
 			end
 
@@ -889,12 +887,9 @@ function M.clear(cb)
 				table.remove(stack)
 			end
 
-			callbacks.when_done(function()
-				pcallfn(cb)
-				pcallfn(action_done)
-			end)
+			pcallfn(cb)
+			pcallfn(action_done)
 		end)
-		assert(coroutine.resume(co))
 	end)
 end
 
@@ -907,6 +902,7 @@ function M.back(data, cb)
 
 	queue_action(function(action_done)
 		local callbacks = callback_tracker()
+		local back_cb = callbacks.track()
 		local screen = table.remove(stack)
 		if screen then
 			log("back()", screen.id)
@@ -918,7 +914,7 @@ function M.back(data, cb)
 					if data then
 						top.data = data
 					end
-					back_in(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
+					back_in(top, screen, WAIT_FOR_TRANSITION, back_cb)
 				end)
 			else
 				if top then
@@ -926,10 +922,10 @@ function M.back(data, cb)
 						top.data = data
 					end
 					back_in(top, screen, DO_NOT_WAIT_FOR_TRANSITION, function()
-						back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
+						back_out(screen, top, WAIT_FOR_TRANSITION, back_cb)
 					end)
 				else
-					back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
+					back_out(screen, top, WAIT_FOR_TRANSITION, back_cb)
 				end
 			end
 		end

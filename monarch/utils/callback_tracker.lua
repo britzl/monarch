@@ -6,13 +6,18 @@ function M.create()
 
 	local callback = nil
 	local callback_count = 0
+	local all_callbacks_done = false
 
 	local function is_done()
 		return callback_count == 0
 	end
 
 	local function invoke_if_done()
+		if all_callbacks_done then
+			print("Warning: The same callback will be invoked twice from the callback tracker!", id or "")
+		end
 		if callback_count == 0 and callback then
+			all_callbacks_done = true
 			local ok, err = pcall(callback)
 			if not ok then print(err) end
 		end
@@ -39,20 +44,6 @@ function M.create()
 	function instance.when_done(cb)
 		callback = cb
 		invoke_if_done()
-	end
-
-	function instance.yield_until_done()
-		local co = coroutine.running()
-		callback = function()
-			local ok, err = coroutine.resume(co)
-			if not ok then
-				print(err)
-			end
-		end
-		invoke_if_done()
-		if not is_done() then
-			coroutine.yield()
-		end
 	end
 
 	return instance
