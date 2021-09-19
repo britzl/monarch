@@ -149,6 +149,14 @@ Check if a Monarch screen is visible.
 * `exists` (boolean) - True if the screen is visible.
 
 
+## monarch.set_timestep_below_popup(screen_id, timestep)
+Set the timestep to apply for a screen when below a popup.
+
+**PARAMETERS**
+* `screen_id` (string|hash) - Id of the screen to change timestep setting for
+* `timestep` (number) - Timestep to apply
+
+
 ## monarch.add_listener([url])
 Add a URL that will be notified of navigation events.
 
