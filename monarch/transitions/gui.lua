@@ -121,11 +121,15 @@ local function create()
 	local current_transition = nil
 
 	local function create_transition(transition_id, node, fn, easing, duration, delay)
+		assert(transition_id, "You must provide a valid transition id")
+		assert(node, "You must provide a node")
+		assert(fn, "You must provide a transition function")
+
 		local t = transitions[transition_id]
 		-- find if there's already a transition for the node in
 		-- question and if so update it instead of creating a new
 		-- transition
-		for _,transition in ipairs(t) do
+		for _,transition in ipairs(t.transitions) do
 			if transition.node == node then
 				transition.fn = fn
 				transition.easing = easing

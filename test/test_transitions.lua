@@ -8,6 +8,12 @@ local easing = require "monarch.transitions.easings"
 
 return function()
 
+local function wait_timeout(fn, ...)
+	local args = { ... }
+	cowait(function() return fn(unpack(args)) end, 5)
+	return fn(...)
+end
+
 describe("transitions", function()
 	before(function()
 		mock_msg.mock()
@@ -21,6 +27,28 @@ describe("transitions", function()
 		unload.unload("monarch%..*")
 	end)
 
+
+	it("should replace an existing transition with a new one", function()
+		local one = false
+		function dummy_transition1(node, to, easing, duration, delay, cb)
+			one = true
+		end
+		local two = false
+		function dummy_transition2(node, to, easing, duration, delay, cb)
+			two = true
+		end
+		
+		local node = gui.new_box_node(vmath.vector3(), vmath.vector3(100, 100, 0))
+		local duration = 2
+		local t = transitions.create(node)
+		t.show_in(dummy_transition1, easing.OUT, duration, delay or 0)
+		t.show_in(dummy_transition2, easing.OUT, duration, delay or 0)
+		t.handle(monarch.TRANSITION.SHOW_IN)
+		
+		wait_timeout(function() return one or two end)
+		assert(two)
+		assert(not one)
+	end)
 
 	it("should replay and immediately finish on layout change", function()
 		function dummy_transition(node, to, easing, duration, delay, cb)
