@@ -52,6 +52,6 @@ end
 
 return setmetatable(M, {
 	__call = function(_, ...)
-		return M.create(...)
+		return M.create()
 	end
 })
