@@ -879,7 +879,7 @@ function M.clear(cb)
 			local top = stack[#stack]
 			while top and top.visible do
 				stack[#stack] = nil
-				await(back_out, top, screen, WAIT_FOR_TRANSITION, resume)
+				await(back_out, top, stack[#stack - 1], WAIT_FOR_TRANSITION, resume)
 				top = stack[#stack]
 			end
 

@@ -14,7 +14,7 @@ function M.create()
 
 	local function invoke_if_done()
 		if all_callbacks_done then
-			print("Warning: The same callback will be invoked twice from the callback tracker!", id or "")
+			print("Warning: The same callback will be invoked twice from the callback tracker!")
 		end
 		if callback_count == 0 and callback then
 			all_callbacks_done = true
