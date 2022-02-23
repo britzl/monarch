@@ -650,10 +650,10 @@ local function back_out(screen, next_screen, wait_for_transition, cb)
 		change_context(screen)
 		release_input(screen, next_screen)
 		focus_lost(screen, next_screen)
+		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id }, wait_for_transition)
 		if next_screen and screen.popup then
 			reset_timestep(next_screen)
 		end
-		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id }, wait_for_transition)
 		screen.visible = false
 		unload(screen)
 		active_transition_count = active_transition_count - 1
@@ -921,9 +921,20 @@ function M.back(data, cb)
 					if data then
 						top.data = data
 					end
-					back_in(top, screen, DO_NOT_WAIT_FOR_TRANSITION, function()
-						back_out(screen, top, WAIT_FOR_TRANSITION, back_cb)
-					end)
+					-- if the screen we are backing out from is a popup and the screen we go
+					-- back to is not a popup we need to let the popup completely hide before 
+					-- we start working on the screen we go back to
+					-- we do this to ensure that we do not reset the times step of the screen
+					-- we go back to until it is no longer obscured by the popup
+					if screen.popup and not top.popup then
+						back_out(screen, top, WAIT_FOR_TRANSITION, function()
+							back_in(top, screen, WAIT_FOR_TRANSITION, back_cb)
+						end)
+					else
+						back_in(top, screen, DO_NOT_WAIT_FOR_TRANSITION, function()
+							back_out(screen, top, WAIT_FOR_TRANSITION, back_cb)
+						end)
+					end
 				else
 					back_out(screen, top, WAIT_FOR_TRANSITION, back_cb)
 				end
