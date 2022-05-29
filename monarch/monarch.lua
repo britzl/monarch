@@ -298,6 +298,12 @@ function M.unregister(id)
 	log("unregister()", id)
 	local screen = screens[id]
 	screens[id] = nil
+	-- remove screen from stack
+	for i = #stack, 1, -1 do
+		if stack[i].id == id then
+			table.remove(stack, i)
+		end
+	end
 end
 
 local function acquire_input(screen)
