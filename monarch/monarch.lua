@@ -996,11 +996,18 @@ end
 --- Preload a screen. This will load but not enable and show a screen. Useful for "heavier" screens
 -- that you wish to show without any delay.
 -- @param id (string|hash) - Id of the screen to preload
+-- @param options (table)
 -- @param cb (function) - Optional callback to invoke when screen is loaded
-function M.preload(id, cb)
+function M.preload(id, options, cb)
 	assert(id, "You must provide a screen id")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+
+	-- support old function signature (id, cb)
+	if type(options) == "function" and not cb then
+		cb = options
+		options = nil
+	end
 
 	log("preload() queuing action", id)
 	queue_action(function(action_done, action_error)
@@ -1011,6 +1018,10 @@ function M.preload(id, cb)
 			action_error(("preload() there is no longer a screen with id %s"):format(tostring(id)))
 			return
 		end
+
+		-- keep_loaded is an option for monarch.preload()
+		-- use it to get the same behavior as the auto preload checkbox
+		screen.auto_preload = screen.auto_preload or options and options.keep_loaded
 
 		if screen.preloaded or screen.loaded then
 			pcallfn(cb)

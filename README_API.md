@@ -48,12 +48,17 @@ Go back to a previous Monarch screen. This operation will be added to the queue 
 * `callback` (function) - Optional function to call when the previous screen is visible.
 
 
-## monarch.preload(screen_id, [callback])
+## monarch.preload(screen_id, [options], [callback])
 Preload a Monarch screen. This will load but not enable the screen. This is useful for content heavy screens that you wish to be able to show without having to wait for it load. This operation will be added to the queue if Monarch is busy.
 
 **PARAMETERS**
 * `screen_id` (string|hash) - Id of the screen to preload.
+* `options` (table)
 * `callback` (function) - Optional function to call when the screen is preloaded.
+
+The options table can contain the following fields:
+
+* `keep_loaded` (boolean) - If the `keep_loaded` flag is set Monarch will keep the screen preloaded even after a `hide()` or `back()` navigation event that normally would unload the screen.
 
 
 ## monarch.is_preloading(screen_id)

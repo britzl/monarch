@@ -377,7 +377,21 @@ return function()
 			end)
 			assert(not monarch.is_preloading(TRANSITION1))
 		end)
-		
+
+		it("should be able to preload a screen and keep it loaded", function()
+			assert(not monarch.is_preloading(TRANSITION1))
+			monarch.preload(TRANSITION1, { keep_loaded = true })
+			wait_until_done(function(done)
+				monarch.when_preloaded(TRANSITION1, done)
+			end)
+			
+			monarch.show(TRANSITION1)
+			assert(wait_until_visible(TRANSITION1), "Transition1 was never shown")
+			monarch.back()
+			assert(wait_until_hidden(TRANSITION1), "Transition1 was never hidden")
+			assert(monarch.is_preloaded(TRANSITION1))
+		end)
+
 		it("should ignore any preload calls while busy", function()
 			monarch.show(TRANSITION1)
 			-- previously a call to preload() while also showing a screen would
