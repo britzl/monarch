@@ -354,8 +354,10 @@ local function unload(screen, force)
 	if screen.proxy then
 		log("unload() proxy", screen.id)
 		if screen.auto_preload and not force then
-			msg.post(screen.proxy, DISABLE)
-			screen.loaded = false
+			if screen.loaded then
+				msg.post(screen.proxy, DISABLE)
+				screen.loaded = false
+			end
 			screen.preloaded = true
 		else
 			screen.wait_for = PROXY_UNLOADED
