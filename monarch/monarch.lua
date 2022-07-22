@@ -1087,7 +1087,7 @@ function M.unload(id, cb)
 		end
 		run_coroutine(screen, when_unloaded, function()
 			change_context(screen)
-			unload(screen)
+			unload(screen, true)
 		end)
 	end)
 	return true -- return true for legacy reasons (before queue existed)
