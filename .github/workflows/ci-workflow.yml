@@ -16,4 +16,4 @@ jobs:
                 DEFOLD_USER: bjorn.ritzl@gmail.com
                 DEFOLD_AUTH: foobar
                 DEFOLD_BOOSTRAP_COLLECTION: /test/test.collectionc
-            run: ./.travis/run.sh
+            run: ./.test/run.sh
