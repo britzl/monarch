@@ -19,12 +19,12 @@ BOB_URL="http://d.defold.com/archive/${SHA1}/bob/bob.jar"
 
 # Download dmengine_headless
 echo "Downloading ${DMENGINE_URL}"
-curl -o dmengine_headless ${DMENGINE_URL}
+curl -L -o dmengine_headless ${DMENGINE_URL}
 chmod +x dmengine_headless
 
 # Download bob.jar
 echo "Downloading ${BOB_URL}"
-curl -o bob.jar ${BOB_URL}
+curl -L -o bob.jar ${BOB_URL}
 
 # Fetch libraries
 echo "Running bob.jar - resolving dependencies"
