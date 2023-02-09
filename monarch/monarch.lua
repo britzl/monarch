@@ -296,7 +296,6 @@ function M.unregister(id)
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	log("unregister()", id)
-	local screen = screens[id]
 	screens[id] = nil
 	-- remove screen from stack
 	for i = #stack, 1, -1 do
