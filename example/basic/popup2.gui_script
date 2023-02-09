@@ -2,14 +2,15 @@ local monarch = require "monarch.monarch"
 
 function init(self)
 	msg.post(".", "acquire_input_focus")
+	gui.set_render_order(15)
 end
 
 function on_input(self, action_id, action)
 	if action_id == hash("touch") and action.pressed then
-		if gui.pick_node(gui.get_node("showscreen2"), action.x, action.y) then
-			monarch.show("screen2")
-		elseif gui.pick_node(gui.get_node("showpopup1"), action.x, action.y) then
-			monarch.show("popup1")
+		if gui.pick_node(gui.get_node("showpopup2"), action.x, action.y) then
+			monarch.show("popup2")
+		elseif gui.pick_node(gui.get_node("closepopup"), action.x, action.y) then
+			monarch.back()
 		end
 	end
 end
