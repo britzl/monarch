@@ -108,7 +108,7 @@ process_queue = function()
 		log("queue() busy")
 		return
 	end
-	action = table.remove(queue, 1)
+	local action = table.remove(queue, 1)
 	if not action then
 		log("queue() empty")
 		return
