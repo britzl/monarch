@@ -1,0 +1,25 @@
+local monarch = require "monarch.monarch"
+local transitions = require "monarch.transitions.gui"
+
+function init(self)
+	print("window2", msg.url())
+	self.transition = transitions.create(gui.get_node("bg"))
+	.show_in(transitions.slide_in_right, gui.EASING_LINEAR, 0.3, 0)
+	.show_out(transitions.slide_out_left, gui.EASING_LINEAR, 0.3, 0)
+	.back_in(transitions.slide_in_left, gui.EASING_LINEAR, 0.3, 0)
+	.back_out(transitions.slide_out_right, gui.EASING_LINEAR, 0.3, 0)
+
+	msg.post(".", "acquire_input_focus")
+end
+
+function on_input(self, action_id, action)
+	if action_id == hash("touch") and action.released then
+		if gui.pick_node(gui.get_node("button"), action.x, action.y) then
+			monarch.show("window2")
+		end
+	end
+end
+
+function on_message(self, message_id, message, sender)
+	self.transition.handle(message_id, message, sender)
+end
