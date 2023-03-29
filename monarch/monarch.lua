@@ -135,27 +135,49 @@ local function notify_transition_listeners(message_id, message)
 	end
 end
 
-local function find_screen(url)
-	local current_url = msg.url()
-	for _,screen in pairs(screens) do
-		if screen.transition_url == current_url
-		or screen.script == current_url
-		or screen.proxy == current_url
-		then
-			return screen
+local function find_screen(url_to_find)
+	local function find(url)
+		for _,screen in pairs(screens) do
+			if screen.script == url or screen.proxy == url then
+				return screen
+			end
 		end
 	end
-
-	for _,screen in pairs(screens) do
-		if screen.transition_url == url
-		or screen.script == url
-		or screen.proxy == url
-		then
-			return screen
-		end
-	end
+	return find(msg.url()) or find(url_to_find)
 end
 
+local function find_transition_screen(url_to_find)
+	local function find(url)
+		for _,screen in pairs(screens) do
+			if screen.transition_url == url or screen.script == url or screen.proxy == url then
+				return screen
+			end
+		end
+	end
+	return find(msg.url()) or find(url_to_find)
+end
+
+local function find_focus_screen(url_to_find)
+	local function find(url)
+		for _,screen in pairs(screens) do
+			if screen.focus_url == url or screen.script == url or screen.proxy == url then
+				return screen
+			end
+		end
+	end
+	return find(msg.url()) or find(url_to_find)
+end
+
+local function find_post_receiver_screen(url_to_find)
+	local function find(url)
+		for _,screen in pairs(screens) do
+			if screen.receiver_url == url or screen.script == url or screen.proxy == url then
+				return screen
+			end
+		end
+	end
+	return find(msg.url()) or find(url_to_find)
+end
 
 --- Check if a screen exists in the current screen stack
 -- @param id (string|hash)
@@ -1152,7 +1174,7 @@ function M.on_message(message_id, message, sender)
 			assert(coroutine.resume(screen.co))
 		end
 	elseif message_id == M.TRANSITION.DONE then
-		local screen = find_screen(sender)
+		local screen = find_transition_screen(sender)
 		assert(screen, "Unable to find screen for transition")
 		if screen.wait_for == M.TRANSITION.DONE then
 			assert(coroutine.resume(screen.co))
@@ -1162,7 +1184,7 @@ function M.on_message(message_id, message, sender)
 	or message_id == M.TRANSITION.BACK_IN
 	or message_id == M.TRANSITION.BACK_OUT
 	then
-		local screen = find_screen(sender)
+		local screen = find_transition_screen(sender)
 		assert(screen, "Unable to find screen for transition")
 		if screen.transition_fn then
 			screen.transition_fn(message_id, message, sender)
@@ -1171,6 +1193,19 @@ function M.on_message(message_id, message, sender)
 		local screen = find_screen(sender)
 		if screen and screen.transition_fn then
 			screen.transition_fn(message_id, message, sender)
+		end
+	elseif message_id == M.FOCUS.GAINED
+	or message_id == M.FOCUS.LOST
+	then
+		local screen = find_focus_screen(sender)
+		assert(screen, "Unable to find screen for focus change")
+		if screen.focus_fn then
+			screen.focus_fn(message_id, message, sender)
+		end
+	else
+		local screen = find_post_receiver_screen(sender)
+		if screen and screen.receiver_fn then
+			screen.receiver_fn(message_id, message, sender)
 		end
 	end
 end
@@ -1218,6 +1253,13 @@ function M.set_timestep_below_popup(id, timestep)
 end
 
 
+---
+-- Set a function to call when a transition should be started
+-- The function will receive (message_id, message, sender)
+-- IMPORTANT! You must call monarch.on_message() from the same script as
+-- this function was called
+-- @param id Screen id to associate transition with
+-- @param fn Transition handler function
 function M.on_transition(id, fn)
 	assert(id, "You must provide a screen id")
 	assert(fn, "You must provide a transition function")
@@ -1228,6 +1270,39 @@ function M.on_transition(id, fn)
 	screen.transition_fn = fn
 end
 
+---
+-- Set a function to call when a screen gains or loses focus
+-- The function will receive (message_id, message, sender)
+-- IMPORTANT! You must call monarch.on_message() from the same script as
+-- this function was called
+-- @param id Screen id to associate focus listener function with
+-- @param fn Focus listener function
+function M.on_focus_changed(id, fn)
+	assert(id, "You must provide a screen id")
+	assert(fn, "You must provide a focus change function")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	local screen = screens[id]
+	screen.focus_url = msg.url()
+	screen.focus_fn = fn
+end
+
+---
+-- Set a function to call when a screen is sent a message using monarch.post()
+-- The function will receive (message_id, message, sender)
+-- IMPORTANT! You must call monarch.on_message() from the same script as
+-- this function was called
+-- @param id Screen id to associate the message listener function with
+-- @param fn Message listener function
+function M.on_post(id, fn)
+	assert(id, "You must provide a screen id")
+	assert(fn, "You must provide a post receiver function")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	local screen = screens[id]
+	screen.receiver_url = msg.url()
+	screen.receiver_fn = fn
+end
 
 local function url_to_key(url)
 	return (url.socket or hash("")) .. (url.path or hash("")) .. (url.fragment or hash(""))
