@@ -20,10 +20,10 @@ local LAYOUT_CHANGED = hash("layout_changed")
 function M.window_resized(width, height)
 	WIDTH = width
 	HEIGHT = height
-	LEFT = vmath.vector3(-WIDTH * 2, 0, 0)
-	RIGHT = vmath.vector3(WIDTH * 2, 0, 0)
-	TOP = vmath.vector3(0, HEIGHT * 2, 0)
-	BOTTOM = vmath.vector3(0, - HEIGHT * 2, 0)
+	LEFT = vmath.vector3(-WIDTH, 0, 0)
+	RIGHT = vmath.vector3(WIDTH, 0, 0)
+	TOP = vmath.vector3(0, HEIGHT, 0)
+	BOTTOM = vmath.vector3(0, - HEIGHT, 0)
 end
 
 M.window_resized(tonumber(sys.get_config("display.width")), tonumber(sys.get_config("display.height")))
@@ -176,7 +176,6 @@ local function create()
 		local t = transitions[transition_id]
 		table.insert(t.urls, url)
 		if t.in_progress_count == 0 then
-			table.insert(t.urls, msg.url())
 			current_transition = t
 			current_transition.id = transition_id
 			if #t.transitions > 0 then
@@ -254,7 +253,11 @@ local function create()
 		return instance
 	end
 
-	return instance
+	return setmetatable(instance, {
+		__call = function(t, ...)
+			return instance.handle(...)
+		end
+	})
 end
 
 function M.create(node)
