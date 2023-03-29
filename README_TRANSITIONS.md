@@ -1,5 +1,7 @@
 # Transitions
-You can add optional transitions when navigating between screens. The default behavior is that screen navigation is instant but if you have defined a transition for a screen Monarch will wait until the transition is completed before proceeding. The `Transition Url` (proxy) or `Transition Id` (collectionfactory) property described above should be the URL/Id to a script with an `on_message` handlers for the following messages:
+You can add optional transitions when navigating between screens. The default behavior is that screen navigation is instant but if you have defined a transition for a screen Monarch will wait until the transition is completed before proceeding.
+
+Transitions are configured through the `monarch.on_transition(screen_id, fn)` function. The function defines for which screen to configure transitions and sets a function to be called when a transition should be started. This function must accept (message_id, message, sender) as arguments, with `message_id` defining which type of transition to start:
 
 * `transition_show_in` (constant defined as `monarch.TRANSITION.SHOW_IN`)
 * `transition_show_out` (constant defined as `monarch.TRANSITION.SHOW_OUT`)
@@ -7,6 +9,11 @@ You can add optional transitions when navigating between screens. The default be
 * `transition_back_out` (constant defined as `monarch.TRANSITION.BACK_OUT`)
 
 When a transition is completed it is up to the developer to send a `transition_done` (constant `monarch.TRANSITION.DONE`) message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence.
+
+## Transition URL
+This property is deprecated and will be removed in a future version of Monarch.
+
+~~It is also possible to configure transitions through the `Transition Url` (proxy) or `Transition Id` (collectionfactory) property. This property must be the URL/Id to a script with an `on_message` handlers for the transition messages mentioned above.~~
 
 
 ## Predefined transitions
@@ -20,15 +27,17 @@ function init(self)
 	-- create transitions for the node 'root'
 	-- the node will slide in/out from left and right with
 	-- a specific easing, duration and delay
-	self.transition = transitions.create(gui.get_node("root"))
+	local transition = transitions.create(gui.get_node("root"))
 		.show_in(transitions.slide_in_right, gui.EASING_OUTQUAD, 0.6, 0)
 		.show_out(transitions.slide_out_left, gui.EASING_INQUAD, 0.6, 0)
 		.back_in(transitions.slide_in_left, gui.EASING_OUTQUAD, 0.6, 0)
 		.back_out(transitions.slide_out_right, gui.EASING_INQUAD, 0.6, 0)
+
+	monarch.on_transition("foobar", transition)
 end
 
 function on_message(self, message_id, message, sender)
-	self.transition.handle(message_id, message, sender)
+	monarch.on_message(message_id, message, sender)
 	-- you can also check when a transition has completed:
 	if message_id == monarch.TRANSITION.DONE and message.transition == monarch.TRANSITION.SHOW_IN then
 		print("Show in done!")
@@ -40,7 +49,7 @@ It is also possible to assign transitions to multiple nodes:
 
 ```lua
 function init(self)
-	self.transition = transitions.create() -- note that no node is passed to transition.create()!
+	local transition = transitions.create() -- note that no node is passed to transition.create()!
 		.show_in(gui.get_node("node1"), transitions.slide_in_right, gui.EASING_OUTQUAD, 0.6, 0)
 		.show_in(gui.get_node("node2"), transitions.slide_in_right, gui.EASING_OUTQUAD, 0.6, 0)
 end
@@ -111,7 +120,7 @@ end
 ```
 
 ## Screen stack info and transitions
-The transition message sent to the Transition Url specified in the screen configuration contains additional information about the transition. For the `transition_show_in` and `transition_back_out` messages the message contains the previous screen id:
+The transition message sent transition listener script contains additional information about the transition. For the `transition_show_in` and `transition_back_out` messages the message contains the previous screen id:
 
 ```lua
 function on_message(self, message_id, message, sender)
