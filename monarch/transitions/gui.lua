@@ -173,6 +173,7 @@ local function create()
 	end
 
 	local function start_transition(transition_id, url)
+		url = url or msg.url()
 		local t = transitions[transition_id]
 		table.insert(t.urls, url)
 		if t.in_progress_count == 0 then
