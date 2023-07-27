@@ -189,6 +189,32 @@ Post a message to a visible screen. If the screen is created through a collectio
 * `error` (string|nil) - Error message if unable to send message
 
 
+## monarch.on_transition(screen_id, fn)
+Set a function to be called when a screen should transition in our out. The function will receive (message_id, message, sender) with `message_id` being one of the transition constants. 
+IMPORTANT! You must call `monarch.on_message(message_id, message, sender)` from the same script as this function was called.
+
+**PARAMETERS**
+* `screen_id` (string|hash) - Id of the screen
+* `fn` (function) - The function to call when a transition should start
+
+
+## monarch.on_focus_change(screen_id, fn)
+Set a function to be called when a screen gains or loses focus. The function will receive (message_id, message, sender) with `message_id` being one of the focus change constants. 
+IMPORTANT! You must call `monarch.on_message(message_id, message, sender)` from the same script as this function was called.
+
+**PARAMETERS**
+* `screen_id` (string|hash) - Id of the screen
+* `fn` (function) - The function to call screen focus changes
+
+
+## monarch.on_post(screen_id, fn)
+Set a function to be called when `msg.post()` is called on a specific screen. IMPORTANT! You must call `monarch.on_message(message_id, message, sender)` from the same script as this function was called.
+
+**PARAMETERS**
+* `screen_id` (string|hash) - Id of the screen
+* `fn` (function) - The function to call when the screen receives a message using `msg.post`
+
+
 ## monarch.debug()
 Enable verbose logging of the internals of Monarch.
 

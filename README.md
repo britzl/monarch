@@ -37,9 +37,9 @@ For proxies the recommended setup is to create one game object per screen and pe
 * **Timestep below Popup (number)** - Timestep to set on screen proxy when it is below a popup. This is useful when pausing animations and gameplay while a popup is open.
 * **Screen Keeps Input Focus When Below Popup (boolean)** - Check this if the screen should keep input focus when it is below a popup.
 * **Others Keep Input Focus When Below Screen (boolean)** - Check this if other screens should keep input focus when below this screen.
-* **Transition Url (url)** - Optional URL to post messages to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
-* **Focus Url (url)** - Optional URL to post messages to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
-* **Receiver Url (url)** - Optional URL to post messages to using `monarch.post()`.
+* **Transition Url (url)** - **DEPRECATED** Optional URL to post messages to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
+* **Focus Url (url)** - **DEPRECATED** Optional URL to post messages to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
+* **Receiver Url (url)** - **DEPRECATED** Optional URL to post messages to using `monarch.post()`.
 * **Preload (boolean)** - Check this if the screen should be preloaded and kept loaded at all times. For a collection proxy it means that it will be async loaded but not enabled at all times while not visible. This can also temporarily be achieved through the `monarch.preload()` function.
 
 ![](docs/setup_proxy.png)
@@ -53,8 +53,8 @@ For factories the recommended setup is to create one game object per screen and 
 * **Popup on Popup (boolean)** - Check this if the screen is a [popup](#popups) and it can be shown on top of other popups.
 * **Screen Keeps Input Focus When Below Popup (boolean)** - Check this if the screen should keep input focus when it is below a popup.
 * **Others Keep Input Focus When Below Screen (boolean)** - Check this if other screens should keep input focus when below this screen.
-* **Transition Id (hash)** - Optional id of the game object to send a message to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
-* **Focus Id (hash)** - Optional id of the game object to send a message to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
+* **Transition Id (hash)** - **DEPRECATED** Optional id of the game object to send a message to when the screen is about to be shown/hidden. Use this to trigger a transition (see the section on [transitions](#transitions)).
+* **Focus Id (hash)** - **DEPRECATED** Optional id of the game object to send a message to when the screen gains or loses focus (see the section on [screen focus](#screen-focus-gainloss)).
 * **Preload (boolean)** - Check this if the screen should be preloaded and kept loaded at all times. For a collection factory this means that its resources will be dynamically loaded at all times. This can also temporarily be achieved through the `monarch.preload()` function.
 
 ![](docs/setup_factory.png)
@@ -161,17 +161,29 @@ You can add optional transitions when navigating between screens. This is [descr
 
 
 ## Screen focus gain/loss
-Monarch will send focus gain and focus loss messages if a `Focus Url` (proxy) or `Focus Id` (collectionfactory) was provided when the screen was created. The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
+Monarch will send focus gain and focus loss messages if a focus change listener has been set using `monarch.on_focus_change(screen_id, fn)` 
 
+DEPRECATED: ~~Monarch will send focus gain and focus loss messages if a `Focus Url` (proxy) or `Focus Id` (collectionfactory) was provided when the screen was created.~~
+
+The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
+
+```lua
 	local monarch = require "monarch.monarch"
 
-	function on_message(self, message_id, message, sender)
-		if message_id == monarch.FOCUS.GAINED then
-			print("Focus gained, previous screen: ", message.id)
-		elseif message_id == monarch.FOCUS.LOST then
-			print("Focus lost, next screen: ", message.id)
-		end
+	function init(self)
+		monarch.on_focus_changed("foobar", function(message_id, message, sender)
+			if message_id == monarch.FOCUS.GAINED then
+				print("Focus gained, previous screen: ", message.id)
+			elseif message_id == monarch.FOCUS.LOST then
+				print("Focus lost, next screen: ", message.id)
+			end
+		end)
 	end
+
+	function on_message(self, message_id, message, sender)
+		monarch.on_message(message_id, message, sender)
+	end
+```
 
 
 ## Callbacks
@@ -180,10 +192,3 @@ Both the `monarch.show()` and `monarch.back()` functions take an optional callba
 
 ## Monarch API
 The full [Monarch API is documented here](/README_API.md).
-
-
-## Monarch FAQ
-
-**Q**: Why am I getting `ERROR GAMEOBJECT: The collection 'default' could not be created since there is already a socket with the same name`?
-
-**A**: Each collection that you use must be given a unique id. In this case you have more than one collection loaded with the id `default`.  Select the root of each collection in the Outline panel and change the Name field in the properties panel from the default value of `default`.

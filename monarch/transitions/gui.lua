@@ -173,10 +173,10 @@ local function create()
 	end
 
 	local function start_transition(transition_id, url)
+		url = url or msg.url()
 		local t = transitions[transition_id]
 		table.insert(t.urls, url)
 		if t.in_progress_count == 0 then
-			table.insert(t.urls, msg.url())
 			current_transition = t
 			current_transition.id = transition_id
 			if #t.transitions > 0 then
@@ -254,7 +254,11 @@ local function create()
 		return instance
 	end
 
-	return instance
+	return setmetatable(instance, {
+		__call = function(t, ...)
+			return instance.handle(...)
+		end
+	})
 end
 
 function M.create(node)
