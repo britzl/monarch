@@ -3,6 +3,7 @@ local async = require "monarch.utils.async"
 
 local M = {}
 
+local WAITFOR_COWAIT = hash("waitfor_cowait")
 local WAITFOR_CONTEXT = hash("waitfor_monarch_context")
 local WAITFOR_PROXY_LOADED = hash("waitfor_proxy_loaded")
 local WAITFOR_PROXY_UNLOADED = hash("waitfor_proxy_unloaded")
@@ -86,10 +87,13 @@ local function assign(to, from)
 	return to
 end
 
-local function cowait(delay)
+local function cowait(screen, delay)
+	log("cowait()", screen.id, delay)
 	local co = coroutine.running()
 	assert(co, "You must run this from within a coroutine")
+	screen.wait_for = WAITFOR_COWAIT
 	timer.delay(delay, false, function()
+		screen.wait_for = nil
 		assert(coroutine.resume(co))
 	end)
 	coroutine.yield()
@@ -327,12 +331,17 @@ function M.unregister(id)
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	log("unregister()", id)
+	local screen = screens[id]
 	screens[id] = nil
 	-- remove screen from stack
 	for i = #stack, 1, -1 do
 		if stack[i].id == id then
 			table.remove(stack, i)
 		end
+	end
+	screen.unregistered = true
+	if screen.wait_for then
+		assert(coroutine.resume(screen.co))
 	end
 end
 
@@ -381,6 +390,7 @@ local function change_context(screen)
 end
 
 local function unload(screen, force)
+	if screen.unregistered then return end
 	if screen.proxy then
 		log("unload() proxy", screen.id)
 		if screen.auto_preload and not force then
@@ -415,8 +425,8 @@ local function unload(screen, force)
 	-- we need to wait here in case the unloaded screen contained any screens
 	-- if this is the case we need to let these sub-screens have their final()
 	-- functions called so that they have time to call unregister()
-	cowait(0)
-	cowait(0)
+	cowait(screen, 0)
+	cowait(screen, 0)
 end
 
 
@@ -443,6 +453,9 @@ local function preload(screen)
 		msg.post(screen.proxy, MSG_ASYNC_LOAD)
 		coroutine.yield()
 		screen.wait_for = nil
+		if screen.unregistered then
+			return false, "Screen was unregistered while loading"
+		end
 	elseif screen.factory then
 		log("preload() factory")
 		if collectionfactory.get_status(screen.factory) == collectionfactory.STATUS_UNLOADED then
@@ -450,6 +463,9 @@ local function preload(screen)
 				assert(coroutine.resume(screen.co))
 			end)
 			coroutine.yield()
+			if screen.unregistered then
+				return false, "Screen was unregistered while loading"
+			end
 		end
 
 		if collectionfactory.get_status(screen.factory) ~= collectionfactory.STATUS_LOADED then
@@ -494,6 +510,7 @@ end
 
 local function transition(screen, message_id, message, wait)
 	log("transition()", screen.id)
+	if screen.unregistered then return end
 	if screen.transition_url then
 		screen.wait_for = WAITFOR_TRANSITION_DONE
 		msg.post(screen.transition_url, message_id, message)
@@ -517,14 +534,15 @@ end
 
 local function focus_lost(screen, next_screen)
 	log("focus_lost()", screen.id)
+	if screen.unregistered then return end
 	if screen.focus_url then
 		msg.post(screen.focus_url, M.FOCUS.LOST, { id = next_screen and next_screen.id })
 		-- if there's no transition on the screen losing focus and it gets
 		-- unloaded this will happen before the focus_lost message reaches
 		-- the focus_url
 		-- we add a delay to ensure the message queue has time to be processed
-		cowait(0)
-		cowait(0)
+		cowait(screen, 0)
+		cowait(screen, 0)
 	else
 		log("focus_lost() no focus url - ignoring")
 	end
@@ -645,7 +663,7 @@ local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_t
 			return
 		end
 		-- wait one frame so that the init() of any script have time to run before starting transitions
-		cowait(0)
+		cowait(screen, 0)
 		reset_timestep(screen)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id }, wait_for_transition)
 		screen.visible = true
@@ -671,7 +689,7 @@ local function back_in(screen, previous_screen, wait_for_transition, cb)
 			return
 		end
 		-- wait one frame so that the init() of any script have time to run before starting transitions
-		cowait(0)
+		cowait(screen, 0)
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
