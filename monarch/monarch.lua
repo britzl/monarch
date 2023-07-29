@@ -442,6 +442,7 @@ local function preload(screen)
 		screen.wait_for = WAITFOR_PROXY_LOADED
 		msg.post(screen.proxy, MSG_ASYNC_LOAD)
 		coroutine.yield()
+		screen.wait_for = nil
 	elseif screen.factory then
 		log("preload() factory")
 		if collectionfactory.get_status(screen.factory) == collectionfactory.STATUS_UNLOADED then
