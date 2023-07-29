@@ -7,6 +7,7 @@ local CONTEXT = hash("monarch_context")
 local PROXY_LOADED = hash("proxy_loaded")
 local PROXY_UNLOADED = hash("proxy_unloaded")
 local LAYOUT_CHANGED = hash("layout_changed")
+local WAITFOR_COWAIT = hash("waitfor_cowait")
 
 local RELEASE_INPUT_FOCUS = hash("release_input_focus")
 local ACQUIRE_INPUT_FOCUS = hash("acquire_input_focus")
@@ -82,10 +83,13 @@ local function assign(to, from)
 	return to
 end
 
-local function cowait(delay)
+local function cowait(screen, delay)
+	log("cowait()", screen.id, delay)
 	local co = coroutine.running()
 	assert(co, "You must run this from within a coroutine")
+	screen.wait_for = WAITFOR_COWAIT
 	timer.delay(delay, false, function()
+		screen.wait_for = nil
 		assert(coroutine.resume(co))
 	end)
 	coroutine.yield()
@@ -411,8 +415,8 @@ local function unload(screen, force)
 	-- we need to wait here in case the unloaded screen contained any screens
 	-- if this is the case we need to let these sub-screens have their final()
 	-- functions called so that they have time to call unregister()
-	cowait(0)
-	cowait(0)
+	cowait(screen, 0)
+	cowait(screen, 0)
 end
 
 
@@ -518,8 +522,8 @@ local function focus_lost(screen, next_screen)
 		-- unloaded this will happen before the focus_lost message reaches
 		-- the focus_url
 		-- we add a delay to ensure the message queue has time to be processed
-		cowait(0)
-		cowait(0)
+		cowait(screen, 0)
+		cowait(screen, 0)
 	else
 		log("focus_lost() no focus url - ignoring")
 	end
@@ -640,7 +644,7 @@ local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_t
 			return
 		end
 		-- wait one frame so that the init() of any script have time to run before starting transitions
-		cowait(0)
+		cowait(screen, 0)
 		reset_timestep(screen)
 		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id }, wait_for_transition)
 		screen.visible = true
@@ -666,7 +670,7 @@ local function back_in(screen, previous_screen, wait_for_transition, cb)
 			return
 		end
 		-- wait one frame so that the init() of any script have time to run before starting transitions
-		cowait(0)
+		cowait(screen, 0)
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
