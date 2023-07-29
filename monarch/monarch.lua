@@ -327,12 +327,17 @@ function M.unregister(id)
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	log("unregister()", id)
+	local screen = screens[id]
 	screens[id] = nil
 	-- remove screen from stack
 	for i = #stack, 1, -1 do
 		if stack[i].id == id then
 			table.remove(stack, i)
 		end
+	end
+	screen.unregistered = true
+	if screen.wait_for then
+		assert(coroutine.resume(screen.co))
 	end
 end
 
@@ -442,6 +447,9 @@ local function preload(screen)
 		screen.wait_for = PROXY_LOADED
 		msg.post(screen.proxy, ASYNC_LOAD)
 		coroutine.yield()
+		if screen.unregistered then
+			return false, "Screen was unregistered while loading"
+		end
 	elseif screen.factory then
 		log("preload() factory")
 		if collectionfactory.get_status(screen.factory) == collectionfactory.STATUS_UNLOADED then
@@ -449,6 +457,9 @@ local function preload(screen)
 				assert(coroutine.resume(screen.co))
 			end)
 			coroutine.yield()
+			if screen.unregistered then
+				return false, "Screen was unregistered while loading"
+			end
 		end
 
 		if collectionfactory.get_status(screen.factory) ~= collectionfactory.STATUS_LOADED then
