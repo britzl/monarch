@@ -390,6 +390,7 @@ local function change_context(screen)
 end
 
 local function unload(screen, force)
+	if screen.unregistered then return end
 	if screen.proxy then
 		log("unload() proxy", screen.id)
 		if screen.auto_preload and not force then
@@ -509,6 +510,7 @@ end
 
 local function transition(screen, message_id, message, wait)
 	log("transition()", screen.id)
+	if screen.unregistered then return end
 	if screen.transition_url then
 		screen.wait_for = WAITFOR_TRANSITION_DONE
 		msg.post(screen.transition_url, message_id, message)
@@ -532,6 +534,7 @@ end
 
 local function focus_lost(screen, next_screen)
 	log("focus_lost()", screen.id)
+	if screen.unregistered then return end
 	if screen.focus_url then
 		msg.post(screen.focus_url, M.FOCUS.LOST, { id = next_screen and next_screen.id })
 		-- if there's no transition on the screen losing focus and it gets
