@@ -3,17 +3,21 @@ local async = require "monarch.utils.async"
 
 local M = {}
 
-local CONTEXT = hash("monarch_context")
-local PROXY_LOADED = hash("proxy_loaded")
-local PROXY_UNLOADED = hash("proxy_unloaded")
-local LAYOUT_CHANGED = hash("layout_changed")
+local WAITFOR_CONTEXT = hash("waitfor_monarch_context")
+local WAITFOR_PROXY_LOADED = hash("waitfor_proxy_loaded")
+local WAITFOR_PROXY_UNLOADED = hash("waitfor_proxy_unloaded")
+local WAITFOR_TRANSITION_DONE = hash("waitfor_transition_done")
 
-local RELEASE_INPUT_FOCUS = hash("release_input_focus")
-local ACQUIRE_INPUT_FOCUS = hash("acquire_input_focus")
-local ASYNC_LOAD = hash("async_load")
-local UNLOAD = hash("unload")
-local ENABLE = hash("enable")
-local DISABLE = hash("disable")
+local MSG_CONTEXT = hash("monarch_context")
+local MSG_PROXY_LOADED = hash("proxy_loaded")
+local MSG_PROXY_UNLOADED = hash("proxy_unloaded")
+local MSG_LAYOUT_CHANGED = hash("layout_changed")
+local MSG_RELEASE_INPUT_FOCUS = hash("release_input_focus")
+local MSG_ACQUIRE_INPUT_FOCUS = hash("acquire_input_focus")
+local MSG_ASYNC_LOAD = hash("async_load")
+local MSG_UNLOAD = hash("unload")
+local MSG_ENABLE = hash("enable")
+local MSG_DISABLE = hash("disable")
 
 -- transition messages
 M.TRANSITION = {}
@@ -336,10 +340,10 @@ local function acquire_input(screen)
 	log("acquire_input()", screen.id)
 	if not screen.input then
 		if screen.proxy then
-			msg.post(screen.script, ACQUIRE_INPUT_FOCUS)
+			msg.post(screen.script, MSG_ACQUIRE_INPUT_FOCUS)
 		elseif screen.factory then
 			for id,instance in pairs(screen.factory_ids) do
-				msg.post(instance, ACQUIRE_INPUT_FOCUS)
+				msg.post(instance, MSG_ACQUIRE_INPUT_FOCUS)
 			end
 		end
 		screen.input = true
@@ -357,10 +361,10 @@ local function release_input(screen, next_screen)
 		local release_focus = not keep_if_next_is_popup and not keep_when_below_next
 		if release_focus then
 			if screen.proxy then
-				msg.post(screen.script, RELEASE_INPUT_FOCUS)
+				msg.post(screen.script, MSG_RELEASE_INPUT_FOCUS)
 			elseif screen.factory then
 				for id,instance in pairs(screen.factory_ids) do
-					msg.post(instance, RELEASE_INPUT_FOCUS)
+					msg.post(instance, MSG_RELEASE_INPUT_FOCUS)
 				end
 			end
 			screen.input = false
@@ -370,8 +374,8 @@ end
 
 local function change_context(screen)
 	log("change_context()", screen.id)
-	screen.wait_for = CONTEXT
-	msg.post(screen.script, CONTEXT, { id = screen.id })
+	screen.wait_for = WAITFOR_CONTEXT
+	msg.post(screen.script, MSG_CONTEXT, { id = screen.id })
 	coroutine.yield()
 	screen.wait_for = nil
 end
@@ -381,13 +385,13 @@ local function unload(screen, force)
 		log("unload() proxy", screen.id)
 		if screen.auto_preload and not force then
 			if screen.loaded then
-				msg.post(screen.proxy, DISABLE)
+				msg.post(screen.proxy, MSG_DISABLE)
 				screen.loaded = false
 			end
 			screen.preloaded = true
 		else
-			screen.wait_for = PROXY_UNLOADED
-			msg.post(screen.proxy, UNLOAD)
+			screen.wait_for = WAITFOR_PROXY_UNLOADED
+			msg.post(screen.proxy, MSG_UNLOAD)
 			coroutine.yield()
 			screen.loaded = false
 			screen.preloaded = false
@@ -435,8 +439,8 @@ local function preload(screen)
 			screen.preloading = false
 			return false, error_message
 		end
-		screen.wait_for = PROXY_LOADED
-		msg.post(screen.proxy, ASYNC_LOAD)
+		screen.wait_for = WAITFOR_PROXY_LOADED
+		msg.post(screen.proxy, MSG_ASYNC_LOAD)
 		coroutine.yield()
 	elseif screen.factory then
 		log("preload() factory")
@@ -476,7 +480,7 @@ local function load(screen)
 	end
 
 	if screen.proxy then
-		msg.post(screen.proxy, ENABLE)
+		msg.post(screen.proxy, MSG_ENABLE)
 	elseif screen.factory then
 		screen.factory_ids = collectionfactory.create(screen.factory)
 		screen.transition_url = screen.factory_ids[screen.transition_id]
@@ -490,7 +494,7 @@ end
 local function transition(screen, message_id, message, wait)
 	log("transition()", screen.id)
 	if screen.transition_url then
-		screen.wait_for = M.TRANSITION.DONE
+		screen.wait_for = WAITFOR_TRANSITION_DONE
 		msg.post(screen.transition_url, message_id, message)
 		if wait then
 			coroutine.yield()
@@ -1158,28 +1162,28 @@ end
 
 
 function M.on_message(message_id, message, sender)
-	if message_id == PROXY_LOADED then
+	if message_id == MSG_PROXY_LOADED then
 		local screen = find_screen(sender)
 		assert(screen, "Unable to find screen for loaded proxy")
-		if screen.wait_for == PROXY_LOADED then
+		if screen.wait_for == WAITFOR_PROXY_LOADED then
 			assert(coroutine.resume(screen.co))
 		end
-	elseif message_id == PROXY_UNLOADED then
+	elseif message_id == MSG_PROXY_UNLOADED then
 		local screen = find_screen(sender)
 		assert(screen, "Unable to find screen for unloaded proxy")
-		if screen.wait_for == PROXY_UNLOADED then
+		if screen.wait_for == WAITFOR_PROXY_UNLOADED then
 			assert(coroutine.resume(screen.co))
 		end
-	elseif message_id == CONTEXT then
+	elseif message_id == MSG_CONTEXT then
 		local screen = find_screen(sender)
 		assert(screen, "Unable to find screen for current script url")
-		if screen.wait_for == CONTEXT then
+		if screen.wait_for == WAITFOR_CONTEXT then
 			assert(coroutine.resume(screen.co))
 		end
 	elseif message_id == M.TRANSITION.DONE then
 		local screen = find_transition_screen(sender)
 		assert(screen, "Unable to find screen for transition")
-		if screen.wait_for == M.TRANSITION.DONE then
+		if screen.wait_for == WAITFOR_TRANSITION_DONE then
 			assert(coroutine.resume(screen.co))
 		end
 	elseif message_id == M.TRANSITION.SHOW_IN
@@ -1192,7 +1196,7 @@ function M.on_message(message_id, message, sender)
 		if screen.transition_fn then
 			screen.transition_fn(message_id, message, sender)
 		end
-	elseif message_id == LAYOUT_CHANGED then
+	elseif message_id == MSG_LAYOUT_CHANGED then
 		local screen = find_screen(sender)
 		if screen and screen.transition_fn then
 			screen.transition_fn(message_id, message, sender)
