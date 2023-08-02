@@ -5,7 +5,7 @@ dependencies#0 = https://github.com/britzl/deftest/archive/2.7.0.zip
 dependencies#1 = https://github.com/defold/lua-language-server/releases/download/v0.0.3/release.zip
 
 [bootstrap]
-main_collection = /example/slidingwindow/slidingwindow.collectionc
+main_collection = /example/advanced/advanced.collectionc
 
 [input]
 game_binding = /input/game.input_bindingc

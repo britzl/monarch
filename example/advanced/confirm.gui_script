@@ -7,11 +7,13 @@ function init(self)
 	self.no = gui.get_node("no_button")
 	gui.set_render_order(15)
 
-	self.transition = transitions.create(gui.get_node("root"))
+	local transition = transitions.create(gui.get_node("root"))
 		.show_in(transitions.scale_in, gui.EASING_OUTBACK, 0.3, 0)
 		.show_out(transitions.scale_out, gui.EASING_INBACK, 0.3, 0)
 		.back_in(transitions.scale_in, gui.EASING_OUTBACK, 0.3, 0)
 		.back_out(transitions.scale_out, gui.EASING_INBACK, 0.3, 0)
+
+	monarch.on_transition("confirm", transition)
 end
 
 function on_input(self, action_id, action)
@@ -35,5 +37,5 @@ function on_input(self, action_id, action)
 end
 
 function on_message(self, message_id, message, sender)
-	self.transition.handle(message_id, message, sender)
+	monarch.on_message(message_id, message, sender)
 end

@@ -5,8 +5,9 @@ function init(self)
 	msg.post(".", "acquire_input_focus")
 	self.play = gui.get_node("play_button")
 	self.back = gui.get_node("back_button")
-	
-	self.transition = transitions.in_right_out_left(gui.get_node("root"), 0.6, 0)
+
+	local transition = transitions.in_right_out_left(gui.get_node("root"), 0.6, 0)
+	monarch.on_transition("pregame", transition)
 end
 
 function on_input(self, action_id, action)
@@ -26,5 +27,5 @@ function on_input(self, action_id, action)
 end
 
 function on_message(self, message_id, message, sender)
-	self.transition.handle(message_id, message, sender)
+	monarch.on_message(message_id, message, sender)
 end

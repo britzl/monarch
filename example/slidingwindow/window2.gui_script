@@ -23,6 +23,5 @@ function on_input(self, action_id, action)
 end
 
 function on_message(self, message_id, message, sender)
-	print("window2", message_id, message, sender)
 	monarch.on_message(message_id, message, sender)
 end
