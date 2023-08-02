@@ -6,8 +6,8 @@ go.property("popup", false)
 go.property("popup_on_popup", false)
 go.property("screen_keeps_input_focus_when_below_popup", false)
 go.property("others_keep_input_focus_when_below_screen", false)
-go.property("transition_id", hash(""))
-go.property("focus_id", hash(""))
+go.property("transition_id", hash("__DEPRECATED__"))
+go.property("focus_id", hash("__DEPRECATED__"))
 go.property("preload", false)
 
 
@@ -15,7 +15,7 @@ function init(self)
 	monarch = require "monarch.monarch"
 	assert(not self.popup_on_popup or (self.popup_on_popup and self.popup), "Popup on Popups can only be set if the Popup flag is set")
 	assert(self.screen_factory ~= msg.url(), "You must specify either a factory URL")
-	
+
 	local settings = {
 		popup = self.popup,
 		popup_on_popup = self.popup_on_popup,

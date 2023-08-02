@@ -20,6 +20,9 @@ local MSG_UNLOAD = hash("unload")
 local MSG_ENABLE = hash("enable")
 local MSG_DISABLE = hash("disable")
 
+
+local DEPRECATED = hash("/__DEPRECATED__")
+
 -- transition messages
 M.TRANSITION = {}
 M.TRANSITION.DONE = hash("transition_done")
@@ -269,12 +272,6 @@ end
 --		  keep input focus when below a popup
 --		* others_keep_input_focus_when_below_screen - If screens below this
 --		  screen should keep input focus
--- 		* transition_url - URL to a script that is responsible for the
---		  screen transitions
--- 		* focus_url - URL to a script that is to be notified of focus
---		  lost/gained events
---		* receiver_url - URL to a script that is to receive messages sent
---		  using monarch.send()
 --		* auto_preload - true if the screen should be automatically preloaded
 function M.register_proxy(id, proxy, settings)
 	assert(proxy, "You must provide a collection proxy URL")
@@ -284,6 +281,15 @@ function M.register_proxy(id, proxy, settings)
 	screen.focus_url = settings and settings.focus_url
 	screen.receiver_url = settings and settings.receiver_url
 	screen.auto_preload = settings and settings.auto_preload
+	if screen.transition_url.path == DEPRECATED then
+		screen.transition_url = nil
+	end
+	if screen.focus_url.path == DEPRECATED then
+		screen.focus_url = nil
+	end
+	if screen.receiver_url.path == DEPRECATED then
+		screen.receiver_url = nil
+	end
 	if screen.auto_preload then
 		M.preload(id)
 	end
@@ -306,10 +312,6 @@ M.register = M.register_proxy
 --		  keep input focus when below a popup
 --		* others_keep_input_focus_when_below_screen - If screens below this
 --		  screen should keep input focus
--- 		* transition_id - Id of the game object in the collection that is responsible
---		  for the screen transitions
--- 		* focus_id - Id of the game object in the collection that is to be notified
---		  of focus lost/gained events
 --		* auto_preload - true if the screen should be automatically preloaded
 function M.register_factory(id, factory, settings)
 	assert(factory, "You must provide a collection factory URL")
@@ -318,6 +320,13 @@ function M.register_factory(id, factory, settings)
 	screen.transition_id = settings and settings.transition_id
 	screen.focus_id = settings and settings.focus_id
 	screen.auto_preload = settings and settings.auto_preload
+
+	if screen.transition_id == DEPRECATED then
+		screen.transition_id = nil
+	end
+	if screen.focus_id == DEPRECATED then
+		screen.focus_id = nil
+	end
 	if screen.auto_preload then
 		M.preload(id)
 	end

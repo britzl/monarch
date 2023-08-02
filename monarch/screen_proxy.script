@@ -7,9 +7,9 @@ go.property("popup_on_popup", false)
 go.property("timestep_below_popup", 1)
 go.property("screen_keeps_input_focus_when_below_popup", false)
 go.property("others_keep_input_focus_when_below_screen", false)
-go.property("transition_url", msg.url())
-go.property("focus_url", msg.url())
-go.property("receiver_url", msg.url())
+go.property("transition_url", msg.url("__DEPRECATED__"))
+go.property("focus_url", msg.url("__DEPRECATED__"))
+go.property("receiver_url", msg.url("__DEPRECATED__"))
 go.property("preload", false)
 
 
@@ -19,7 +19,7 @@ function init(self)
 	assert(not self.popup_on_popup or (self.popup_on_popup and self.popup), "Popup on Popups can only be set if the Popup flag is set")
 	assert(self.screen_proxy ~= url, "You must specify either a proxy URL")
 	assert(self.timestep_below_popup >= 0, "Timestep must be positive")
-	
+
 	local settings = {
 		popup = self.popup,
 		popup_on_popup = self.popup_on_popup,
