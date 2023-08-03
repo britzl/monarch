@@ -21,7 +21,7 @@ local MSG_ENABLE = hash("enable")
 local MSG_DISABLE = hash("disable")
 
 
-local DEPRECATED = hash("/__DEPRECATED__")
+local DEPRECATED = hash("__DEPRECATED__")
 
 -- transition messages
 M.TRANSITION = {}
@@ -281,13 +281,13 @@ function M.register_proxy(id, proxy, settings)
 	screen.focus_url = settings and settings.focus_url
 	screen.receiver_url = settings and settings.receiver_url
 	screen.auto_preload = settings and settings.auto_preload
-	if screen.transition_url.path == DEPRECATED then
+	if screen.transition_url.fragment == DEPRECATED then
 		screen.transition_url = nil
 	end
-	if screen.focus_url.path == DEPRECATED then
+	if screen.focus_url.fragment == DEPRECATED then
 		screen.focus_url = nil
 	end
-	if screen.receiver_url.path == DEPRECATED then
+	if screen.receiver_url.fragment == DEPRECATED then
 		screen.receiver_url = nil
 	end
 	if screen.auto_preload then

@@ -7,9 +7,9 @@ go.property("popup_on_popup", false)
 go.property("timestep_below_popup", 1)
 go.property("screen_keeps_input_focus_when_below_popup", false)
 go.property("others_keep_input_focus_when_below_screen", false)
-go.property("transition_url", msg.url("__DEPRECATED__"))
-go.property("focus_url", msg.url("__DEPRECATED__"))
-go.property("receiver_url", msg.url("__DEPRECATED__"))
+go.property("transition_url", msg.url("#__DEPRECATED__"))
+go.property("focus_url", msg.url("#__DEPRECATED__"))
+go.property("receiver_url", msg.url("#__DEPRECATED__"))
 go.property("preload", false)
 
 
