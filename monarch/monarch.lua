@@ -1173,17 +1173,11 @@ function M.post(id, message_id, message)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
 	local screen = screens[id]
-	if screen.proxy then
-		if screen.receiver_url then
-			log("post() sending message to", screen.receiver_url)
-			msg.post(screen.receiver_url, message_id, message)
-		else
-			return false, "Unable to post message since screen has no receiver url specified"
-		end
+	if screen.receiver_url then
+		log("post() sending message to", screen.receiver_url)
+		msg.post(screen.receiver_url, message_id, message)
 	else
-		for id,instance in pairs(screen.factory_ids) do
-			msg.post(instance, message_id, message)
-		end
+		return false, "Unable to post message since screen has no receiver url specified. Set one using monarch.on_post()."
 	end
 	return true
 end

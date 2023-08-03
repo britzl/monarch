@@ -177,7 +177,7 @@ Remove a previously added listener.
 
 
 ## monarch.post(screen_id, message_id, [message])
-Post a message to a visible screen. If the screen is created through a collection proxy it must have specified a receiver url. If the screen is created through a collection factory the function will post the message to all game objects within the collection.
+Post a message to a visible screen. The screen must have set a message listener using `monarch.on_post()`.
 
 **PARAMETERS**
 * `screen_id` (string|hash) - Id of the screen to post message to
