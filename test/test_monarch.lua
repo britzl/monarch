@@ -12,7 +12,6 @@ local FOCUS1 = hash("focus1")
 local BACKGROUND = hash("background")
 local POPUP1 = hash("popup1")
 local POPUP2 = hash("popup2")
-local FOOBAR = hash("foobar")
 local TRANSITION1 = hash("transition1")
 
 local function check_stack(expected_screens)
@@ -491,49 +490,56 @@ return function()
 
 
 		it("should be able to post messages without message data to visible screens", function()
-			_G.screen1_foobar = nil
-			_G.screen2_foobar = nil
+			_G.screen1_on_message = nil
+			_G.screen1_on_post = nil
+			_G.screen2_on_message = nil
+			_G.screen2_on_post = nil
 
 			-- proxy screen
 			monarch.show(SCREEN1)
 			wait_until_visible(SCREEN1)
 			assert(monarch.post(SCREEN1, "foobar"), "Expected monarch.post() to return true")
 			cowait(0.1)
-			assert(_G.screen1_foobar, "Screen1 never received a message")
+			assert(_G.screen1_on_message, "Screen1 never received a message")
+			assert(_G.screen1_on_post, "Screen1 never received a callback")
 
 			-- factory screen
 			monarch.show(SCREEN2)
 			wait_until_visible(SCREEN2)
 			assert(monarch.post(SCREEN2, "foobar"), "Expected monarch.post() to return true")
 			cowait(0.1)
-			assert(_G.screen2_foobar, "Screen2 never received a message")
+			assert(_G.screen2_on_message, "Screen2 never received a message")
+			assert(_G.screen2_on_post, "Screen2 never received a callback")
 		end)
 
 
 		it("should be able to post messages with message data to visible screens", function()
-			_G.screen1_foobar = nil
-			_G.screen2_foobar = nil
+			_G.screen1_on_message = nil
+			_G.screen1_on_post = nil
+			_G.screen2_on_message = nil
+			_G.screen2_on_post = nil
 
 			-- proxy screen
 			monarch.show(SCREEN1)
 			wait_until_visible(SCREEN1)
 			assert(monarch.post(SCREEN1, "foobar", { foo = "bar" }), "Expected monarch.post() to return true")
 			cowait(0.1)
-			assert(_G.screen1_foobar, "Screen1 never received a message")
-			assert(_G.screen1_foobar.foo == "bar", "Screen1 never received message data")
-			
+			assert(_G.screen1_on_message, "Screen1 never received a message")
+			assert(_G.screen1_on_message.foo == "bar", "Screen1 never received message data")
+
 			-- factory screen
 			monarch.show(SCREEN2)
 			wait_until_visible(SCREEN2)
 			assert(monarch.post(SCREEN2, "foobar", { foo = "bar" }), "Expected monarch.post() to return true")
 			cowait(0.1)
-			assert(_G.screen2_foobar, "Screen2 never received a message")
-			assert(_G.screen2_foobar.foo == "bar", "Screen2 never received message data")
+			assert(_G.screen2_on_message, "Screen2 never received a message")
+			assert(_G.screen2_on_message.foo == "bar", "Screen2 never received message data")
 		end)
 
 
 		it("should not be able to post messages to hidden screens", function()
-			_G.screen1_foobar = nil
+			_G.screen1_on_message = nil
+			_G.screen1_on_post = nil
 
 			monarch.show(SCREEN1)
 			monarch.show(SCREEN2)
@@ -542,7 +548,7 @@ return function()
 			local ok, err = monarch.post(SCREEN1, "foobar")
 			assert(not ok and err, "Expected monarch.post() to return false plus an error message")
 			cowait(0.1)
-			assert(not _G.screen1_foobar, "Screen1 should not have received a message")
+			assert(not _G.screen1_on_message, "Screen1 should not have received a message")
 		end)
 
 

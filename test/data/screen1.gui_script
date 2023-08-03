@@ -1,5 +1,11 @@
+local monarch
+
 function init(self)
-	print("init - screen1")
+	monarch = require "monarch.monarch"
+	print("init - screen1", msg.url())
+	monarch.on_post("screen1", function(message_id, message, sender)
+		_G.screen1_on_post = message or true
+	end)
 end
 
 function final(self)
@@ -7,7 +13,8 @@ function final(self)
 end
 
 function on_message(self, message_id, message, sender)
+	monarch.on_message(message_id, message, sender)
 	if message_id == hash("foobar") then
-		_G.screen1_foobar = message or true
+		_G.screen1_on_message = message or true
 	end
 end
