@@ -991,12 +991,12 @@ function M.back(options, data, cb)
 		local screen = table.remove(stack)
 		if screen then
 			log("back()", screen.id)
+			local back_cb = callbacks.track()
 			local top = stack[#stack]
 			-- if we go back to the same screen we need to first hide it
 			-- and wait until it is hidden before we show it again
 			local same_screen = top and top.id == screen.id
 			if same_screen or (options and options.sequential) then
-				local back_cb = callbacks.track()
 				back_out(screen, top, WAIT_FOR_TRANSITION, function()
 					if data then
 						top.data = data
