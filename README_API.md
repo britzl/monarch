@@ -40,12 +40,17 @@ Clear the stack of screens completely. Any visible screen will be hidden by navi
 * `callback` (function) - Optional function to call when the stack has been cleared.
 
 
-## monarch.back([data], [callback])
+## monarch.back([options], [data], [callback])
 Go back to a previous Monarch screen. This operation will be added to the queue if Monarch is busy.
 
 **PARAMETERS**
+* `options` (table) - Options when showing the new screen (see below).
 * `data` (table) - Optional data to associate with the screen you are going back to.  Retrieve using `monarch.data()`.
 * `callback` (function) - Optional function to call when the previous screen is visible.
+
+The options table can contain the following fields:
+
+* `sequential` (boolean) - If the `sequential` flag is set Monarch will start loading the screen only after the previous screen finished transitioning out.
 
 
 ## monarch.preload(screen_id, [options], [callback])

@@ -965,21 +965,38 @@ end
 
 
 -- Go back to the previous screen in the stack.
+-- @param options (table) - Table with options when backing out from the screen (can be nil).
+--		Valid values:
+-- 		* sequential - Set to true to wait for the current screen to hide itself out before starting the
+--				   back in transition even when transitioning to a different scene ID.
+
 -- @param data (*) - Optional data to set for the previous screen
 -- @param cb (function) - Optional callback to invoke when the previous screen is visible again
-function M.back(data, cb)
+function M.back(options, data, cb)
 	log("back() queuing action")
+	-- backwards compatibility with old version M.back(data, cb)
+	-- case when back(data, cb)
+	if type(data) == "function" then
+		cb = data
+		data = options
+		options = nil
+	-- case when back(data, nil)
+	elseif options ~= nil and data == nil and cb == nil then
+		data = options
+		options = nil
+	end
 
 	queue_action(function(action_done)
 		local callbacks = callback_tracker()
-		local back_cb = callbacks.track()
 		local screen = table.remove(stack)
 		if screen then
 			log("back()", screen.id)
 			local top = stack[#stack]
 			-- if we go back to the same screen we need to first hide it
 			-- and wait until it is hidden before we show it again
-			if top and screen.id == top.id then
+			local same_screen = top and top.id == screen.id
+			if same_screen or (options and options.sequential) then
+				local back_cb = callbacks.track()
 				back_out(screen, top, WAIT_FOR_TRANSITION, function()
 					if data then
 						top.data = data
