@@ -219,7 +219,7 @@ return function()
 			assert(monarch.data(SCREEN2) == data2, "Expected data on screen2 doesn't match actual data")
 
 			local data_back = { going = "back" }
-			monarch.back(data_back)
+			monarch.back(nil, data_back)
 			assert(wait_until_visible(SCREEN1))
 
 			assert(monarch.data(SCREEN1) == data_back, "Expected data on screen1 doesn't match actual data")
