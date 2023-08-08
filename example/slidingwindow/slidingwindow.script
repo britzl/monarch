@@ -4,10 +4,25 @@ function init(self)
 	monarch.debug()
 	msg.post("@render:/", "clear_color", { color = vmath.vector4(0.4, 0.6, 0.8,1.0) })
 	msg.post("#", "init_monarch") -- wait until init() has been called for all screen.script instances
+	monarch.add_listener()
+end
+
+function final(self)
+	monarch.remove_listener()
 end
 
 function on_message(self, message_id, message, sender)
 	if message_id == hash("init_monarch") then
 		monarch.show(hash("window1"))
+	elseif message_id == monarch.SCREEN_TRANSITION_IN_STARTED then
+		print("Monarch screen transition in started", message.screen)
+	elseif message_id == monarch.SCREEN_TRANSITION_IN_FINISHED then
+		print("Monarch screen transition in finished", message.screen)
+	elseif message_id == monarch.SCREEN_TRANSITION_OUT_STARTED then
+		print("Monarch screen transition out started", message.screen)
+	elseif message_id == monarch.SCREEN_TRANSITION_OUT_FINISHED then
+		print("Monarch screen transition out finished", message.screen)
+	elseif message_id == monarch.SCREEN_TRANSITION_FAILED then
+		print("Monarch screen transition failed")
 	end
 end
