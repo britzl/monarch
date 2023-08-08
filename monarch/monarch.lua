@@ -863,13 +863,10 @@ function M.show(id, options, data, cb)
 				show_in(screen, top, options and options.reload, add_to_stack, WAIT_FOR_TRANSITION, callbacks.track())
 			else
 				-- show screen
-				local cb = callbacks.track()
-				show_in(screen, top, options and options.reload, add_to_stack, DO_NOT_WAIT_FOR_TRANSITION, function()
-					if add_to_stack and top and not top.popup then
-						show_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
-					end
-					cb()
-				end)
+				show_in(screen, top, options and options.reload, add_to_stack, WAIT_FOR_TRANSITION, callbacks.track())
+				if add_to_stack and top and not top.popup then
+					show_out(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
+				end
 			end
 
 			callbacks.when_done(function()
@@ -997,16 +994,16 @@ function M.back(data, cb)
 					-- we do this to ensure that we do not reset the times step of the screen
 					-- we go back to until it is no longer obscured by the popup
 					if screen.popup and not top.popup then
+						local back_cb = callbacks.track()
 						back_out(screen, top, WAIT_FOR_TRANSITION, function()
 							back_in(top, screen, WAIT_FOR_TRANSITION, back_cb)
 						end)
 					else
-						back_in(top, screen, DO_NOT_WAIT_FOR_TRANSITION, function()
-							back_out(screen, top, WAIT_FOR_TRANSITION, back_cb)
-						end)
+						back_in(top, screen, WAIT_FOR_TRANSITION, callbacks.track())
+						back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
 					end
 				else
-					back_out(screen, top, WAIT_FOR_TRANSITION, back_cb)
+					back_out(screen, top, WAIT_FOR_TRANSITION, callbacks.track())
 				end
 			end
 		end
