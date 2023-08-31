@@ -1330,21 +1330,34 @@ function M.on_focus_changed(id, fn)
 	screen.focus_fn = fn
 end
 
+local function set_on_post(id, fn, url)
+end
+
 ---
--- Set a function to call when a screen is sent a message using monarch.post()
--- The function will receive (message_id, message, sender)
--- IMPORTANT! You must call monarch.on_message() from the same script as
--- this function was called
+-- Set either a function to be called when msg.post() is called on a specific
+-- screen or a URL where the message is sent.
+-- IMPORTANT! If you provide a function you must also make sure to call
+-- monarch.on_message(message_id, message, sender) from the same script as
+-- this function was called.
 -- @param id Screen id to associate the message listener function with
--- @param fn Message listener function
-function M.on_post(id, fn)
+-- @param fn_or_url The function to call or URL to send message to
+function M.on_post(id, fn_or_url)
 	assert(id, "You must provide a screen id")
-	assert(fn, "You must provide a post receiver function")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	local screen = screens[id]
-	screen.receiver_url = msg.url()
-	screen.receiver_fn = fn
+
+	local t = type(fn_or_url)
+	if t == "function" then
+		screen.receiver_fn = fn_or_url
+		screen.receiver_url = msg.url()
+	elseif t == "userdata" then
+		screen.receiver_fn = nil
+		screen.receiver_url = fn_or_url
+	else
+		screen.receiver_fn = nil
+		screen.receiver_url = msg.url()
+	end
 end
 
 local function url_to_key(url)

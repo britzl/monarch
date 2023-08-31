@@ -212,12 +212,14 @@ IMPORTANT! You must call `monarch.on_message(message_id, message, sender)` from 
 * `fn` (function) - The function to call screen focus changes
 
 
-## monarch.on_post(screen_id, fn)
-Set a function to be called when `msg.post()` is called on a specific screen. IMPORTANT! You must call `monarch.on_message(message_id, message, sender)` from the same script as this function was called.
+## monarch.on_post(screen_id, fn_or_url)
+Set either a function to be called when `msg.post()` is called on a specific screen or a URL where the message is sent.
+
+IMPORTANT! If you provide a function you must also make sure to call `monarch.on_message(message_id, message, sender)` from the same script as this function was called.
 
 **PARAMETERS**
 * `screen_id` (string|hash) - Id of the screen
-* `fn` (function) - The function to call when the screen receives a message using `msg.post`
+* `fn_or_url` (function) - The function to call or URL to send message to
 
 
 ## monarch.debug()
