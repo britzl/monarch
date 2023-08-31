@@ -1330,9 +1330,6 @@ function M.on_focus_changed(id, fn)
 	screen.focus_fn = fn
 end
 
-local function set_on_post(id, fn, url)
-end
-
 ---
 -- Set either a function to be called when msg.post() is called on a specific
 -- screen or a URL where the message is sent.
@@ -1351,7 +1348,7 @@ function M.on_post(id, fn_or_url)
 	if t == "function" then
 		screen.receiver_fn = fn_or_url
 		screen.receiver_url = msg.url()
-	elseif t == "userdata" then
+	elseif t == "userdata" or t == "string" then
 		screen.receiver_fn = nil
 		screen.receiver_url = fn_or_url
 	else
