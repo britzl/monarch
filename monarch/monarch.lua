@@ -509,7 +509,9 @@ local function load(screen)
 		msg.post(screen.proxy, MSG_ENABLE)
 	elseif screen.factory then
 		screen.factory_ids = collectionfactory.create(screen.factory)
-		screen.transition_url = screen.factory_ids[screen.transition_id]
+		if screen.transition_id then
+			screen.transition_url = screen.factory_ids[screen.transition_id]
+		end
 		screen.focus_url = screen.factory_ids[screen.focus_id]
 	end
 	screen.loaded = true
