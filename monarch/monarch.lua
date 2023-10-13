@@ -509,7 +509,9 @@ local function load(screen)
 		msg.post(screen.proxy, MSG_ENABLE)
 	elseif screen.factory then
 		screen.factory_ids = collectionfactory.create(screen.factory)
-		screen.transition_url = screen.factory_ids[screen.transition_id]
+		if screen.transition_id then
+			screen.transition_url = screen.factory_ids[screen.transition_id]
+		end
 		screen.focus_url = screen.factory_ids[screen.focus_id]
 	end
 	screen.loaded = true
@@ -1006,7 +1008,7 @@ function M.back(options, data, cb)
 						top.data = data
 					end
 					-- if the screen we are backing out from is a popup and the screen we go
-					-- back to is not a popup we need to let the popup completely hide before 
+					-- back to is not a popup we need to let the popup completely hide before
 					-- we start working on the screen we go back to
 					-- we do this to ensure that we do not reset the times step of the screen
 					-- we go back to until it is no longer obscured by the popup
