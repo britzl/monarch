@@ -142,12 +142,12 @@ return function()
 			monarch.show(SCREEN1)
 			assert(wait_until_stack({ SCREEN1 }))
 			assert(wait_until_visible(SCREEN1))
-			
+
 			monarch.show(SCREEN2)
 			assert(wait_until_stack({ SCREEN1, SCREEN2 }))
 			assert(wait_until_hidden(SCREEN1))
 			assert(wait_until_visible(SCREEN2))
-			
+
 			monarch.show(POPUP1)
 			assert(wait_until_stack({ SCREEN1, SCREEN2, POPUP1 }))
 			assert(wait_until_hidden(SCREEN1))
@@ -155,6 +155,17 @@ return function()
 			assert(wait_until_visible(POPUP1))
 		end)
 
+		it("should be able to tell if a screen is loaded or not", function()
+			assert(not monarch.is_loaded(SCREEN1))
+			monarch.show(SCREEN1)
+			assert(wait_until_visible(SCREEN1))
+			assert(monarch.is_loaded(SCREEN1))
+			
+			monarch.hide(SCREEN1)
+			assert(wait_until_hidden(SCREEN1))
+			assert(not monarch.is_loaded(SCREEN1))
+		end)
+		
 		it("should be able to show a screen without adding it to the stack", function()
 			monarch.show(BACKGROUND, { no_stack = true })
 			assert(wait_until_visible(BACKGROUND), "Background was never shown")
