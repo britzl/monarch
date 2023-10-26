@@ -1189,8 +1189,8 @@ end
 -- @return error (string|nil) Error message if unable to send message
 function M.post(id, message_id, message)
 	assert(id, "You must provide a screen id")
-	if not M.is_visible(id) then
-		return false, "Unable to post message to screen if it isn't visible"
+	if not M.is_loaded(id) then
+		return false, "Unable to post message to screen if it isn't loaded"
 	end
 
 	assert(message_id, "You must provide a message_id")
