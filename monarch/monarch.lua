@@ -523,7 +523,9 @@ local function load(screen)
 		if screen.transition_id then
 			screen.transition_url = screen.factory_ids[screen.transition_id]
 		end
-		screen.focus_url = screen.factory_ids[screen.focus_id]
+		if screen.focus_id then
+			screen.focus_url = screen.factory_ids[screen.focus_id]
+		end
 	end
 	screen.loaded = true
 	screen.preloaded = false
