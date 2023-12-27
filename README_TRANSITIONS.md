@@ -114,7 +114,7 @@ end
 
 function on_message(self, message_id, message, sender)
 	if message_id == hash("my_resize_message") then
-		self.transition.window_resized(message.width, message.height)
+		transition.window_resized(message.width, message.height)
 	end
 end
 ```
