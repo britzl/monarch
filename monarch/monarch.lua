@@ -995,7 +995,6 @@ function M.back(options, data, cb)
 	-- case when back(data, nil)
 	elseif options ~= nil and data == nil and cb == nil then
 		data = options
-		options = nil
 	end
 
 	queue_action(function(action_done)
