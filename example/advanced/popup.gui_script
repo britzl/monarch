@@ -27,7 +27,7 @@ function on_input(self, action_id, action)
 			end)
 		elseif gui.pick_node(self.cancel, action.x, action.y) then
 			print("cancel")
-			monarch.back(function()
+			monarch.back(nil, nil, function()
 				print("back from popup done")
 			end)
 		elseif gui.pick_node(self.about, action.x, action.y) then

@@ -924,7 +924,7 @@ function M.hide(id, cb)
 			log("hide() you can only hide the screen at the top of the stack", id)
 			return false
 		end
-		return M.back(id, cb)
+		return M.back(nil, nil, cb)
 	else
 		log("hide() queuing action", id)
 		queue_action(function(action_done, action_error)
@@ -986,16 +986,6 @@ end
 -- @param cb (function) - Optional callback to invoke when the previous screen is visible again
 function M.back(options, data, cb)
 	log("back() queuing action")
-	-- backwards compatibility with old version M.back(data, cb)
-	-- case when back(data, cb)
-	if type(data) == "function" then
-		cb = data
-		data = options
-		options = nil
-	-- case when back(data, nil)
-	elseif options ~= nil and data == nil and cb == nil then
-		data = options
-	end
 
 	queue_action(function(action_done)
 		local callbacks = callback_tracker()

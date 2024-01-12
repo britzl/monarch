@@ -19,7 +19,7 @@ function on_input(self, action_id, action)
 			end)
 		elseif gui.pick_node(self.back, action.x, action.y) then
 			print("back")
-			monarch.back(function()
+			monarch.back(nil, nil, function()
 				print("back from pregame done")
 			end)
 		end
