@@ -462,8 +462,7 @@ local function preload(screen)
 	screen.preloading = true
 	if screen.proxy then
 		log("preload() proxy")
-		local missing_resources = collectionproxy.missing_resources(screen.proxy)
-		if #missing_resources > 0 then
+		if M.has_missing_resources(screen.id) then
 			local error_message = ("preload() collection proxy %s is missing resources"):format(tostring(screen.id))
 			log(error_message)
 			screen.preloading = false
@@ -1131,6 +1130,22 @@ function M.preload(id, options, cb)
 	return true -- return true for legacy reasons (before queue existed)
 end
 
+--- Check if a screen has missing resources, always returns false for factory
+-- @param id (string|hash) - Id of the screen to preload
+function M.has_missing_resources(id)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+
+    	local screen = screens[id]
+	if screen.proxy then
+		local missing_resources = collectionproxy.missing_resources(screen.proxy)
+		if #missing_resources > 0 then
+            		return true
+        	end
+	end
+	return false
+end
 
 --- Unload a preloaded monarch screen
 -- @param id (string|hash) - Id of the screen to unload
