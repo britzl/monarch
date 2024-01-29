@@ -1137,12 +1137,12 @@ function M.has_missing_resources(id)
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 
-    	local screen = screens[id]
+	local screen = screens[id]
 	if screen.proxy then
 		local missing_resources = collectionproxy.missing_resources(screen.proxy)
 		if #missing_resources > 0 then
-            		return true
-        	end
+			return true
+		end
 	end
 	return false
 end
