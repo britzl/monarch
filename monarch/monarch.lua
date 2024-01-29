@@ -1140,9 +1140,7 @@ function M.has_missing_resources(id)
 	local screen = screens[id]
 	if screen.proxy then
 		local missing_resources = collectionproxy.missing_resources(screen.proxy)
-		if #missing_resources > 0 then
-			return true
-		end
+		return #missing_resources > 0
 	end
 	return false
 end
