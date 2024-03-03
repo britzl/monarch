@@ -430,7 +430,9 @@ local function unload(screen, force)
 	elseif screen.factory then
 		log("unload() factory", screen.id)
 		for id, instance in pairs(screen.factory_ids) do
-			go.delete(instance)
+			if pcall(go.get_position, instance) then
+				go.delete(instance)
+			end
 		end
 		screen.factory_ids = nil
 		if screen.auto_preload and not force then
