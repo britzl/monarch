@@ -1376,8 +1376,10 @@ function M.on_post(id, fn_or_url)
 	end
 end
 
+local empty_hash = hash("")
+
 local function url_to_key(url)
-	return (url.socket or hash("")) .. (url.path or hash("")) .. (url.fragment or hash(""))
+	return (url.socket or empty_hash) .. (url.path or empty_hash) .. (url.fragment or empty_hash)
 end
 
 
