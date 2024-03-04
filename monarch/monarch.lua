@@ -430,7 +430,7 @@ local function unload(screen, force)
 	elseif screen.factory then
 		log("unload() factory", screen.id)
 		for id, instance in pairs(screen.factory_ids) do
-			if pcall(go.get_position, instance) then
+			if go.exists(instance) then
 				go.delete(instance)
 			end
 		end
