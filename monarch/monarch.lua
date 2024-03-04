@@ -430,7 +430,9 @@ local function unload(screen, force)
 	elseif screen.factory then
 		log("unload() factory", screen.id)
 		for id, instance in pairs(screen.factory_ids) do
-			go.delete(instance)
+			if go.exists(instance) then
+				go.delete(instance)
+			end
 		end
 		screen.factory_ids = nil
 		if screen.auto_preload and not force then
@@ -1374,8 +1376,10 @@ function M.on_post(id, fn_or_url)
 	end
 end
 
+local empty_hash = hash("")
+
 local function url_to_key(url)
-	return (url.socket or hash("")) .. (url.path or hash("")) .. (url.fragment or hash(""))
+	return (url.socket or empty_hash) .. (url.path or empty_hash) .. (url.fragment or empty_hash)
 end
 
 
