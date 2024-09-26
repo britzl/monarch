@@ -79,16 +79,9 @@ end
 
 gui_template = function(gui_script)
     return [[script: "]].. gui_script .. [["
-background_color {
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    w: 0.0
-}
-material: "/builtins/materials/gui.material"
-adjust_reference: ADJUST_REFERENCE_PARENT
-max_nodes: 512
-]] 
+    material: "/builtins/materials/gui.material"
+    adjust_reference: ADJUST_REFERENCE_PARENT
+    ]] 
 end
 
 gui_script_content = [[local monarch = require "monarch.monarch"
@@ -116,43 +109,43 @@ end
 
 collection_template = function(gui_script, name)
     return [[name: "]].. name .. [["
-scale_along_z: 0
-embedded_instances {
-  id: "go"
-  data: "components {\n"
-  "  id: \"monarch\"\n"
-  "  component: \"]].. gui_script .. [[\"\n"
-  "  position {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "  }\n"
-  "  rotation {\n"
-  "    x: 0.0\n"
-  "    y: 0.0\n"
-  "    z: 0.0\n"
-  "    w: 1.0\n"
-  "  }\n"
-  "}\n"
-  ""
-  position {
-      x: 0.0
-      y: 0.0
-      z: 0.0
-  }
-  rotation {
-      x: 0.0
-      y: 0.0
-      z: 0.0
-      w: 1.0
-  }
-  scale3 {
-      x: 1.0
-      y: 1.0
-      z: 1.0
-  }
-}
-]]
+    scale_along_z: 0
+    embedded_instances {
+        id: "go"
+        data: "components {\n"
+        "  id: \"monarch\"\n"
+        "  component: \"]].. gui_script .. [[\"\n"
+        "  position {\n"
+        "    x: 0.0\n"
+        "    y: 0.0\n"
+        "    z: 0.0\n"
+        "  }\n"
+        "  rotation {\n"
+        "    x: 0.0\n"
+        "    y: 0.0\n"
+        "    z: 0.0\n"
+        "    w: 1.0\n"
+        "  }\n"
+        "}\n"
+        ""
+        position {
+            x: 0.0
+            y: 0.0
+            z: 0.0
+        }
+        rotation {
+            x: 0.0
+            y: 0.0
+            z: 0.0
+            w: 1.0
+        }
+        scale3 {
+            x: 1.0
+            y: 1.0
+            z: 1.0
+        }
+    }
+    ]]
 
 end
 
