@@ -64,5 +64,17 @@ function M.last(url)
 	return messages[#messages]
 end
 
+function M.filter(url, fn)
+	local t = {}
+	local messages = M.messages(url)
+	for i=1,#messages do
+		local message = messages[i]
+		if fn(message) then
+			t[#t + 1] = message
+		end
+	end
+	return t
+end
+
 
 return M

@@ -5,7 +5,6 @@ else
 	PLATFORM="$1"
 fi
 
-
 echo "${PLATFORM}"
 
 # {"version": "1.2.89", "sha1": "5ca3dd134cc960c35ecefe12f6dc81a48f212d40"}
@@ -16,26 +15,28 @@ echo "Using Defold dmengine_headless version ${SHA1}"
 # Create dmengine_headless and bob.jar URLs
 DMENGINE_URL="http://d.defold.com/archive/${SHA1}/engine/${PLATFORM}/dmengine_headless"
 BOB_URL="http://d.defold.com/archive/${SHA1}/bob/bob.jar"
+DMENGINE_FILE=dmengine_headless_${SHA1}
+BOB_FILE=bob_${SHA1}.jar
 
 # Download dmengine_headless
-echo "Downloading ${DMENGINE_URL}"
-curl -L -o dmengine_headless ${DMENGINE_URL}
-chmod +x dmengine_headless
+if ! [ -f ${DMENGINE_FILE} ]; then
+	echo "Downloading ${DMENGINE_URL} to ${DMENGINE_FILE}"
+	curl -L -o ${DMENGINE_FILE} ${DMENGINE_URL}
+	chmod +x ${DMENGINE_FILE}
+fi
 
 # Download bob.jar
-echo "Downloading ${BOB_URL}"
-curl -L -o bob.jar ${BOB_URL}
+if ! [ -f ${BOB_FILE} ]; then
+	echo "Downloading ${BOB_URL} to ${BOB_FILE}"
+	curl -L -o ${BOB_FILE} ${BOB_URL}
+fi
 
 # Fetch libraries
-echo "Running bob.jar - resolving dependencies"
-java -jar bob.jar --auth "foobar" --email "john@doe.com" resolve
+echo "Running ${BOB_FILE} - resolving dependencies"
+java -jar ${BOB_FILE} --auth "foobar" --email "john@doe.com" resolve
 
-echo "Running bob.jar - building"
-java -jar bob.jar --debug build --keep-unused
+echo "Running ${BOB_FILE} - building"
+java -jar ${BOB_FILE} --debug build --settings=test.settings
 
-echo "Starting dmengine_headless"
-if [ -n "${DEFOLD_BOOSTRAP_COLLECTION}" ]; then
-	./dmengine_headless --config=bootstrap.main_collection=${DEFOLD_BOOSTRAP_COLLECTION}
-else
-	./dmengine_headless
-fi
+echo "Starting ${DMENGINE_FILE}"
+./${DMENGINE_FILE}

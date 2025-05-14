@@ -9,3 +9,6 @@ build
 builtins
 .internal
 luacov.report.out
+/.editor_settings
+manifest.private.der
+manifest.public.der
