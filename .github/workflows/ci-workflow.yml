@@ -11,7 +11,7 @@ jobs:
           - uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9
             with:
                 java-version: '21.0.5+11.0.LTS'
-                distribution: 'Temurin'
+                distribution: 'temurin'
           - name: Run.sh
             env:
                 DEFOLD_USER: bjorn.ritzl@gmail.com
