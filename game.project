@@ -2,7 +2,6 @@
 title = Monarch
 version = 0.9
 dependencies#0 = https://github.com/britzl/deftest/archive/2.7.0.zip
-dependencies#1 = https://github.com/defold/lua-language-server/releases/download/v0.0.3/release.zip
 
 [bootstrap]
 main_collection = /example/advanced/advanced.collectionc
@@ -20,10 +19,10 @@ display_profiles = /example/example.display_profilesc
 shared_state = 1
 
 [ios]
-bundle_identifier = com.example.todo
+bundle_identifier = com.defold.monarch
 
 [osx]
-bundle_identifier = com.example.todo
+bundle_identifier = com.defold.monarch
 
 [library]
 include_dirs = monarch
