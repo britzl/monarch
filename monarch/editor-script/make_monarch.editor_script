@@ -43,8 +43,12 @@ local function create_files(file_path)
         local gui_file = io.open("." .. path, "rb")
         local gui_text = gui_file:read("*a")
         gui_file:close()
-
-        gui_text = string.gsub(gui_text, 'script: "%.*"', [[script: "]] .. main .. basename .. ".gui_script" .. [["]])
+        local start = string.find(gui_text, "script:", 1, true)
+        if start == nil then
+            gui_text = [[script: "]] .. main .. basename .. ".gui_script" .. [["]] .. "\n" .. gui_text
+        else
+            gui_text = string.gsub(gui_text, 'script:.-\n', [[script: "]] .. main .. basename .. ".gui_script" .. [["]] .. "\n")
+        end
 
         gui_file = io.open("." .. path, "w")
         gui_file:write(gui_text)
