@@ -20,9 +20,14 @@ Or point to the ZIP file of a [specific release](https://github.com/britzl/monar
 Using Monarch requires that screens are created in a certain way. Once you have one or more screens created you can start navigating between the screens.
 
 ## Editor Script
-Right click in on a`.gui` file in the outline and selected the menu item, it creates a `.collection` and a `.gui_script` with the same name as the `.gui` file. It adds the file with some basic setup done to them, adding the selected gui script to the created gui scene and in turns adds the gui scene to the newly created collection.
+Right click in on a`.gui`, `.gui_script` or `.collection` file in the outline and selected the menu item, it creates the other two file types with the same name as the selected file. It adds the file with some basic setup done to them, adding the selected gui script to the created gui scene and in turns adds the gui scene to the newly created collection.
+
+You can also right click on directory to get the option to create a monarch scene from it, the directory should be empty (or only contain other monarch scene files).Use the option and it will create all three files inside of the directory.
 
 <img src="/docs/editor_script.gif" width="200px">
+
+You can use Monarchs editor script with your own custom templates. Create the template files you want, these are normal defold files. Then inside of your game.project file add a path to the files you created.
+
 
 ## Creating screens
 Monarch screens are created in individual collections and either loaded through collection proxies or created through collection factories.
