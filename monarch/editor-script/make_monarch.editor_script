@@ -1,8 +1,13 @@
 local M = {}
 
 local collection_template
-local gui_script_content
-local gui_file_content
+local gui_script_template
+local gui_template
+
+local function _log(msg)
+    io.stdout:write("ERROR:MONARCH: " .. msg .. "\n")
+    io.stdout:flush()
+end
 
 local function ends_with(str, ending)
     return ending == "" or str:sub(-#ending) == ending
@@ -13,48 +18,143 @@ local function file_exists(name)
     if f~=nil then io.close(f) return true else return false end
 end
 
-local function get_filename(path)   
+local function get_filename(path)
     local main, filename, extension = path:match("(.-)([^\\/]-%.?([^%.\\/]*))$")
     return main, filename
 end
 
-local function create_files(file_path)
+local function get_template(game_project_path)
+    -- The input file can be the "compiled" file. If they are they end with "c".
+    -- If they end with "c" remove the last charater.
+    local path = editor.get("/game.project", game_project_path)
+    if path == nil then
+        return
+    end
+    if ends_with(path, "c") then
+        return path:sub(1, -2)
+    end
+    return path
+end
+
+local function get_template_content(type_string)
+    local default_template = {
+        collection = collection_template,
+        gui_script = gui_script_template,
+        gui = gui_template,
+    }
+    local custom_template = {
+        collection = get_template("monarch.collection_template"),
+        gui_script = get_template("monarch.gui_script_template"),
+        gui = get_template("monarch.gui_template"),
+    }
+    local template = custom_template[type_string]
+    if template ~= nil then
+        local file = io.open("." .. template, "rb")
+        if file == nil then
+            _log("Could not read " .. type_string .. " template '" .. template .. "'")
+            return
+        end
+        local content = file:read("*a")
+        file:close()
+        return content
+    end
+    return default_template[type_string]
+end
+
+local function add_monarch_go(collection_file, gui_file, name)
+    return editor.tx.add(collection_file, "children", {
+        type = "go",
+        id = "monarch",
+        components = {
+            {
+                type = "component-reference",
+                id = name,
+                path = gui_file,
+            }
+        }
+    })
+end
+
+local function create_collection(collection_file, gui_file, name)
+    local _collection_content = get_template_content("collection")
+    if _collection_content == nil then
+        _log("Could not create colletion file at " .. gui)
+        return
+    end
+    local collection = io.open("." .. collection_file, "w")
+    if collection == nil then
+        _log("Could not create colletion file at " .. collection_file)
+        return
+    end
+    collection:write(_collection_content)
+    collection:close()
+    return add_monarch_go(collection_file, gui_file, name)
+end
+
+local function create_gui(gui_file, gui_script_file)
+    local gui_content = get_template_content("gui")
+    if gui_content == nil then
+        _log("Could not create gui file at " .. gui)
+        return
+    end
+    local gui = io.open("." .. gui_file, "w")
+    if gui == nil then
+        _log("Could not create gui file at " .. gui)
+        return
+    end
+    gui:write(gui_content)
+    gui:close()
+
+    return editor.tx.set(gui_file, "script", gui_script_file)
+end
+
+local function create_files(directory, name)
     -- Construct paths
-    local path = editor.get(file_path, "path")
-    local main, filename = get_filename(path)
-    local basename = filename:match("(.+)%..+")
-    local target_collection_path = "." .. main .. basename .. ".collection"
-    local target_gui_script_path = "." .. main .. basename .. ".gui_script"
-    local target_gui_path = "." .. main .. basename .. ".gui"
+    local target_collection_path = directory .. name .. ".collection"
+    local target_gui_script_path = directory .. name .. ".gui_script"
+    local target_gui_path = directory .. name .. ".gui"
 
-    -- Create the files if they don't exists
-    if not file_exists(target_collection_path) then
-        local collection_content = collection_template(path, basename)
-        local collection = io.open(target_collection_path, "w")
-        collection:write(collection_content)
-        collection:close()
-    end
-    if not file_exists(target_gui_script_path) then
-        local gui_script = io.open(target_gui_script_path, "w")
-        gui_script:write(gui_script_content)
+    if not file_exists("." .. target_gui_script_path) then
+        local gui_script_template_content = get_template_content("gui_script")
+        if gui_script_template_content == nil then
+            return
+        end
+        local gui_script = io.open("." .. target_gui_script_path, "w")
+        gui_script:write(gui_script_template_content)
         gui_script:close()
-
-        -- Put the gui_script path into the gui file
-        local gui_file = io.open("." .. path, "rb")
-        local gui_text = gui_file:read("*a")
-        gui_file:close()
-
-        gui_text = string.gsub(gui_text, 'script: "%.*"', [[script: "]] .. main .. basename .. ".gui_script" .. [["]])
-
-        gui_file = io.open("." .. path, "w")
-        gui_file:write(gui_text)
-        gui_file:close()
     end
-    if not file_exists(target_gui_path) then
-        local gui_content = gui_template(path)
-        local gui = io.open(target_gui_path, "w")
-        gui:write(gui_content)
-        gui:close()
+    local transactions = {}
+
+    if file_exists("." .. target_gui_path) then
+        -- If the gui file exists change the script.
+        table.insert(transactions, editor.tx.set(target_gui_path, "script", target_gui_script_path)
+    )
+    else
+        -- If the gui file doesn't exist create a new one.
+        local transaction = create_gui(target_gui_path, target_gui_script_path)
+        if transaction == nil then
+            return
+        end
+        table.insert(transactions, transaction)
+    end
+    if file_exists("." .. target_collection_path) then
+        --- If the collection already exists we will add the monarch go to it.
+        local transaction = add_monarch_go(target_collection_path, target_gui_path, name)
+        if transaction == nil then
+            return
+        end
+        table.insert(transactions, transaction)
+    else
+        -- If the collection doesn't exists we create a new one.
+        local transaction = create_collection(target_collection_path, target_gui_path, name)
+        if transaction == nil then
+            return
+        end
+        table.insert(transactions, transaction)
+    end
+    if #transactions > 1 then
+        editor.transact(transactions)
+        editor.save()
     end
 end
 
@@ -68,23 +168,54 @@ function M.get_commands()
             },
             active = function(opts)
                 local path = editor.get(opts.selection, "path")
-                return ends_with(path, ".gui")
+                return ends_with(path, ".gui") or ends_with(path, ".gui_script") or ends_with(path, ".collection")
             end,
             run = function(opts)
-                create_files(opts.selection)
+                local path = editor.get(opts.selection, "path")
+                local directory, filename = get_filename(path)
+
+                local basename = filename:match("(.+)%..+")
+                create_files(directory, basename)
+            end
+        },
+        {
+            label="Create Monarch Scene From Directory",
+            locations = {"Assets"},
+            query = {
+                selection = {type = "resource", cardinality = "one"}
+            },
+            active = function(opts)
+                local _is_directory = editor.resource_attributes(editor.get(opts.selection, "path")).is_directory
+                if not _is_directory then
+                    return false
+                end
+                local _children = editor.get(opts.selection, "children")
+                if #_children >= 3 then
+                    return false
+                end
+                for i = 1, #_children do
+                    local _path = editor.get(_children[i], "path")
+                    if not (ends_with(_path, ".gui") or ends_with(_path, ".collection") or ends_with(_path, ".gui_script")) then
+                        return false
+                    end
+                end
+                return true
+            end,
+            run = function(opts)
+                local path = editor.get(opts.selection, "path")
+                local _, filename = get_filename(path)
+                create_files(path .. "/", filename)
             end
         }
     }
 end
 
-gui_template = function(gui_script)
-    return [[script: "]].. gui_script .. [["
-    material: "/builtins/materials/gui.material"
-    adjust_reference: ADJUST_REFERENCE_PARENT
-    ]] 
-end
+gui_template = [[
+material: "/builtins/materials/gui.material"
+adjust_reference: ADJUST_REFERENCE_PARENT
+]]
 
-gui_script_content = [[local monarch = require "monarch.monarch"
+gui_script_template = [[local monarch = require "monarch.monarch"
 
 function init(self)
     msg.post(".", "acquire_input_focus")
@@ -106,49 +237,10 @@ function on_reload(self)
 end
 ]]
 
-
-collection_template = function(gui_script, name)
-    return [[name: "]].. name .. [["
-    scale_along_z: 0
-    embedded_instances {
-        id: "go"
-        data: "components {\n"
-        "  id: \"monarch\"\n"
-        "  component: \"]].. gui_script .. [[\"\n"
-        "  position {\n"
-        "    x: 0.0\n"
-        "    y: 0.0\n"
-        "    z: 0.0\n"
-        "  }\n"
-        "  rotation {\n"
-        "    x: 0.0\n"
-        "    y: 0.0\n"
-        "    z: 0.0\n"
-        "    w: 1.0\n"
-        "  }\n"
-        "}\n"
-        ""
-        position {
-            x: 0.0
-            y: 0.0
-            z: 0.0
-        }
-        rotation {
-            x: 0.0
-            y: 0.0
-            z: 0.0
-            w: 1.0
-        }
-        scale3 {
-            x: 1.0
-            y: 1.0
-            z: 1.0
-        }
-    }
-    ]]
-
-end
-
+collection_template = [[
+name: "m"
+scale_along_z: 0
+]]
 
 
 return M
