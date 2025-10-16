@@ -160,7 +160,7 @@ end
 local function find_transition_screen(url_to_find)
 	local function find(url)
 		for _,screen in pairs(screens) do
-			if screen.transition_url == url or screen.script == url or screen.proxy == url then
+			if screen.script == url or screen.proxy == url then
 				return screen
 			end
 		end
