@@ -379,6 +379,23 @@ return function()
 			assert(wait_until_not_busy())
 		end)
 
+		it("should be possible to remove a transition", function()
+			local start = socket.gettime()
+			monarch.show(TRANSITION1)
+			assert(wait_until_stack({ TRANSITION1 }))
+			assert(wait_until_not_busy())
+			local t = socket.gettime() - start
+			assert_greater_than(t, 0.2)
+
+			monarch.on_transition(TRANSITION1, nil)
+			start = socket.gettime()
+			monarch.hide(TRANSITION1)
+			assert(wait_until_stack({ }))
+			assert(wait_until_not_busy())
+			local t = socket.gettime() - start
+			assert_less_than(t, 0.1)
+		end)
+		
 		it("should be able to preload a screen and wait for it", function()
 			assert(not monarch.is_preloading(TRANSITION1))
 			monarch.preload(TRANSITION1)
@@ -569,5 +586,6 @@ return function()
 			assert(not monarch.is_popup(SCREEN1))
 			assert(monarch.is_popup(POPUP1))
 		end)
+		
 	end)
 end

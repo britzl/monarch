@@ -40,6 +40,7 @@ describe("transitions", function()
 		
 		local node = gui.new_box_node(vmath.vector3(), vmath.vector3(100, 100, 0))
 		local duration = 2
+		local delay = 0
 		local t = transitions.create(node)
 		t.show_in(dummy_transition1, easing.OUT, duration, delay or 0)
 		t.show_in(dummy_transition2, easing.OUT, duration, delay or 0)
@@ -57,6 +58,7 @@ describe("transitions", function()
 
 		local node = gui.new_box_node(vmath.vector3(), vmath.vector3(100, 100, 0))
 		local duration = 2
+		local delay = 0
 		local t = transitions.create(node)
 		.show_in(dummy_transition, easing.OUT, duration, delay or 0)
 		.show_out(dummy_transition, easing.IN, duration, delay or 0)

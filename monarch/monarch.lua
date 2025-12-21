@@ -1321,14 +1321,13 @@ end
 -- IMPORTANT! You must call monarch.on_message() from the same script as
 -- this function was called
 -- @param id Screen id to associate transition with
--- @param fn Transition handler function
+-- @param fn Transition handler function or nil to remove transition
 function M.on_transition(id, fn)
 	assert(id, "You must provide a screen id")
-	assert(fn, "You must provide a transition function")
 	id = tohash(id)
 	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
 	local screen = screens[id]
-	screen.transition_url = msg.url()
+	screen.transition_url = fn and msg.url() or nil
 	screen.transition_fn = fn
 end
 
