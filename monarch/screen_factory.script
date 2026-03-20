@@ -6,8 +6,6 @@ go.property("popup", false)
 go.property("popup_on_popup", false)
 go.property("screen_keeps_input_focus_when_below_popup", false)
 go.property("others_keep_input_focus_when_below_screen", false)
-go.property("transition_id", hash("__DEPRECATED__"))
-go.property("focus_id", hash("__DEPRECATED__"))
 go.property("preload", false)
 
 
