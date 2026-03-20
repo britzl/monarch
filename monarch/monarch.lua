@@ -24,17 +24,15 @@ local MSG_DISABLE = hash("disable")
 local DEPRECATED = hash("__DEPRECATED__")
 
 -- transition messages
-M.TRANSITION = {}
-M.TRANSITION.DONE = hash("transition_done")
-M.TRANSITION.SHOW_IN = hash("transition_show_in")
-M.TRANSITION.SHOW_OUT = hash("transition_show_out")
-M.TRANSITION.BACK_IN = hash("transition_back_in")
-M.TRANSITION.BACK_OUT = hash("transition_back_out")
+M.TRANSITION_DONE = hash("transition_done")
+M.TRANSITION_SHOW_IN = hash("transition_show_in")
+M.TRANSITION_SHOW_OUT = hash("transition_show_out")
+M.TRANSITION_BACK_IN = hash("transition_back_in")
+M.TRANSITION_BACK_OUT = hash("transition_back_out")
 
 -- focus messages
-M.FOCUS = {}
-M.FOCUS.GAINED = hash("monarch_focus_gained")
-M.FOCUS.LOST = hash("monarch_focus_lost")
+M.FOCUS_GAINED = hash("monarch_focus_gained")
+M.FOCUS_LOST = hash("monarch_focus_lost")
 
 -- listener messages
 M.SCREEN_TRANSITION_IN_STARTED = hash("monarch_screen_transition_in_started")
@@ -1410,5 +1408,25 @@ function M.queue_size()
 	return #queue
 end
 
+
+--- @deprecated
+M.TRANSITION = {}
+--- @deprecated
+M.TRANSITION.DONE = hash("transition_done")
+--- @deprecated
+M.TRANSITION.SHOW_IN = hash("transition_show_in")
+--- @deprecated
+M.TRANSITION.SHOW_OUT = hash("transition_show_out")
+--- @deprecated
+M.TRANSITION.BACK_IN = hash("transition_back_in")
+--- @deprecated
+M.TRANSITION.BACK_OUT = hash("transition_back_out")
+
+--- @deprecated
+M.FOCUS = {}
+--- @deprecated
+M.FOCUS.GAINED = hash("monarch_focus_gained")
+--- @deprecated
+M.FOCUS.LOST = hash("monarch_focus_lost")
 
 return M
