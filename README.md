@@ -163,8 +163,6 @@ You can add optional transitions when navigating between screens. This is [descr
 ## Screen focus gain/loss
 Monarch will send focus gain and focus loss messages if a focus change listener has been set using `monarch.on_focus_change(screen_id, fn)` 
 
-DEPRECATED: ~~Monarch will send focus gain and focus loss messages if a `Focus Url` (proxy) or `Focus Id` (collectionfactory) was provided when the screen was created.~~
-
 The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
 
 ```lua
