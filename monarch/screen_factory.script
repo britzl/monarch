@@ -19,8 +19,6 @@ function init(self)
 		popup_on_popup = self.popup_on_popup,
 		screen_keeps_input_focus_when_below_popup = self.screen_keeps_input_focus_when_below_popup,
 		others_keep_input_focus_when_below_screen = self.others_keep_input_focus_when_below_screen,
-		transition_id = self.transition_id,
-		focus_id = self.focus_id,
 		auto_preload = self.preload,
 	}
 	monarch.register_factory(self.screen_id, self.screen_factory, settings)

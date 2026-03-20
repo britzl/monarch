@@ -20,9 +20,6 @@ function init(self)
 	local settings = {
 		popup = self.popup,
 		popup_on_popup = self.popup_on_popup,
-		transition_url = self.transition_url ~= url and self.transition_url or nil,
-		focus_url = self.focus_url ~= url and self.focus_url or nil,
-		receiver_url = self.receiver_url ~= url and self.receiver_url or nil,
 		timestep_below_popup = self.timestep_below_popup,
 		screen_keeps_input_focus_when_below_popup = self.screen_keeps_input_focus_when_below_popup,
 		others_keep_input_focus_when_below_screen = self.others_keep_input_focus_when_below_screen,

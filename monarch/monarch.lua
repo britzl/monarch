@@ -21,8 +21,6 @@ local MSG_ENABLE = hash("enable")
 local MSG_DISABLE = hash("disable")
 
 
-local DEPRECATED = hash("__DEPRECATED__")
-
 -- transition messages
 M.TRANSITION_DONE = hash("transition_done")
 M.TRANSITION_SHOW_IN = hash("transition_show_in")
@@ -286,19 +284,7 @@ function M.register_proxy(id, proxy, settings)
 	assert(proxy, "You must provide a collection proxy URL")
 	local screen = register(id, settings)
 	screen.proxy = proxy
-	screen.transition_url = settings and settings.transition_url
-	screen.focus_url = settings and settings.focus_url
-	screen.receiver_url = settings and settings.receiver_url
 	screen.auto_preload = settings and settings.auto_preload
-	if screen.transition_url.fragment == DEPRECATED then
-		screen.transition_url = nil
-	end
-	if screen.focus_url.fragment == DEPRECATED then
-		screen.focus_url = nil
-	end
-	if screen.receiver_url.fragment == DEPRECATED then
-		screen.receiver_url = nil
-	end
 	if screen.auto_preload then
 		M.preload(id)
 	end
@@ -326,16 +312,7 @@ function M.register_factory(id, factory, settings)
 	assert(factory, "You must provide a collection factory URL")
 	local screen = register(id, settings)
 	screen.factory = factory
-	screen.transition_id = settings and settings.transition_id
-	screen.focus_id = settings and settings.focus_id
 	screen.auto_preload = settings and settings.auto_preload
-
-	if screen.transition_id == DEPRECATED then
-		screen.transition_id = nil
-	end
-	if screen.focus_id == DEPRECATED then
-		screen.focus_id = nil
-	end
 	if screen.auto_preload then
 		M.preload(id)
 	end
@@ -519,12 +496,6 @@ local function load(screen)
 		msg.post(screen.proxy, MSG_ENABLE)
 	elseif screen.factory then
 		screen.factory_ids = collectionfactory.create(screen.factory)
-		if screen.transition_id then
-			screen.transition_url = screen.factory_ids[screen.transition_id]
-		end
-		if screen.focus_id then
-			screen.focus_url = screen.factory_ids[screen.focus_id]
-		end
 	end
 	screen.loaded = true
 	screen.preloaded = false
