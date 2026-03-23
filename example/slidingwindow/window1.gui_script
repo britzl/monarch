@@ -14,9 +14,9 @@ function init(self)
 	monarch.on_transition("window1", transition)
 
 	monarch.on_focus_changed("window1", function(message_id, message)
-		if message_id == monarch.FOCUS.GAINED then
+		if message_id == monarch.FOCUS_GAINED then
 			print("window1 gained focus")
-		elseif message_id == monarch.FOCUS.LOST then
+		elseif message_id == monarch.FOCUS_LOST then
 			print("window1 lost focus")
 		end
 	end)

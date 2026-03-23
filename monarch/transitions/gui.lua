@@ -112,10 +112,10 @@ local function create()
 	local instance = {}
 
 	local transitions = {
-		[monarch.TRANSITION.SHOW_IN] = { urls = {}, transitions = {}, in_progress_count = 0, },
-		[monarch.TRANSITION.SHOW_OUT] = { urls = {}, transitions = {}, in_progress_count = 0, },
-		[monarch.TRANSITION.BACK_IN] = { urls = {}, transitions = {}, in_progress_count = 0, },
-		[monarch.TRANSITION.BACK_OUT] = { urls = {}, transitions = {}, in_progress_count = 0, },
+		[monarch.TRANSITION_SHOW_IN] = { urls = {}, transitions = {}, in_progress_count = 0, },
+		[monarch.TRANSITION_SHOW_OUT] = { urls = {}, transitions = {}, in_progress_count = 0, },
+		[monarch.TRANSITION_BACK_IN] = { urls = {}, transitions = {}, in_progress_count = 0, },
+		[monarch.TRANSITION_BACK_OUT] = { urls = {}, transitions = {}, in_progress_count = 0, },
 	}
 
 	local current_transition = nil
@@ -159,7 +159,7 @@ local function create()
 			local message = { transition = transition_id }
 			while #t.urls > 0 do
 				local url = table.remove(t.urls)
-				msg.post(url, monarch.TRANSITION.DONE, message)
+				msg.post(url, monarch.TRANSITION_DONE, message)
 			end
 		end
 		current_transition = nil
@@ -214,10 +214,10 @@ local function create()
 					finish_transition(current_transition.id)
 				end
 			end
-		elseif message_id == monarch.TRANSITION.SHOW_IN
-		or message_id == monarch.TRANSITION.SHOW_OUT
-		or message_id == monarch.TRANSITION.BACK_IN
-		or message_id == monarch.TRANSITION.BACK_OUT then
+		elseif message_id == monarch.TRANSITION_SHOW_IN
+		or message_id == monarch.TRANSITION_SHOW_OUT
+		or message_id == monarch.TRANSITION_BACK_IN
+		or message_id == monarch.TRANSITION_BACK_OUT then
 			start_transition(message_id, sender)
 		end
 	end
@@ -229,28 +229,28 @@ local function create()
 	-- @param duration Transition duration
 	-- @param delay Transition delay
 	function instance.show_in(node, fn, easing, duration, delay)
-		create_transition(monarch.TRANSITION.SHOW_IN, node, fn, easing, duration, delay)
+		create_transition(monarch.TRANSITION_SHOW_IN, node, fn, easing, duration, delay)
 		return instance
 	end
 
 	-- Specify the transition function when this node is transitioned
 	-- from when showing another screen
 	function instance.show_out(node, fn, easing, duration, delay)
-		create_transition(monarch.TRANSITION.SHOW_OUT, node, fn, easing, duration, delay)
+		create_transition(monarch.TRANSITION_SHOW_OUT, node, fn, easing, duration, delay)
 		return instance
 	end
 
 	--- Specify the transition function when this node is transitioned
 	-- to when navigating back in the screen stack
 	function instance.back_in(node, fn, easing, duration, delay)
-		create_transition(monarch.TRANSITION.BACK_IN, node, fn, easing, duration, delay)
+		create_transition(monarch.TRANSITION_BACK_IN, node, fn, easing, duration, delay)
 		return instance
 	end
 
 	--- Specify the transition function when this node is transitioned
 	-- from when navigating back in the screen stack
 	function instance.back_out(node, fn, easing, duration, delay)
-		create_transition(monarch.TRANSITION.BACK_OUT, node, fn, easing, duration, delay)
+		create_transition(monarch.TRANSITION_BACK_OUT, node, fn, easing, duration, delay)
 		return instance
 	end
 

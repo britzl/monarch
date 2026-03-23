@@ -520,7 +520,7 @@ end
 local function focus_gained(screen, previous_screen)
 	log("focus_gained()", screen.id)
 	if screen.focus_url then
-		msg.post(screen.focus_url, M.FOCUS.GAINED, { id = previous_screen and previous_screen.id })
+		msg.post(screen.focus_url, M.FOCUS_GAINED, { id = previous_screen and previous_screen.id })
 	else
 		log("focus_gained() no focus url - ignoring")
 	end
@@ -530,7 +530,7 @@ local function focus_lost(screen, next_screen)
 	log("focus_lost()", screen.id)
 	if screen.unregistered then return end
 	if screen.focus_url then
-		msg.post(screen.focus_url, M.FOCUS.LOST, { id = next_screen and next_screen.id })
+		msg.post(screen.focus_url, M.FOCUS_LOST, { id = next_screen and next_screen.id })
 		-- if there's no transition on the screen losing focus and it gets
 		-- unloaded this will happen before the focus_lost message reaches
 		-- the focus_url
@@ -621,7 +621,7 @@ local function show_out(screen, next_screen, wait_for_transition, cb)
 		local next_is_popup = next_screen and next_screen.popup
 		local current_is_popup = screen.popup
 		if (not next_is_popup and not current_is_popup) or (current_is_popup) then
-			transition(screen, M.TRANSITION.SHOW_OUT, { next_screen = next_screen.id }, wait_for_transition)
+			transition(screen, M.TRANSITION_SHOW_OUT, { next_screen = next_screen.id }, wait_for_transition)
 			screen.visible = false
 			unload(screen)
 		elseif next_is_popup then
@@ -659,7 +659,7 @@ local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_t
 		-- wait one frame so that the init() of any script have time to run before starting transitions
 		cowait(screen, 0)
 		reset_timestep(screen)
-		transition(screen, M.TRANSITION.SHOW_IN, { previous_screen = previous_screen and previous_screen.id }, wait_for_transition)
+		transition(screen, M.TRANSITION_SHOW_IN, { previous_screen = previous_screen and previous_screen.id }, wait_for_transition)
 		screen.visible = true
 		acquire_input(screen)
 		focus_gained(screen, previous_screen)
@@ -686,7 +686,7 @@ local function back_in(screen, previous_screen, wait_for_transition, cb)
 		cowait(screen, 0)
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
-			transition(screen, M.TRANSITION.BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
+			transition(screen, M.TRANSITION_BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
 		end
 		screen.visible = true
 		acquire_input(screen)
@@ -705,7 +705,7 @@ local function back_out(screen, next_screen, wait_for_transition, cb)
 		change_context(screen)
 		release_input(screen, next_screen)
 		focus_lost(screen, next_screen)
-		transition(screen, M.TRANSITION.BACK_OUT, { next_screen = next_screen and next_screen.id }, wait_for_transition)
+		transition(screen, M.TRANSITION_BACK_OUT, { next_screen = next_screen and next_screen.id }, wait_for_transition)
 		if next_screen and screen.popup then
 			reset_timestep(next_screen)
 		end
@@ -1204,16 +1204,16 @@ function M.on_message(message_id, message, sender)
 		if screen.wait_for == WAITFOR_CONTEXT then
 			assert(coroutine.resume(screen.co))
 		end
-	elseif message_id == M.TRANSITION.DONE then
+	elseif message_id == M.TRANSITION_DONE then
 		local screen = find_transition_screen(sender)
 		assert(screen, "Unable to find screen for transition")
 		if screen.wait_for == WAITFOR_TRANSITION_DONE then
 			assert(coroutine.resume(screen.co))
 		end
-	elseif message_id == M.TRANSITION.SHOW_IN
-	or message_id == M.TRANSITION.SHOW_OUT
-	or message_id == M.TRANSITION.BACK_IN
-	or message_id == M.TRANSITION.BACK_OUT
+	elseif message_id == M.TRANSITION_SHOW_IN
+	or message_id == M.TRANSITION_SHOW_OUT
+	or message_id == M.TRANSITION_BACK_IN
+	or message_id == M.TRANSITION_BACK_OUT
 	then
 		local screen = find_transition_screen(sender)
 		assert(screen, "Unable to find screen for transition")
@@ -1225,8 +1225,8 @@ function M.on_message(message_id, message, sender)
 		if screen and screen.transition_fn then
 			screen.transition_fn(message_id, message, sender)
 		end
-	elseif message_id == M.FOCUS.GAINED
-	or message_id == M.FOCUS.LOST
+	elseif message_id == M.FOCUS_GAINED
+	or message_id == M.FOCUS_LOST
 	then
 		local screen = find_focus_screen(sender)
 		assert(screen, "Unable to find screen for focus change")
