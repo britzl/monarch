@@ -543,7 +543,7 @@ local function focus_lost(screen, next_screen)
 end
 
 local function change_timestep(screen)
-	if screen.proxy then
+	if screen.proxy and screen.timestep_below_popup >= 0 then
 		screen.changed_timestep = true
 		msg.post(screen.proxy, "set_time_step", { mode = 0, factor = screen.timestep_below_popup })
 	end
@@ -1274,7 +1274,7 @@ end
 
 --- Set the timestep to apply for a screen when below a popup
 -- @param id (string|hash) Id of the screen to change timestep setting for
--- @param timestep (number) Timestep to apply
+-- @param timestep (number) Timestep to apply or -1 to disable setting a timestep
 function M.set_timestep_below_popup(id, timestep)
 	assert(id, "You must provide a screen id")
 	assert(timestep, "You must provide a timestep")
