@@ -170,9 +170,9 @@ The focus gained message will contain the id of the previous screen and the focu
 
 	function init(self)
 		monarch.on_focus_changed("foobar", function(message_id, message, sender)
-			if message_id == monarch.FOCUS.GAINED then
+			if message_id == monarch.FOCUS_GAINED then
 				print("Focus gained, previous screen: ", message.id)
-			elseif message_id == monarch.FOCUS.LOST then
+			elseif message_id == monarch.FOCUS_LOST then
 				print("Focus lost, next screen: ", message.id)
 			end
 		end)

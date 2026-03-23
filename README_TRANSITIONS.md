@@ -3,12 +3,12 @@ You can add optional transitions when navigating between screens. The default be
 
 Transitions are configured through the `monarch.on_transition(screen_id, fn)` function. The function defines for which screen to configure transitions and sets a function to be called when a transition should be started. This function must accept (message_id, message, sender) as arguments, with `message_id` defining which type of transition to start:
 
-* `transition_show_in` (constant defined as `monarch.TRANSITION.SHOW_IN`)
-* `transition_show_out` (constant defined as `monarch.TRANSITION.SHOW_OUT`)
-* `transition_back_in` (constant defined as `monarch.TRANSITION.BACK_IN`)
-* `transition_back_out` (constant defined as `monarch.TRANSITION.BACK_OUT`)
+* `transition_show_in` (constant defined as `monarch.TRANSITION_SHOW_IN`)
+* `transition_show_out` (constant defined as `monarch.TRANSITION_SHOW_OUT`)
+* `transition_back_in` (constant defined as `monarch.TRANSITION_BACK_IN`)
+* `transition_back_out` (constant defined as `monarch.TRANSITION_BACK_OUT`)
 
-When a transition is completed it is up to the developer to send a `transition_done` (constant `monarch.TRANSITION.DONE`) message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence.
+When a transition is completed it is up to the developer to send a `transition_done` (constant `monarch.TRANSITION_DONE`) message back to the sender to indicate that the transition is completed and that Monarch can continue the navigation sequence.
 
 ## Transition URL
 This property is deprecated and will be removed in a future version of Monarch.
@@ -39,7 +39,7 @@ end
 function on_message(self, message_id, message, sender)
 	monarch.on_message(message_id, message, sender)
 	-- you can also check when a transition has completed:
-	if message_id == monarch.TRANSITION.DONE and message.transition == monarch.TRANSITION.SHOW_IN then
+	if message_id == monarch.TRANSITION_DONE and message.transition == monarch.TRANSITION_SHOW_IN then
 		print("Show in done!")
 	end
 end
