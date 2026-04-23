@@ -1110,8 +1110,15 @@ function M.has_missing_resources(id)
 
 	local screen = screens[id]
 	if screen.proxy then
-		local resources = collectionproxy.get_resources(screen.proxy)
-		return #resources == 0
+		if not collectionproxy.missing_resources then
+			-- from defold 1.13.0
+			local resources = collectionproxy.get_resources(screen.proxy)
+			return #resources == 0
+		else
+			-- for backwards compatibility
+			local missing = collectionproxy.missing_resources(screen.proxy)
+			return #missing > 0
+		end
 	end
 	return false
 end
