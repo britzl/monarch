@@ -223,7 +223,7 @@ IMPORTANT! If you provide a function you must also make sure to call `monarch.on
 
 
 ## monarch.has_missing_resources(screen_id)
-Check if a screen has any missing resources. If the screen is loaded by a collection proxy with Load Dynamically this will use `collectionproxy.missing_resources()`. For other cases this function will always return false.
+Check if a screen has any missing resources. If the screen is loaded by a collection proxy with Load Dynamically this will use `collectionproxy.get_resources()`. For other cases this function will always return false.
 
 **RETURN**
 * `result` (boolean) - true if the screen has missing resources
