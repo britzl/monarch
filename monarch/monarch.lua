@@ -8,6 +8,7 @@ local WAITFOR_CONTEXT = hash("waitfor_monarch_context")
 local WAITFOR_PROXY_LOADED = hash("waitfor_proxy_loaded")
 local WAITFOR_PROXY_UNLOADED = hash("waitfor_proxy_unloaded")
 local WAITFOR_TRANSITION_DONE = hash("waitfor_transition_done")
+local WAITFOR_TRANSITION_READY = hash("waitfor_transition_ready")
 
 local MSG_CONTEXT = hash("monarch_context")
 local MSG_PROXY_LOADED = hash("proxy_loaded")
@@ -594,6 +595,28 @@ local function enable(screen, previous_screen)
 	end)
 end
 
+local function can_start_in_transition_without_wait(screen)
+	return screen.proxy and screen.preloaded and screen.transition_url
+end
+
+local function should_wait_for_transition_registration(screen)
+	return screen.proxy and screen.preloaded and not screen.transition_url
+end
+
+local function wait_for_transition_ready(screen)
+	log("wait_for_transition_ready()", screen.id)
+	local co = coroutine.running()
+	assert(co, "You must run this from within a coroutine")
+	screen.wait_for = WAITFOR_TRANSITION_READY
+	timer.delay(0, false, function()
+		if screen.wait_for == WAITFOR_TRANSITION_READY then
+			screen.wait_for = nil
+			assert(coroutine.resume(co))
+		end
+	end)
+	coroutine.yield()
+end
+
 local function show_out(screen, next_screen, wait_for_transition, cb)
 	log("show_out()", screen.id)
 	assert(wait_for_transition ~= nil)
@@ -646,6 +669,8 @@ local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_t
 		if add_to_stack then
 			stack[#stack + 1] = screen
 		end
+		local start_transition_immediately = can_start_in_transition_without_wait(screen)
+		local wait_for_transition_registration = should_wait_for_transition_registration(screen)
 		local ok, err = load(screen)
 		if not ok then
 			log("show_in()", err)
@@ -656,8 +681,14 @@ local function show_in(screen, previous_screen, reload, add_to_stack, wait_for_t
 			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
 			return
 		end
+		-- for preloaded proxy screens the transition callback may be registered
+		-- during enable/init(). wait for that instead of always waiting a frame
+		if wait_for_transition_registration then
+			wait_for_transition_ready(screen)
 		-- wait one frame so that the init() of any script have time to run before starting transitions
-		cowait(screen, 0)
+		elseif not start_transition_immediately then
+			cowait(screen, 0)
+		end
 		reset_timestep(screen)
 		transition(screen, M.TRANSITION_SHOW_IN, { previous_screen = previous_screen and previous_screen.id }, wait_for_transition)
 		screen.visible = true
@@ -675,6 +706,8 @@ local function back_in(screen, previous_screen, wait_for_transition, cb)
 		active_transition_count = active_transition_count + 1
 		notify_transition_listeners(M.SCREEN_TRANSITION_IN_STARTED, { screen = screen.id, previous_screen = previous_screen and previous_screen.id })
 		change_context(screen)
+		local start_transition_immediately = can_start_in_transition_without_wait(screen)
+		local wait_for_transition_registration = should_wait_for_transition_registration(screen)
 		local ok, err = load(screen)
 		if not ok then
 			log("back_in()", err)
@@ -682,8 +715,14 @@ local function back_in(screen, previous_screen, wait_for_transition, cb)
 			notify_transition_listeners(M.SCREEN_TRANSITION_FAILED, { screen = screen.id })
 			return
 		end
+		-- for preloaded proxy screens the transition callback may be registered
+		-- during enable/init(). wait for that instead of always waiting a frame
+		if wait_for_transition_registration then
+			wait_for_transition_ready(screen)
 		-- wait one frame so that the init() of any script have time to run before starting transitions
-		cowait(screen, 0)
+		elseif not start_transition_immediately then
+			cowait(screen, 0)
+		end
 		reset_timestep(screen)
 		if previous_screen and not previous_screen.popup then
 			transition(screen, M.TRANSITION_BACK_IN, { previous_screen = previous_screen.id }, wait_for_transition)
@@ -1305,6 +1344,12 @@ function M.on_transition(id, fn)
 	local screen = screens[id]
 	screen.transition_url = fn and msg.url() or nil
 	screen.transition_fn = fn
+	-- a preloaded proxy screen may be waiting for its transition handler to
+	-- register from init() before the first show_in transition can start
+	if fn and screen.wait_for == WAITFOR_TRANSITION_READY then
+		screen.wait_for = nil
+		assert(coroutine.resume(screen.co))
+	end
 end
 
 ---
