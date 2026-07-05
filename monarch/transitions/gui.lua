@@ -134,7 +134,7 @@ local function create()
 				transition.fn = fn
 				transition.easing = easing
 				transition.duration = duration
-				transitions.delay = delay
+				transition.delay = delay
 				return
 			end
 		end
