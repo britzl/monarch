@@ -11,7 +11,9 @@ Monarch is a screen manager for the [Defold](https://www.defold.com) game engine
 # Installation
 You can use Monarch in your own project by adding this project as a [Defold library dependency](http://www.defold.com/manuals/libraries/). Open your game.project file and in the dependencies field under project add:
 
+```
 https://github.com/britzl/monarch/archive/master.zip
+```
 
 Or point to the ZIP file of a [specific release](https://github.com/britzl/monarch/releases).
 
@@ -161,7 +163,7 @@ You can add optional transitions when navigating between screens. This is [descr
 
 
 ## Screen focus gain/loss
-Monarch will send focus gain and focus loss messages if a focus change listener has been set using `monarch.on_focus_change(screen_id, fn)` 
+Monarch will send focus gain and focus loss messages if a focus change listener has been set using `monarch.on_focus_change(screen_id, fn)`
 
 The focus gained message will contain the id of the previous screen and the focus loss message will contain the id of the next screen. Example:
 
