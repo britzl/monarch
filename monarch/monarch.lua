@@ -259,6 +259,7 @@ local function register(id, settings)
 		screen_keeps_input_focus_when_below_popup = settings and settings.screen_keeps_input_focus_when_below_popup or false,
 		others_keep_input_focus_when_below_screen = settings and settings.others_keep_input_focus_when_below_screen or false,
 		preload_listeners = {},
+		managed_input = {},
 	}
 	return screens[id]
 end
@@ -295,8 +296,7 @@ M.register = M.register_proxy
 --- Register a new screen contained in a collection factory
 -- This is done automatically by the screen_factory.script. It is expected that
 -- the caller of this function is a script component attached to the same game
--- object as the factory. This is required since monarch will acquire and
--- release input focus of the game object where the factory is attached.
+-- object as the factory.
 -- @param id Unique id of the screen
 -- @param factory URL to the collection factory containing the screen
 -- @param settings Settings table for screen. Accepted values:
@@ -345,10 +345,14 @@ local function acquire_input(screen)
 	if not screen.input then
 		if screen.proxy then
 			msg.post(screen.script, MSG_ACQUIRE_INPUT_FOCUS)
-		elseif screen.factory then
-			for id,instance in pairs(screen.factory_ids) do
-				msg.post(instance, MSG_ACQUIRE_INPUT_FOCUS)
-			end
+		end
+		local managed_ids = screen.managed_input
+		if #managed_ids == 0 and screen.factory then
+			-- For backward compatibility, manage all factory-created objects by default.
+			managed_ids = screen.factory_ids
+		end
+		for id,instance in pairs(managed_ids) do
+			msg.post(instance, MSG_ACQUIRE_INPUT_FOCUS)
 		end
 		screen.input = true
 	end
@@ -366,10 +370,14 @@ local function release_input(screen, next_screen)
 		if release_focus then
 			if screen.proxy then
 				msg.post(screen.script, MSG_RELEASE_INPUT_FOCUS)
-			elseif screen.factory then
-				for id,instance in pairs(screen.factory_ids) do
-					msg.post(instance, MSG_RELEASE_INPUT_FOCUS)
-				end
+			end
+			local managed_ids = screen.managed_input
+			if #managed_ids == 0 and screen.factory then
+				-- For backward compatibility, manage all factory-created objects by default.
+				managed_ids = screen.factory_ids
+			end
+			for id,instance in pairs(managed_ids) do
+				msg.post(instance, MSG_RELEASE_INPUT_FOCUS)
 			end
 			screen.input = false
 		end
@@ -419,6 +427,7 @@ local function unload(screen, force)
 			screen.preloaded = false
 		end
 	end
+	screen.managed_input = {}
 	-- we need to wait here in case the unloaded screen contained any screens
 	-- if this is the case we need to let these sub-screens have their final()
 	-- functions called so that they have time to call unregister()
@@ -1327,6 +1336,26 @@ function M.on_post(id, fn_or_url)
 		screen.receiver_fn = nil
 		screen.receiver_url = msg.url()
 	end
+end
+
+--- Manage input focus for a screen component.
+-- Monarch will acquire and release input focus for the given URL (or msg.url())
+-- when the given screen is shown or hidden.
+-- @param id (string|hash) - Screen id to associate the URL with
+-- @param url (url|nil) - Optional URL to send acquire/release messages to, defaults to msg.url()
+function M.manage_input_focus(id, url)
+	assert(id, "You must provide a screen id")
+	id = tohash(id)
+	assert(screens[id], ("There is no screen registered with id %s"):format(tostring(id)))
+	local screen = screens[id]
+	url = url or msg.url()
+	for i, u in ipairs(screen.managed_input) do
+		if u == url then
+			-- We already have this one.
+			return
+		end
+	end
+	screen.managed_input[#screen.managed_input + 1] = url
 end
 
 local empty_hash = hash("")
