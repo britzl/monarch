@@ -921,21 +921,28 @@ function M.clear(cb)
 	log("clear() queuing action")
 
 	queue_action(function(action_done, action_error)
-		async(function(await, resume)
-			local top = stack[#stack]
-			while top and top.visible do
-				stack[#stack] = nil
-				await(back_out, top, stack[#stack - 1], WAIT_FOR_TRANSITION, resume)
-				top = stack[#stack]
-			end
+		-- clear() is often queued behind a transition and then started from that
+		-- transition's done callback, inside another screen's coroutine and under pcall.
+		-- async() would reuse that coroutine and yield across pcall, which Lua 5.1 on
+		-- HTML5 does not allow. Run in a coroutine of our own, as show() does.
+		local co = coroutine.create(function()
+			async(function(await, resume)
+				local top = stack[#stack]
+				while top and top.visible do
+					stack[#stack] = nil
+					await(back_out, top, stack[#stack - 1], WAIT_FOR_TRANSITION, resume)
+					top = stack[#stack]
+				end
 
-			while stack[#stack] do
-				table.remove(stack)
-			end
+				while stack[#stack] do
+					table.remove(stack)
+				end
 
-			pcallfn(cb)
-			pcallfn(action_done)
+				pcallfn(cb)
+				pcallfn(action_done)
+			end)
 		end)
+		assert(coroutine.resume(co))
 	end)
 end
 
